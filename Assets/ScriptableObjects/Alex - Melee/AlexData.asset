@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2759f840cf70c848a65d2b89d678bb6, type: 3}
+  m_Name: AlexData
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterName: Alex
+  characterVisualPrefab: {fileID: 9127036592062597366, guid: d14db2f7b8d86bf4483067eb7eeaac67, type: 3}
+  characterVisualPositionOffset: {x: 0, y: 0, z: 0}
+  characterVisualRotationOffset: {x: 0, y: 0, z: 0}
+  weaponHolderTransform: {fileID: 0}
+  stats: {fileID: 11400000, guid: 6aa398045ce01c24ca5aed19fbd339cd, type: 2}
+  weapon: {fileID: 11400000, guid: d7ad94fe13d0d464eb36b9c926610543, type: 2}
+  skills:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  moveSound: {fileID: 0}
+  hurtSound: {fileID: 0}
+  deathSound: {fileID: 0}
