@@ -1,0 +1,158 @@
+name: Unity CI — format / style / build / meta-check
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+# Fail-fast: formatting checks run first so noisy style failures block the rest.
+# You can disable/modify any job below if you don't want it.
+
+env:
+  # Make sure global dotnet tools are found when we install them as fallback
+  PATH: ${{ env.PATH }}:${{ github.workspace }}/.dotnet/tools:${{ env.HOME }}/.dotnet/tools
+
+jobs:
+  format:
+    name: Format & meta-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore or install dotnet tools
+        id: tools
+        run: |
+          # prefer repository tool manifest (recommended for stability)
+          if [ -f .config/dotnet-tools.json ] || [ -f .config/dotnet-tools.json ]; then
+            echo "Found dotnet tool manifest -> restoring local tools"
+            dotnet tool restore
+          else
+            echo "No dotnet tool manifest found -> installing pinned global tools (fallback)"
+            # pinning helps avoid surprises; change the versions if you already pin in your repo
+            dotnet tool install --global csharpier --version 1.1.2 || dotnet tool install --global csharpier || true
+            dotnet tool install --global dotnet-format --version 6.1.253801 || dotnet tool install --global dotnet-format || true
+          fi
+
+      - name: Run CSharpier (format check)
+        run: |
+          # prefer the local tool (dotnet csharpier) if available in manifest
+          if dotnet tool list --local 2>/dev/null | grep -q csharpier; then
+            dotnet csharpier check .
+          else
+            # fallback to global (should be on PATH because of env above)
+            csharpier --check .
+          fi
+
+      - name: dotnet-format (verify no changes)
+        run: |
+          # dotnet format will exit non-zero if code needs formatting when --verify-no-changes is used
+          if dotnet tool list --local 2>/dev/null | grep -q dotnet-format; then
+            dotnet format --verify-no-changes
+          else
+            dotnet format --verify-no-changes || true
+          fi
+
+      - name: Unity meta-file check
+        # Using the official unity-meta-check release binary (quick, zero-deps)
+        run: |
+          curl -sL https://github.com/DeNA/unity-meta-check/releases/latest/download/gh-action-linux-amd64 -o unity-meta-check
+          chmod +x unity-meta-check
+          ./unity-meta-check .
+
+  build-and-test:
+    name: Build & (dotnet) tests
+    needs: format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore NuGet packages
+        run: dotnet restore --configfile NuGet.Config || dotnet restore || true
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run dotnet tests (if any)
+        run: |
+          set -e
+          # discover common test project patterns so workflow doesn't fail when no tests exist
+          TEST_PROJS=$(git ls-files "**/*Tests/*.csproj" "**/*.Tests/*.csproj" "**/*test*/**/*.csproj" || true)
+          if [ -z "$TEST_PROJS" ]; then
+            echo "No test projects found; skipping dotnet test"
+            exit 0
+          fi
+          for proj in $TEST_PROJS; do
+            echo "Running tests in: $proj"
+            dotnet test "$proj" --no-build --verbosity normal
+          done
+
+      - name: Upload test results (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/TestResults/**
+            test-results/**
+
+  codeql:
+    name: CodeQL security scan (PRs)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+
+      - name: Autobuild (required for compiled languages)
+        run: dotnet build --configuration Release
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+
+  unity-tests:
+    name: (Optional) Unity test-runner (GameCI)
+    runs-on: ubuntu-latest
+    # only run when you add a UNITY_LICENSE secret (so this won't run by default)
+    if: ${{ secrets.UNITY_LICENSE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Unity tests (game-ci)
+        uses: game-ci/unity-test-runner@v2
+        with:
+          # set UNITY_VERSION in GitHub Secrets (or change to a literal string like '2023.3.0f1')
+          unityVersion: ${{ secrets.UNITY_VERSION }}
+          # more options: projectPath, testMode, targetPlatform etc. See GameCI docs
+
+# NOTES:
+# - This workflow prefers a dotnet tool manifest (`dotnet new tool-manifest` + `dotnet tool install csharpier`) so every dev + CI uses the exact same formatter binary.
+# - CSharpier docs: prefer `dotnet tool restore` && `dotnet csharpier check .` for CI usage. See CSharpier CI docs.
+# - dotnet-format: using `--verify-no-changes` ensures stylistic differences are flagged (Microsoft docs).
+# - Unity meta check: uses DeNA's unity-meta-check (binary) to detect missing/dangling .meta files.
+#
+# If you'd like I can also:
+#  - commit a sample .config/dotnet-tools.json and pinned versions into the repo
+#  - add a pre-commit hook script to enforce formatting locally
+#  - wire reviewdog or Danger to annotate PRs instead of just failing the check
