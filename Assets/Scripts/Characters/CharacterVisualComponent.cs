@@ -19,9 +19,7 @@ public class CharacterVisualComponent : MonoBehaviour
 
         visualInstance.transform.localPosition = characterData.characterVisualPositionOffset;
 
-        visualInstance.transform.localRotation = Quaternion.Euler(
-            characterData.characterVisualRotationOffset
-        );
+        visualInstance.transform.localRotation = Quaternion.Euler(characterData.characterVisualRotationOffset);
     }
 
     public GameObject GetVisualInstance()

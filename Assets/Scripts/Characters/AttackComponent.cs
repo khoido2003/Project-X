@@ -73,11 +73,7 @@ public class AttackComponent : MonoBehaviour
             {
                 HealthComponent enemyHealth = hit.GetComponent<HealthComponent>();
 
-                if (
-                    enemyHealth != null
-                    && enemyHealth != currentHealthComponent
-                    && !damaged.Contains(enemyHealth)
-                )
+                if (enemyHealth != null && enemyHealth != currentHealthComponent && !damaged.Contains(enemyHealth))
                 {
                     damaged.Add(enemyHealth);
                     enemyHealth.TakeDamage(weaponData.attackDamage);
