@@ -47,13 +47,14 @@
     <Analyzer Include="D:\unity\Editor\6000.2.5f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Characters\MovementComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponHolder.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\SkillData.cs" />
-    <Compile Include="Assets\Scripts\Core\MovementComponent.cs" />
-    <Compile Include="Assets\Scripts\Core\CharacterVisualComponent.cs" />
-    <Compile Include="Assets\Scripts\Core\WeaponComponent.cs" />
+    <Compile Include="Assets\Scripts\Characters\AnimationControllerComponent.cs" />
+    <Compile Include="Assets\Scripts\Characters\CharacterVisualComponent.cs" />
+    <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\CharacterData.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\WeaponData.cs" />
     <Compile Include="Assets\Scripts\Utils\MouseWorldPosition.cs" />

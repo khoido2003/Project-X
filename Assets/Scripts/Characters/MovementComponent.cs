@@ -11,9 +11,10 @@ public class MovementComponent : MonoBehaviour
     private float verticalVelocity = -0.5f;
 
     private CharacterController controller;
-    private Animator animator;
     private Character character;
     private MouseWorldPosition mouseWorldPosition;
+
+    public event EventHandler<Vector3> OnVelocityChanged;
 
     private void Awake()
     {
@@ -21,8 +22,6 @@ public class MovementComponent : MonoBehaviour
         character = GetComponent<Character>();
         mouseWorldPosition = GetComponent<MouseWorldPosition>();
     }
-
-    private void Start() { }
 
     public void Initialize(StatsData statsData, bool isPlayer)
     {
@@ -37,13 +36,11 @@ public class MovementComponent : MonoBehaviour
         {
             mouseWorldPosition.OnDirectionToMouseChanged += UpdateRotation;
         }
-        animator = GetComponentInChildren<Animator>();
     }
 
     private void Update()
     {
         ApplyGravity();
-        SetupAnimation();
         Move();
     }
 
@@ -52,32 +49,6 @@ public class MovementComponent : MonoBehaviour
         if (InputManager.Instance != null)
         {
             InputManager.Instance.OnMove -= SetMoveDirection;
-        }
-    }
-
-    private void SetupAnimation()
-    {
-        if (animator != null)
-        {
-            bool isMoving = moveDirection.sqrMagnitude > 0.01f;
-            animator.SetBool("isMoving", isMoving);
-
-            if (isMoving)
-            {
-                Vector3 forward = transform.forward;
-                Vector3 right = transform.right;
-
-                float forwardDot = Vector3.Dot(moveDirection, forward);
-                float rightDot = Vector3.Dot(moveDirection, right);
-
-                animator.SetFloat("moveY", forwardDot);
-                animator.SetFloat("moveX", rightDot);
-            }
-            else
-            {
-                animator.SetFloat("moveX", 0f);
-                animator.SetFloat("moveY", 0f);
-            }
         }
     }
 
@@ -100,6 +71,9 @@ public class MovementComponent : MonoBehaviour
         if (controller != null)
         {
             Vector3 move = moveDirection * moveSpeed + Vector3.up * verticalVelocity;
+
+            // Notice the animator to trigger animation
+            OnVelocityChanged?.Invoke(this, moveDirection);
 
             controller.Move(move * Time.deltaTime);
         }

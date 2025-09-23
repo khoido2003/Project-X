@@ -16,17 +16,17 @@ public class Character : MonoBehaviour
     [SerializeField]
     private Transform characterVisualHolder;
 
-    private MovementComponent movement;
+    private MovementComponent movementComponent;
     private WeaponComponent weaponComponent;
-    private CharacterVisualComponent characterVisual;
+    private CharacterVisualComponent characterVisualComponent;
+    private AnimationControllerComponent animationControllerComponent;
 
     private void Awake()
     {
-        visualPlaceHolder.SetActive(false);
-
-        movement = GetComponent<MovementComponent>();
+        movementComponent = GetComponent<MovementComponent>();
         weaponComponent = GetComponent<WeaponComponent>();
-        characterVisual = GetComponent<CharacterVisualComponent>();
+        characterVisualComponent = GetComponent<CharacterVisualComponent>();
+        animationControllerComponent = GetComponent<AnimationControllerComponent>();
     }
 
     private void Start()
@@ -36,18 +36,28 @@ public class Character : MonoBehaviour
 
     private void Setup()
     {
-        if (data != null)
+        visualPlaceHolder.SetActive(false);
+
+        if (data == null)
         {
-            characterVisual?.Initialize(data, characterVisualHolder);
-            movement?.Initialize(data.stats, isPlayerControlled);
+            Debug.LogError("Missing CharacterData!");
+            return;
+        }
 
-            WeaponHolder weaponHolder = GetComponentInChildren<WeaponHolder>();
+        // NOTICE: this always spawned first so other component can find it correctly
+        characterVisualComponent?.Initialize(data, characterVisualHolder);
 
-            if (weaponHolder != null)
-            {
-                weaponHolderTransform = weaponHolder.transform;
-                weaponComponent?.Initialize(data.weapon, weaponHolderTransform);
-            }
+        movementComponent?.Initialize(data.stats, isPlayerControlled);
+
+        animationControllerComponent.Bind(movementComponent);
+
+        // MUST find the weaponHolder here or else it will be null since the characterVisual has not spawned yet!
+        WeaponHolder weaponHolder = GetComponentInChildren<WeaponHolder>();
+
+        if (weaponHolder != null)
+        {
+            weaponHolderTransform = weaponHolder.transform;
+            weaponComponent?.Initialize(data.weapon, weaponHolderTransform);
         }
     }
 }
