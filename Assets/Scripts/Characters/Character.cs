@@ -20,6 +20,10 @@ public class Character : MonoBehaviour
     private WeaponComponent weaponComponent;
     private CharacterVisualComponent characterVisualComponent;
     private AnimationControllerComponent animationControllerComponent;
+    private AttackComponent attackComponent;
+    private HealthComponent healthComponent;
+
+    private HealthBarUI healthBarUI;
 
     private void Awake()
     {
@@ -27,6 +31,10 @@ public class Character : MonoBehaviour
         weaponComponent = GetComponent<WeaponComponent>();
         characterVisualComponent = GetComponent<CharacterVisualComponent>();
         animationControllerComponent = GetComponent<AnimationControllerComponent>();
+        attackComponent = GetComponent<AttackComponent>();
+        healthComponent = GetComponent<HealthComponent>();
+
+        healthBarUI = GetComponentInChildren<HealthBarUI>();
     }
 
     private void Start()
@@ -49,7 +57,12 @@ public class Character : MonoBehaviour
 
         movementComponent?.Initialize(data.stats, isPlayerControlled);
 
-        animationControllerComponent.Bind(movementComponent);
+        healthComponent?.Initialize(data.stats);
+        healthBarUI.Bind(healthComponent);
+
+        attackComponent?.Initialize(data.weapon, isPlayerControlled);
+
+        animationControllerComponent.Bind(movementComponent, attackComponent);
 
         // MUST find the weaponHolder here or else it will be null since the characterVisual has not spawned yet!
         WeaponHolder weaponHolder = GetComponentInChildren<WeaponHolder>();

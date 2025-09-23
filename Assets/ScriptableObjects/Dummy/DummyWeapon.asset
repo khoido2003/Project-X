@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 15d0a9d26896e39448f8ae83840b45a7, type: 3}
-  m_Name: AlexWeapon
+  m_Name: DummyWeapon
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: Baseball
+  weaponName: Knife
   isMelee: 1
   attackDamage: 10
   attackCooldown: 0.5
-  attackRange: 1.5
-  weaponPrefab: {fileID: 6270620331197016252, guid: 4e9f5748a1536464c829a251c4edae87, type: 3}
+  attackRange: 1
+  weaponPrefab: {fileID: 1312650332241227964, guid: de76ac7616859d24ea87de100506dc56, type: 3}
   projectilePrefab: {fileID: 0}
-  spawnPositionOffset: {x: 0, y: 0, z: 0}
-  spawnRotationOffset: {x: 0, y: 0, z: 0}
+  spawnPositionOffset: {x: 0, y: 0.152, z: 0}
+  spawnRotationOffset: {x: 0, y: 73, z: 0}
   attackSound: {fileID: 0}
   attackAnimationTrigger: attack
   totalAttackAnimations: 2
