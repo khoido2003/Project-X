@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 
+[RequireComponent(typeof(MouseWorldPosition))]
 public class SkillComponent : MonoBehaviour, IAnimationTrigger
 {
     private SkillInstance[] skills = new SkillInstance[3];
@@ -8,18 +9,43 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger
     private Character character;
     private MouseWorldPosition mouseWorldPosition;
 
+    private LineRenderer rangeRing;
+    private LineRenderer indicatorRing;
+    private int selectedSkillIndex = -1;
+
+    [Header("Visual Settings")]
+    [SerializeField]
+    private int ringSegments = 64;
+
+    [SerializeField]
+    private float ringWidth = 0.05f;
+
+    [SerializeField]
+    private Color rangeColor = Color.blue;
+
+    [SerializeField]
+    private Color indicatorColor = Color.green;
+
+    [SerializeField]
+    private float indicatorRadius = 0.5f;
+
     public event Action<string> OnTriggerAnimation;
     public event Action<string, float> OnSetFloatParameter;
     public event Action<string, bool> OnSetBoolParameter;
+
+    void Update()
+    {
+        if (selectedSkillIndex != -1)
+            UpdateVisuals();
+    }
 
     public void Initialize(SkillData[] skillDatas, bool isPlayerControlled)
     {
         character = GetComponent<Character>();
         mouseWorldPosition = GetComponent<MouseWorldPosition>();
-
         isPlayer = isPlayerControlled;
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < skills.Length; i++)
         {
             if (skillDatas != null && i < skillDatas.Length && skillDatas[i] != null)
             {
@@ -29,53 +55,125 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger
 
         if (isPlayer)
         {
-            InputManager.Instance.OnSkill1Pressed += () => UseSkill(0);
-            InputManager.Instance.OnSkill2Pressed += () => UseSkill(1);
-            InputManager.Instance.OnSkill3Pressed += () => UseSkill(2);
+            InputManager.Instance.OnSkill1Pressed += () => SelectSkill(0);
+            InputManager.Instance.OnSkill2Pressed += () => SelectSkill(1);
+            InputManager.Instance.OnSkill3Pressed += () => SelectSkill(2);
+            InputManager.Instance.OnSkill1Released += () => CancelSkill(0);
+            InputManager.Instance.OnSkill2Released += () => CancelSkill(1);
+            InputManager.Instance.OnSkill3Released += () => CancelSkill(2);
+            InputManager.Instance.OnAttackPressed += CastSelectedSkill;
         }
+    }
+
+    private void SelectSkill(int index)
+    {
+        if (skills[index] == null || !skills[index].CanUse())
+        {
+            return;
+        }
+        selectedSkillIndex = index;
+
+        // Range ring
+        rangeRing = Drawer.CreateCircle(skills[index].Data.castRange, ringSegments, ringWidth, rangeColor);
+        rangeRing.transform.position = transform.position + Vector3.up * 0.05f;
+
+        // Target indicator
+        indicatorRing = Drawer.CreateCircle(indicatorRadius, ringSegments, ringWidth, indicatorColor);
+    }
+
+    private void CancelSkill(int index)
+    {
+        if (selectedSkillIndex == index)
+        {
+            HideVisuals();
+        }
+    }
+
+    private void CastSelectedSkill()
+    {
+        if (selectedSkillIndex == -1)
+        {
+            return;
+        }
+        UseSkill(selectedSkillIndex);
+        HideVisuals();
     }
 
     private void UseSkill(int index)
     {
-        if (index < 0 || index >= 3 || skills[index] == null)
-        {
-            Debug.LogError($"Invalid or unassigned skill index {index}!");
+        if (skills[index] == null || mouseWorldPosition == null)
             return;
-        }
 
-        if (!skills[index].CanUse())
+        Vector3 target = mouseWorldPosition.GetWorldPosition();
+        float range = skills[index].Data.castRange;
+
+        Vector3 directionToTarget = (target - transform.position).normalized;
+        directionToTarget.y = 0;
+
+        if (Vector3.Distance(transform.position, target) > range)
         {
-            return;
+            target = transform.position + directionToTarget * range;
         }
 
-        if (mouseWorldPosition == null)
-        {
-            Debug.LogError("Missing MouseWorldPosition Component!");
-            return;
-        }
+        directionToTarget *= character?.Data?.forwardDirectionMultiplier ?? 1f;
 
-        Vector3 targetPoint = mouseWorldPosition.GetWorldPosition();
-        float castRange = skills[index].Data.castRange;
-
-        Vector3 direction = (targetPoint - transform.position).normalized;
-        direction.y = 0f;
-
-        float distance = Vector3.Distance(targetPoint, transform.position);
-
-        if (distance > castRange)
-        {
-            targetPoint = transform.position + direction * castRange;
-        }
-
-        direction *= character?.Data?.forwardDirectionMultiplier ?? 1f;
-
-        // TRIGGER ANIMATION HERE
         OnTriggerAnimation?.Invoke(skills[index]?.Data.activationAnimationTrigger ?? "skill");
 
-        // TODO: Trigger sound here
+        skills[index].Use(gameObject, target, directionToTarget);
+    }
 
+    private void UpdateVisuals()
+    {
+        if (indicatorRing == null || mouseWorldPosition == null)
+        {
+            return;
+        }
 
-        // Start using skill
-        skills[index].Use(gameObject, targetPoint, direction);
+        Vector3 target = mouseWorldPosition.GetWorldPosition();
+        float range = skills[selectedSkillIndex].Data.castRange;
+
+        Vector3 directionToTarget = (target - transform.position).normalized;
+        directionToTarget.y = 0;
+
+        if (Vector3.Distance(transform.position, target) > range)
+        {
+            target = transform.position + directionToTarget * range;
+        }
+
+        indicatorRing.transform.position = target + Vector3.up * 0.05f;
+
+        if (rangeRing != null)
+        {
+            rangeRing.transform.position = transform.position + Vector3.up * 0.05f;
+        }
+    }
+
+    private void HideVisuals()
+    {
+        selectedSkillIndex = -1;
+
+        if (indicatorRing)
+        {
+            Destroy(indicatorRing.gameObject);
+        }
+        if (rangeRing)
+        {
+            Destroy(rangeRing.gameObject);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (InputManager.Instance != null)
+        {
+            InputManager.Instance.OnSkill1Pressed -= () => SelectSkill(0);
+            InputManager.Instance.OnSkill2Pressed -= () => SelectSkill(1);
+            InputManager.Instance.OnSkill3Pressed -= () => SelectSkill(2);
+            InputManager.Instance.OnSkill1Released -= () => CancelSkill(0);
+            InputManager.Instance.OnSkill2Released -= () => CancelSkill(1);
+            InputManager.Instance.OnSkill3Released -= () => CancelSkill(2);
+            InputManager.Instance.OnAttackPressed -= CastSelectedSkill;
+        }
+        HideVisuals();
     }
 }

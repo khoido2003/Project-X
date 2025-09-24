@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DashStrikeSkill
   m_EditorClassIdentifier: Assembly-CSharp::DaskStrikeSkill
   skillName: Dash Strike
-  coolDown: 5
+  coolDown: 10
   castRange: 5
   activateSound: {fileID: 0}
   activationAnimationTrigger: skill1

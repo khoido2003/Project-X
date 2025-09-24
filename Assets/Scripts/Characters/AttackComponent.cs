@@ -46,7 +46,6 @@ public class AttackComponent : MonoBehaviour, IAnimationTrigger
         // TRIGGER ANIMATION HERE
         hitDirection = transform.forward * (GetComponent<Character>()?.Data?.forwardDirectionMultiplier ?? 1f);
 
-
         // Choose random attack
         int randomIndex = UnityEngine.Random.Range(0, weaponData.totalAttackAnimations);
 

@@ -66,6 +66,8 @@ public class Character : MonoBehaviour
 
         attackComponent?.Initialize(Data.weapon, isPlayerControlled);
 
+        skillComponent.Initialize(Data.skills, isPlayerControlled);
+
         // ALL components that need animator will be listed here (Must implement IAnimationTrigger)
         List<IAnimationTrigger> animationTriggerSource = new() { movementComponent, attackComponent, skillComponent };
 
