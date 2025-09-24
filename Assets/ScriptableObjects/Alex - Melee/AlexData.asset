@@ -16,13 +16,11 @@ MonoBehaviour:
   characterVisualPrefab: {fileID: 9127036592062597366, guid: d14db2f7b8d86bf4483067eb7eeaac67, type: 3}
   characterVisualPositionOffset: {x: 0, y: 0, z: 0}
   characterVisualRotationOffset: {x: 0, y: 0, z: 0}
-  weaponHolderTransform: {fileID: 0}
+  forwardDirectionMultiplier: 1
   stats: {fileID: 11400000, guid: 6aa398045ce01c24ca5aed19fbd339cd, type: 2}
   weapon: {fileID: 11400000, guid: d7ad94fe13d0d464eb36b9c926610543, type: 2}
   skills:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: ac836004cdd5409498e9f1f360eb6fde, type: 2}
   moveSound: {fileID: 0}
   hurtSound: {fileID: 0}
   deathSound: {fileID: 0}

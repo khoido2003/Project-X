@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AttackComponent : MonoBehaviour
+public class AttackComponent : MonoBehaviour, IAnimationTrigger
 {
     private WeaponData weaponData;
     private HealthComponent currentHealthComponent;
@@ -12,7 +12,9 @@ public class AttackComponent : MonoBehaviour
 
     private Vector3 hitDirection;
 
-    public event EventHandler<WeaponData> OnAttackTrigger;
+    public event Action<string> OnTriggerAnimation;
+    public event Action<string, float> OnSetFloatParameter;
+    public event Action<string, bool> OnSetBoolParameter;
 
     private void Awake()
     {
@@ -41,8 +43,19 @@ public class AttackComponent : MonoBehaviour
 
         hitDirection = transform.forward;
 
-        // Trigger animation
-        OnAttackTrigger?.Invoke(this, weaponData);
+        // TRIGGER ANIMATION HERE
+        hitDirection = transform.forward * (GetComponent<Character>()?.Data?.forwardDirectionMultiplier ?? 1f);
+
+
+        // Choose random attack
+        int randomIndex = UnityEngine.Random.Range(0, weaponData.totalAttackAnimations);
+
+        OnSetFloatParameter?.Invoke("attackIndex", randomIndex);
+
+        OnTriggerAnimation?.Invoke(weaponData.attackAnimationTrigger);
+
+        // TODO: Trigger sound here
+
 
         lastAttackTime = Time.time;
     }

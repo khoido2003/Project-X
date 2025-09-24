@@ -9,6 +9,9 @@ public class CharacterData : ScriptableObject
     public Vector3 characterVisualPositionOffset = Vector3.zero;
     public Vector3 characterVisualRotationOffset = Vector3.zero;
 
+    // Z axis: 1 for Z+, -1 for Z-
+    public float forwardDirectionMultiplier = 1f;
+
     public StatsData stats;
     public WeaponData weapon;
     public SkillData[] skills = new SkillData[3];
