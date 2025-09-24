@@ -49,19 +49,23 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Characters\MovementComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponHolder.cs" />
+    <Compile Include="Assets\Scripts\Characters\Skills\SkillInstance.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\SkillData.cs" />
     <Compile Include="Assets\Scripts\Characters\AnimationControllerComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\AttackComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\CharacterVisualComponent.cs" />
+    <Compile Include="Assets\Scripts\Characters\IAnimationTrigger.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\CharacterData.cs" />
+    <Compile Include="Assets\Scripts\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\UI\HealthBarUI.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\WeaponData.cs" />
     <Compile Include="Assets\Scripts\Characters\AnimationEventRelay.cs" />
     <Compile Include="Assets\Scripts\Utils\MouseWorldPosition.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
+    <Compile Include="Assets\Scripts\Characters\Skills\DaskStrikeSkill.cs" />
     <Compile Include="Assets\Scripts\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\StatsData.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
@@ -69,7 +73,6 @@
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.Mdb.dll" />
-    <None Include="Assets\___www.unityassetcollection.com___.txt" />
     <None Include="Assets\ScriptTemplates\52-Mirror__Network Authenticator-NewNetworkAuthenticator.cs.txt" />
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.Pdb.dll" />
     <None Include="Assets\GameAssets\PolygonSciFiCity\Shaders\Polygon_Triplanar.shader" />
@@ -84,7 +87,6 @@
     <None Include="Assets\ScriptTemplates\57-Mirror__Network Transform-NewNetworkTransform.cs.txt" />
     <None Include="Assets\ScriptTemplates\52-Mirror__Network Behaviour-NewNetworkBehaviour.cs.txt" />
     <None Include="Assets\GameAssets\PolygonBattleRoyale\Shader\DamageZone.shader" />
-    <None Include="Assets\!GET_MORE_ASSETS_FOR_FREE\DEV FREEDOM.txt" />
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\License.txt" />
     <None Include="Assets\ScriptTemplates\55-Mirror__Network Room Player-NewNetworkRoomPlayer.cs.txt" />
     <None Include="Assets\ScriptTemplates\54-Mirror__Custom Interest Management-CustomInterestManagement.cs.txt" />

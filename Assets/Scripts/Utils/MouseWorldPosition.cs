@@ -40,4 +40,16 @@ public class MouseWorldPosition : MonoBehaviour
 
         return raycastHit.point;
     }
+
+    public Vector3 GetWorldPositionClamped(float maxRange)
+    {
+        Vector3 worldPos = GetWorldPosition();
+        float distance = Vector3.Distance(transform.position, worldPos);
+
+        Vector3 direction = (worldPos - transform.position).normalized;
+
+        direction.y = 0f;
+
+        return transform.position + direction * Mathf.Min(distance, maxRange);
+    }
 }

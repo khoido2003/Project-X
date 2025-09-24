@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Character : MonoBehaviour
@@ -5,8 +6,7 @@ public class Character : MonoBehaviour
     [SerializeField]
     private GameObject visualPlaceHolder;
 
-    [SerializeField]
-    private CharacterData data;
+    public CharacterData Data;
 
     [SerializeField]
     private bool isPlayerControlled = false;
@@ -22,18 +22,22 @@ public class Character : MonoBehaviour
     private AnimationControllerComponent animationControllerComponent;
     private AttackComponent attackComponent;
     private HealthComponent healthComponent;
+    private SkillComponent skillComponent;
 
     private HealthBarUI healthBarUI;
 
     private void Awake()
     {
+        // Logic component
         movementComponent = GetComponent<MovementComponent>();
         weaponComponent = GetComponent<WeaponComponent>();
         characterVisualComponent = GetComponent<CharacterVisualComponent>();
         animationControllerComponent = GetComponent<AnimationControllerComponent>();
         attackComponent = GetComponent<AttackComponent>();
         healthComponent = GetComponent<HealthComponent>();
+        skillComponent = GetComponent<SkillComponent>();
 
+        // UI component (Optional)
         healthBarUI = GetComponentInChildren<HealthBarUI>();
     }
 
@@ -46,23 +50,26 @@ public class Character : MonoBehaviour
     {
         visualPlaceHolder.SetActive(false);
 
-        if (data == null)
+        if (Data == null)
         {
             Debug.LogError("Missing CharacterData!");
             return;
         }
 
         // NOTICE: this always spawned first so other component can find it correctly
-        characterVisualComponent?.Initialize(data, characterVisualHolder);
+        characterVisualComponent?.Initialize(Data, characterVisualHolder);
 
-        movementComponent?.Initialize(data.stats, isPlayerControlled);
+        movementComponent?.Initialize(Data.stats, isPlayerControlled);
 
-        healthComponent?.Initialize(data.stats);
+        healthComponent?.Initialize(Data.stats);
         healthBarUI.Bind(healthComponent);
 
-        attackComponent?.Initialize(data.weapon, isPlayerControlled);
+        attackComponent?.Initialize(Data.weapon, isPlayerControlled);
 
-        animationControllerComponent.Bind(movementComponent, attackComponent);
+        // ALL components that need animator will be listed here (Must implement IAnimationTrigger)
+        List<IAnimationTrigger> animationTriggerSource = new() { movementComponent, attackComponent, skillComponent };
+
+        animationControllerComponent?.Bind(animationTriggerSource);
 
         // MUST find the weaponHolder here or else it will be null since the characterVisual has not spawned yet!
         WeaponHolder weaponHolder = GetComponentInChildren<WeaponHolder>();
@@ -70,7 +77,7 @@ public class Character : MonoBehaviour
         if (weaponHolder != null)
         {
             weaponHolderTransform = weaponHolder.transform;
-            weaponComponent?.Initialize(data.weapon, weaponHolderTransform);
+            weaponComponent?.Initialize(Data.weapon, weaponHolderTransform);
         }
     }
 }

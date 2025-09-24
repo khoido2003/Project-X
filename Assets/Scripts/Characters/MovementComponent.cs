@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class MovementComponent : MonoBehaviour
+public class MovementComponent : MonoBehaviour, IAnimationTrigger
 {
     private const float GRAVITY = 9.81f;
     private const float ROTATION_SPEED = 650f;
@@ -9,12 +9,15 @@ public class MovementComponent : MonoBehaviour
     private Vector3 moveDirection = Vector3.zero;
     private float moveSpeed;
     private float verticalVelocity = -0.5f;
+    private float forwardMultiplier;
 
     private CharacterController controller;
     private Character character;
     private MouseWorldPosition mouseWorldPosition;
 
-    public event EventHandler<Vector3> OnVelocityChanged;
+    public event Action<string> OnTriggerAnimation;
+    public event Action<string, float> OnSetFloatParameter;
+    public event Action<string, bool> OnSetBoolParameter;
 
     private void Awake()
     {
@@ -27,15 +30,19 @@ public class MovementComponent : MonoBehaviour
     {
         moveSpeed = statsData.moveSpeed;
 
+        // Character movememt
         if (isPlayer && InputManager.Instance != null)
         {
-            InputManager.Instance.OnMove += SetMoveDirection;
+            InputManager.Instance.OnMove += InputManager_OnMove;
         }
 
+        // Character look around
         if (isPlayer && mouseWorldPosition != null)
         {
             mouseWorldPosition.OnDirectionToMouseChanged += UpdateRotation;
         }
+
+        forwardMultiplier = GetComponent<Character>()?.Data?.forwardDirectionMultiplier ?? 1f;
     }
 
     private void Update()
@@ -48,7 +55,7 @@ public class MovementComponent : MonoBehaviour
     {
         if (InputManager.Instance != null)
         {
-            InputManager.Instance.OnMove -= SetMoveDirection;
+            InputManager.Instance.OnMove -= InputManager_OnMove;
         }
     }
 
@@ -66,19 +73,6 @@ public class MovementComponent : MonoBehaviour
         }
     }
 
-    private void Move()
-    {
-        if (controller != null)
-        {
-            Vector3 move = moveDirection * moveSpeed + Vector3.up * verticalVelocity;
-
-            // Notice the animator to trigger animation
-            OnVelocityChanged?.Invoke(this, moveDirection);
-
-            controller.Move(move * Time.deltaTime);
-        }
-    }
-
     private void ApplyGravity()
     {
         if (controller.isGrounded)
@@ -91,7 +85,39 @@ public class MovementComponent : MonoBehaviour
         }
     }
 
-    private void SetMoveDirection(Vector2 input)
+    private void Move()
+    {
+        if (controller != null)
+        {
+            Vector3 move = moveDirection * moveSpeed + Vector3.up * verticalVelocity;
+
+            // TRIGGER ANIMATION HERE
+            bool isMoving = moveDirection.sqrMagnitude > 0.01f;
+
+            OnSetBoolParameter?.Invoke("isMoving", isMoving);
+
+            if (isMoving)
+            {
+                Vector3 forward = transform.forward * forwardMultiplier;
+                Vector3 right = transform.right;
+
+                float forwardDot = Vector3.Dot(moveDirection, forward);
+                float rightDot = Vector3.Dot(moveDirection, right);
+
+                OnSetFloatParameter?.Invoke("moveY", -forwardDot);
+                OnSetFloatParameter?.Invoke("moveX", rightDot);
+            }
+            else
+            {
+                OnSetFloatParameter?.Invoke("moveY", 0f);
+                OnSetFloatParameter?.Invoke("moveX", 0f);
+            }
+
+            controller.Move(move * Time.deltaTime);
+        }
+    }
+
+    private void InputManager_OnMove(Vector2 input)
     {
         if (input.sqrMagnitude < 0.01f)
         {
@@ -99,15 +125,17 @@ public class MovementComponent : MonoBehaviour
             return;
         }
 
-        Vector3 forward = transform.forward;
-        Vector3 right = transform.right;
+        Vector3 localInput = new Vector3(input.x, 0f, input.y);
 
-        forward.y = 0f;
-        right.y = 0f;
+        // Convert local input to world-space relative to the character's transform.
+        Vector3 worldMove = transform.right * localInput.x + transform.forward * localInput.z;
 
-        forward.Normalize();
-        right.Normalize();
+        moveDirection = worldMove.normalized * forwardMultiplier;
+    }
 
-        moveDirection = (right * input.x + forward * input.y).normalized;
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(transform.position, transform.position + transform.forward * 2);
     }
 }

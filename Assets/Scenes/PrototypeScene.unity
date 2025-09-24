@@ -477,9 +477,10 @@ GameObject:
   - component: {fileID: 588982925}
   - component: {fileID: 588982930}
   - component: {fileID: 588982924}
+  - component: {fileID: 588982934}
+  - component: {fileID: 588982933}
   - component: {fileID: 588982928}
   - component: {fileID: 588982931}
-  - component: {fileID: 588982933}
   - component: {fileID: 588982932}
   - component: {fileID: 588982927}
   - component: {fileID: 588982926}
@@ -532,7 +533,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Character
   visualPlaceHolder: {fileID: 1309607710}
-  data: {fileID: 11400000, guid: b030ee8f170ffc44e88e5aa8333f88d2, type: 2}
+  Data: {fileID: 11400000, guid: b030ee8f170ffc44e88e5aa8333f88d2, type: 2}
   isPlayerControlled: 1
   characterVisualHolder: {fileID: 1865457432}
 --- !u!65 &588982926
@@ -656,6 +657,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e86aaa016c240954ba1f9649dec2ea44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackComponent
+--- !u!114 &588982934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 588982921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54e28f93a80baa042ad9b3179d80590c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkillComponent
 --- !u!1001 &760265264
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1085,6 +1098,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: VisualPlaceholder
       objectReference: {fileID: 0}
+    - target: {fileID: 1025864630481856, guid: 6909982d91f86a04e831a86fff27cd80, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4950051439177134, guid: 6909982d91f86a04e831a86fff27cd80, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1149,10 +1166,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1401809223}
-  - component: {fileID: 1401809222}
   - component: {fileID: 1401809221}
   - component: {fileID: 1401809220}
   - component: {fileID: 1401809219}
+  - component: {fileID: 1401809224}
   - component: {fileID: 1401809218}
   - component: {fileID: 1401809217}
   - component: {fileID: 1401809216}
@@ -1297,24 +1314,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Character
   visualPlaceHolder: {fileID: 1025865567639605}
-  data: {fileID: 11400000, guid: cdfbf12f81a9ee24c9550e819a3d5999, type: 2}
+  Data: {fileID: 11400000, guid: cdfbf12f81a9ee24c9550e819a3d5999, type: 2}
   isPlayerControlled: 0
   characterVisualHolder: {fileID: 1426990320}
---- !u!114 &1401809222
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1401809212}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 243bd3748aeb89a4f842d3ce5c4381c7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MouseWorldPosition
-  mouseLayerMask:
-    serializedVersion: 2
-    m_Bits: 192
 --- !u!4 &1401809223
 Transform:
   m_ObjectHideFlags: 0
@@ -1332,6 +1334,18 @@ Transform:
   - {fileID: 1426990320}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1401809224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1401809212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54e28f93a80baa042ad9b3179d80590c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkillComponent
 --- !u!1 &1426990319
 GameObject:
   m_ObjectHideFlags: 0
@@ -3900,6 +3914,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HealthBarUI
       objectReference: {fileID: 0}
+    - target: {fileID: 6480051937195779444, guid: 1f5133d54b83ba542b917644c12ee85f, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9077328486059171440, guid: 1f5133d54b83ba542b917644c12ee85f, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3993,8 +4011,8 @@ SceneRoots:
   - {fileID: 509294131}
   - {fileID: 1904469181}
   - {fileID: 929846718}
+  - {fileID: 1639381665}
   - {fileID: 3171374606917750533}
   - {fileID: 300049412}
   - {fileID: 588982922}
   - {fileID: 1401809223}
-  - {fileID: 1639381665}
