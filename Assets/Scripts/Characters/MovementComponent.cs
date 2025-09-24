@@ -7,6 +7,7 @@ public class MovementComponent : MonoBehaviour, IAnimationTrigger
     private const float ROTATION_SPEED = 650f;
 
     private Vector3 moveDirection = Vector3.zero;
+    private Vector2 inputDirection = Vector2.zero;
     private float moveSpeed;
     private float verticalVelocity = -0.5f;
     private float forwardMultiplier;
@@ -70,6 +71,12 @@ public class MovementComponent : MonoBehaviour, IAnimationTrigger
                 targetRotation,
                 ROTATION_SPEED * Time.deltaTime
             );
+
+            // Update move direction if character is currently moving
+            if (inputDirection.sqrMagnitude > 0.01f)
+            {
+                UpdateMoveDirection();
+            }
         }
     }
 
@@ -119,15 +126,28 @@ public class MovementComponent : MonoBehaviour, IAnimationTrigger
 
     private void InputManager_OnMove(Vector2 input)
     {
+        inputDirection = input; // Store raw input
+
         if (input.sqrMagnitude < 0.01f)
         {
             moveDirection = Vector3.zero;
             return;
         }
 
-        Vector3 localInput = new Vector3(input.x, 0f, input.y);
+        UpdateMoveDirection();
+    }
 
-        // Convert local input to world-space relative to the character's transform.
+    private void UpdateMoveDirection()
+    {
+        if (inputDirection.sqrMagnitude < 0.01f)
+        {
+            moveDirection = Vector3.zero;
+            return;
+        }
+
+        Vector3 localInput = new Vector3(inputDirection.x, 0f, inputDirection.y);
+
+        // Convert local input to world-space relative to the character's current transform rotation
         Vector3 worldMove = transform.right * localInput.x + transform.forward * localInput.z;
 
         moveDirection = worldMove.normalized * forwardMultiplier;
