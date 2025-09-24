@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.XR;
 
 public class InputManager : MonoBehaviour
 {
@@ -15,9 +14,14 @@ public class InputManager : MonoBehaviour
 
     public event Action<Vector2> OnMove;
     public event Action OnAttackPressed;
+
     public event Action OnSkill1Pressed;
     public event Action OnSkill2Pressed;
     public event Action OnSkill3Pressed;
+
+    public event Action OnSkill1Released;
+    public event Action OnSkill2Released;
+    public event Action OnSkill3Released;
 
     private Vector2 moveInput;
 
@@ -81,7 +85,7 @@ public class InputManager : MonoBehaviour
         }
 
         // Skill 1 (mouse right)
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetKeyDown(KeyCode.Q))
         {
             OnSkill1Pressed?.Invoke();
         }
@@ -133,6 +137,21 @@ public class InputManager : MonoBehaviour
         inputActions.Player.Skill3.performed += (ctx) =>
         {
             OnSkill3Pressed?.Invoke();
+        };
+
+        inputActions.Player.Skill1.canceled += (ctx) =>
+        {
+            OnSkill1Released?.Invoke();
+        };
+
+        inputActions.Player.Skill2.canceled += (ctx) =>
+        {
+            OnSkill2Released?.Invoke();
+        };
+
+        inputActions.Player.Skill3.canceled += (ctx) =>
+        {
+            OnSkill3Released?.Invoke();
         };
     }
 
