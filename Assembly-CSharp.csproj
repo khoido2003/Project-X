@@ -54,6 +54,7 @@
     <Compile Include="Assets\Scripts\Characters\Skills\SkillInstance.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
+    <Compile Include="Assets\Scripts\Characters\Skills\TauntSkill.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\SkillData.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="Assets\Scripts\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\StatsData.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
+    <Compile Include="Assets\Scripts\Characters\Skills\PowerSwingSkill.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />
