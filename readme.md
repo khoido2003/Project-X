@@ -3,29 +3,47 @@
 
 ---
 
+## 0. Git Flow
+
+```cmd
+git checkout main
+
+git fetch origin main
+
+git pull origin main
+
+git checkout dev_mk
+
+git stash
+
+git rebase main
+
+git stash pop
+```
+
 ## 1. Core Vision
 
-- **Genre:** Fast-paced roguelike battle arena with PvPvE chaos.  
-- **Modes:**  
-  - **Offline:** Bots + bosses + hazards.  
-  - **Online:** PvP + enemies + hazards + shrinking map.  
-- **Pillars:** Unpredictability, chaos, skill expression, replayability.  
-- **Tech:** Unity + Mirror networking.  
+- **Genre:** Fast-paced roguelike battle arena with PvPvE chaos.
+- **Modes:**
+  - **Offline:** Bots + bosses + hazards.
+  - **Online:** PvP + enemies + hazards + shrinking map.
+- **Pillars:** Unpredictability, chaos, skill expression, replayability.
+- **Tech:** Unity + Mirror networking.
 
 ---
 
 ## 2. Match Flow
 
-- **Wave-based structure** with global augment phases.  
-- **Augment choices:** 3 per match  
-  - Turn 1: Universal augments.  
-  - Turn 2: Hero-synergy augments.  
-  - Turn 3: Crazy/power spike augments (before boss).  
-- **Hazards + enemies** escalate per wave.  
-- **Boss** spawns in final wave.  
-- **Win condition:**  
-  - Online → last player/team alive.  
-  - Offline → survive boss fight.  
+- **Wave-based structure** with global augment phases.
+- **Augment choices:** 3 per match
+  - Turn 1: Universal augments.
+  - Turn 2: Hero-synergy augments.
+  - Turn 3: Crazy/power spike augments (before boss).
+- **Hazards + enemies** escalate per wave.
+- **Boss** spawns in final wave.
+- **Win condition:**
+  - Online → last player/team alive.
+  - Offline → survive boss fight.
 
 **Timeline Example:**
 
