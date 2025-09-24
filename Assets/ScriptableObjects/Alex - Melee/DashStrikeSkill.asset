@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DashStrikeSkill
   m_EditorClassIdentifier: Assembly-CSharp::DaskStrikeSkill
   skillName: Dash Strike
-  coolDown: 10
+  coolDown: 1
   castRange: 5
   activateSound: {fileID: 0}
   activationAnimationTrigger: skill1
@@ -21,3 +21,4 @@ MonoBehaviour:
   dashDuration: 0.3
   damage: 20
   attackRadius: 1
+  dashVfxPrefab: {fileID: 3066829756271264116, guid: c188b547e908aed488fe0099093ca286, type: 3}

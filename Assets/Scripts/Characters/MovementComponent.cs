@@ -133,9 +133,9 @@ public class MovementComponent : MonoBehaviour, IAnimationTrigger
         moveDirection = worldMove.normalized * forwardMultiplier;
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawLine(transform.position, transform.position + transform.forward * 2);
-    }
+    // private void OnDrawGizmos()
+    // {
+    //     Gizmos.color = Color.blue;
+    //     Gizmos.DrawLine(transform.position, transform.position + transform.forward * 2);
+    // }
 }

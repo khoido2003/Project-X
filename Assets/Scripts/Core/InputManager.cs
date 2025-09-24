@@ -9,7 +9,6 @@ public class InputManager : MonoBehaviour
     [SerializeField]
     private bool useNewInputSystem = true;
 
-    [SerializeField]
     private PlayerInputAction inputActions;
 
     public event Action<Vector2> OnMove;
@@ -84,7 +83,7 @@ public class InputManager : MonoBehaviour
             OnAttackPressed?.Invoke();
         }
 
-        // Skill 1 (mouse right)
+        // Skill 1 (Q key)
         if (Input.GetKeyDown(KeyCode.Q))
         {
             OnSkill1Pressed?.Invoke();
