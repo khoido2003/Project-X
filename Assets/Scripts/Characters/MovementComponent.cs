@@ -14,6 +14,7 @@ public class MovementComponent : MonoBehaviour, IAnimationTrigger
 
     private CharacterController controller;
     private Character character;
+    private StatusEffectComponent statusEffect;
     private MouseWorldPosition mouseWorldPosition;
 
     public event Action<string> OnTriggerAnimation;
@@ -24,6 +25,7 @@ public class MovementComponent : MonoBehaviour, IAnimationTrigger
     {
         controller = GetComponent<CharacterController>();
         character = GetComponent<Character>();
+        statusEffect = GetComponent<StatusEffectComponent>();
         mouseWorldPosition = GetComponent<MouseWorldPosition>();
     }
 
@@ -96,7 +98,15 @@ public class MovementComponent : MonoBehaviour, IAnimationTrigger
     {
         if (controller != null)
         {
-            Vector3 move = moveDirection * moveSpeed + Vector3.up * verticalVelocity;
+            // Check for stunt effect or slow down effect
+            if (statusEffect != null && statusEffect.IsStunned())
+            {
+                moveDirection = Vector3.zero;
+            }
+
+            float effectiveSpeed = moveSpeed * (statusEffect?.GetSlowMultiplier() ?? 1);
+
+            Vector3 move = moveDirection * effectiveSpeed + Vector3.up * verticalVelocity;
 
             // TRIGGER ANIMATION HERE
             bool isMoving = moveDirection.sqrMagnitude > 0.01f;

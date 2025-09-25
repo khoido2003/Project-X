@@ -17,6 +17,7 @@ MonoBehaviour:
   castRange: 5
   activateSound: {fileID: 0}
   activationAnimationTrigger: skill1
+  skillHitImpactEffectPrefab: {fileID: 5683715703724972373, guid: e55b07d1dee51c947ba23ff5d4e3afbc, type: 3}
   dashDistance: 5
   dashDuration: 0.3
   damage: 20

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0f394f317bb40f4081a3906fd544cfe, type: 3}
+  m_Name: HomerunSwingSkill
+  m_EditorClassIdentifier: Assembly-CSharp::HomerunSwingSkill
+  skillName: HomerunSwingSkill
+  coolDown: 1
+  castRange: 1.5
+  activateSound: {fileID: 0}
+  activationAnimationTrigger: attack
+  skillHitImpactEffectPrefab: {fileID: 7100685650444493368, guid: e7ff2c64bb834a34b8089f9494736530, type: 3}
+  skillHitImpactEffectInstance: {fileID: 0}
+  skillVfxEffectPrefab: {fileID: 7171937360060591948, guid: 3100a3e6d75da534f993cfebb4929ad4, type: 3}
+  skillVfxEffectInstance: {fileID: 0}
+  chargeDuration: 0.5
+  damage: 30
+  attackRadius: 2
+  knockbakcForce: 8
+  stuntDuration: 1.5

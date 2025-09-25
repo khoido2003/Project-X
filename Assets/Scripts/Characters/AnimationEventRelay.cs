@@ -1,16 +1,27 @@
 using UnityEngine;
 
+public enum AnimationEventRelayName
+{
+    ATTACK_HIT,
+    SKILL_HIT,
+}
+
 public class AnimationEventRelay : MonoBehaviour
 {
-    private AttackComponent attackComponent;
+    private IAnimationRelayReceiver[] receivers;
 
     private void Start()
     {
-        attackComponent = GetComponentInParent<AttackComponent>();
+        receivers = GetComponentsInParent<IAnimationRelayReceiver>();
     }
 
-    public void OnAttackHit()
+    public void OnAnimationTrigger(int eventId)
     {
-        attackComponent?.PerformHit();
+        AnimationEventRelayName eventName = (AnimationEventRelayName)eventId;
+
+        foreach (var r in receivers)
+        {
+            r.OnAnimationEvent(eventName);
+        }
     }
 }

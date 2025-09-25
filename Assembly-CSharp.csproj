@@ -47,6 +47,7 @@
     <Analyzer Include="D:\unity\Editor\6000.2.5f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Characters\StatusEffectComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MovementComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\Skills\AlexMeleeSkills\DaskStrikeSkill.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleCountdownLabel.cs" />
@@ -55,18 +56,20 @@
     <Compile Include="Assets\Scripts\Characters\Skills\SkillInstance.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
-    <Compile Include="Assets\Scripts\Characters\Skills\TauntSkill.cs" />
+    <Compile Include="Assets\Scripts\Characters\IAnimationRelayReceiver.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\SkillData.cs" />
     <Compile Include="Assets\Scripts\Characters\AnimationControllerComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\AnimatorActionData.cs" />
+    <Compile Include="Assets\Scripts\Characters\WeaponVfxEffectSocket.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
     <Compile Include="Assets\Scripts\Characters\AttackComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\CharacterVisualComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\Characters\IAnimationTrigger.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
+    <Compile Include="Assets\Scripts\Characters\IStatusEffect.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\CharacterData.cs" />
     <Compile Include="Assets\Scripts\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\UI\HealthBarUI.cs" />
@@ -135,6 +138,7 @@
     <None Include="Assets\GameAssets\InterfaceApocalypseHUD\Fonts\SairaCondensed\OFL.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus Line.shader" />
     <None Include="Assets\GameAssets\PolygonCyberCity\Shaders\SyntyStudios_Parallax_Full.shader" />
+    <None Include="Assets\GameAssets\POLYGON - Particle FX v1.0\PolygonParticles\Materials\SHARED BY LUXURYPANDA.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Snow.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Lava3D.shader" />

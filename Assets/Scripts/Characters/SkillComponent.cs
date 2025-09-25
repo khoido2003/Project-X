@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [RequireComponent(typeof(MouseWorldPosition))]
-public class SkillComponent : MonoBehaviour, IAnimationTrigger
+public class SkillComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelayReceiver
 {
     private SkillInstance[] skills = new SkillInstance[3];
     private bool isPlayer;
@@ -79,13 +79,16 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger
 
         // Target indicator
         indicatorRing = Drawer.CreateCircle(indicatorRadius, ringSegments, ringWidth, indicatorColor);
+
+        skills[index].Data.OnWeaponVfxEffectStart(gameObject);
     }
 
     private void CancelSkill(int index)
     {
         if (selectedSkillIndex == index)
         {
-            HideVisuals();
+            skills[index].Data.OnWeaponVfxEffectStop(gameObject);
+            HideRangeVisuals();
         }
     }
 
@@ -96,7 +99,8 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger
             return;
         }
         UseSkill(selectedSkillIndex);
-        HideVisuals();
+
+        skills[selectedSkillIndex].Data.OnWeaponVfxEffectStop(gameObject);
     }
 
     private void UseSkill(int index)
@@ -148,7 +152,7 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger
         }
     }
 
-    private void HideVisuals()
+    private void HideRangeVisuals()
     {
         selectedSkillIndex = -1;
 
@@ -174,6 +178,16 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger
             InputManager.Instance.OnSkill3Released -= () => CancelSkill(2);
             InputManager.Instance.OnAttackPressed -= CastSelectedSkill;
         }
-        HideVisuals();
+        HideRangeVisuals();
+    }
+
+    public void OnAnimationEvent(AnimationEventRelayName eventName)
+    {
+        if (selectedSkillIndex != -1 && eventName == AnimationEventRelayName.SKILL_HIT)
+        {
+            skills[selectedSkillIndex].Data.OnTriggerSkillVfxEffect();
+
+            HideRangeVisuals();
+        }
     }
 }
