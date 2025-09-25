@@ -25,8 +25,13 @@ public class HealthComponent : MonoBehaviour
 
         if (currentHealth <= 0)
         {
-            // TODO: add death state
-            Debug.Log("Character die!");
+            Die();
         }
+    }
+
+    private void Die()
+    {
+        // TODO: add death state
+        Debug.Log("Character die!");
     }
 }

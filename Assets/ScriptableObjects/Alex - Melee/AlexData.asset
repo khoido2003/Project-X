@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AlexData
   m_EditorClassIdentifier: Assembly-CSharp::CharacterData
   characterName: Alex
-  characterVisualPrefab: {fileID: 9127036592062597366, guid: d14db2f7b8d86bf4483067eb7eeaac67, type: 3}
+  characterVisualPrefab: {fileID: 3282989880002128842, guid: 7097ffbff134a6842b2a8e7e21699cad, type: 3}
   characterVisualPositionOffset: {x: 0, y: 0, z: 0}
   characterVisualRotationOffset: {x: 0, y: 0, z: 0}
   forwardDirectionMultiplier: 1
@@ -21,6 +21,7 @@ MonoBehaviour:
   weapon: {fileID: 11400000, guid: d7ad94fe13d0d464eb36b9c926610543, type: 2}
   skills:
   - {fileID: 11400000, guid: ac836004cdd5409498e9f1f360eb6fde, type: 2}
+  - {fileID: 11400000, guid: 1cf52211adfe7174f9eff1deb9615294, type: 2}
   moveSound: {fileID: 0}
   hurtSound: {fileID: 0}
   deathSound: {fileID: 0}

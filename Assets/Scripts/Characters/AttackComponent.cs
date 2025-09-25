@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AttackComponent : MonoBehaviour, IAnimationTrigger
+public class AttackComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelayReceiver
 {
     private WeaponData weaponData;
     private HealthComponent currentHealthComponent;
@@ -59,6 +59,14 @@ public class AttackComponent : MonoBehaviour, IAnimationTrigger
         lastAttackTime = Time.time;
     }
 
+    public void OnAnimationEvent(AnimationEventRelayName eventName)
+    {
+        if (eventName == AnimationEventRelayName.ATTACK_HIT)
+        {
+            PerformHit();
+        }
+    }
+
     public void PerformHit()
     {
         ExcuteAttack(hitDirection);
@@ -89,6 +97,17 @@ public class AttackComponent : MonoBehaviour, IAnimationTrigger
                 {
                     damaged.Add(enemyHealth);
                     enemyHealth.TakeDamage(weaponData.attackDamage);
+
+                    // Spawn Hit Effect
+                    if (weaponData.hitImpactParticlePrefab != null)
+                    {
+                        ParticleSystem impactInstance = Instantiate(
+                            weaponData.hitImpactParticlePrefab,
+                            hit.ClosestPoint(transform.position),
+                            Quaternion.identity
+                        );
+                        Destroy(impactInstance.gameObject, 2f);
+                    }
                 }
             }
         }

@@ -21,6 +21,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 0}
   spawnPositionOffset: {x: 0, y: 0, z: 0}
   spawnRotationOffset: {x: 0, y: 0, z: 0}
+  hitImpactParticlePrefab: {fileID: 7089567446671028007, guid: a3015979818be2645a5a7a5907241fe8, type: 3}
   attackSound: {fileID: 0}
   attackAnimationTrigger: attack
   totalAttackAnimations: 2

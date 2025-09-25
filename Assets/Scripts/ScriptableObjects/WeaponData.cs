@@ -17,6 +17,7 @@ public class WeaponData : ScriptableObject
     public GameObject projectilePrefab;
     public Vector3 spawnPositionOffset = Vector3.zero;
     public Vector3 spawnRotationOffset = Vector3.zero;
+    public ParticleSystem hitImpactParticlePrefab;
 
     [Header("Sounds and Animations")]
     public AudioClip attackSound;

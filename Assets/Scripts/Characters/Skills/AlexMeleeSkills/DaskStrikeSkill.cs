@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "DashStrikeSkill", menuName = "Skills/DashStrikeSkill")]
+[CreateAssetMenu(fileName = "DashStrikeSkill", menuName = "Skills/Alex/DashStrikeSkill")]
 public class DaskStrikeSkill : SkillData
 {
     public float dashDistance = 5f;
@@ -11,10 +11,13 @@ public class DaskStrikeSkill : SkillData
 
     public TrailRenderer dashVfxPrefab;
 
+    private MonoBehaviour ownerMonoBehaviour;
+
     public override void Execute(GameObject owner, Vector3 targetPoint, Vector3 direction)
     {
         // Start dash coroutine
-        owner.GetComponent<MonoBehaviour>().StartCoroutine(DashCoroutine(owner, targetPoint, direction));
+        ownerMonoBehaviour = owner.GetComponent<MonoBehaviour>();
+        ownerMonoBehaviour.StartCoroutine(DashCoroutine(owner, targetPoint, direction));
     }
 
     private IEnumerator DashCoroutine(GameObject owner, Vector3 targetPoint, Vector3 direction)
@@ -66,6 +69,17 @@ public class DaskStrikeSkill : SkillData
             if (enemyHealth != null && enemyHealth != owner.GetComponent<HealthComponent>())
             {
                 enemyHealth.TakeDamage(damage);
+
+                if (skillHitImpactEffectPrefab != null)
+                {
+                    skillHitImpactEffectInstance = Instantiate(
+                        skillHitImpactEffectPrefab,
+                        hit.ClosestPoint(ownerMonoBehaviour.transform.position),
+                        Quaternion.identity
+                    );
+
+                    Destroy(skillHitImpactEffectInstance, 2f);
+                }
             }
         }
     }
