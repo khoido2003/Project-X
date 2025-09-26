@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e6954522530a843989e9f128fe6ff9, type: 3}
+  m_Name: PlasmaShieldSkill
+  m_EditorClassIdentifier: Assembly-CSharp::PlasmaShieldSkill
+  skillName: PlasmaShieldSkill
+  coolDown: 1
+  castRange: 5
+  isInstant: 1
+  activateSound: {fileID: 0}
+  activationAnimationTrigger: skill
+  skillHitImpactEffectPrefab: {fileID: 0}
+  skillHitImpactEffectInstance: {fileID: 0}
+  skillVfxEffectPrefab: {fileID: 9182071414042874320, guid: d157ae1c06c365d4fb024376bdf83cab, type: 3}
+  skillVfxEffectInstance: {fileID: 0}
+  defenseBoost: 20
+  boostDuration: 5

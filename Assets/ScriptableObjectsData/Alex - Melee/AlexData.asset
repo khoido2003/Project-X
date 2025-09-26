@@ -22,6 +22,7 @@ MonoBehaviour:
   skills:
   - {fileID: 11400000, guid: ac836004cdd5409498e9f1f360eb6fde, type: 2}
   - {fileID: 11400000, guid: 1cf52211adfe7174f9eff1deb9615294, type: 2}
+  - {fileID: 11400000, guid: a3547e23a3e670242a5e809a491c810c, type: 2}
   moveSound: {fileID: 0}
   hurtSound: {fileID: 0}
   deathSound: {fileID: 0}

@@ -6,6 +6,10 @@ public abstract class SkillData : ScriptableObject
     public float coolDown = 5f;
     public float castRange = 5f;
 
+    // True when only need press Key to active
+    // False when need to press Key + click left mouse to activate the skill
+    public bool isInstant = false;
+
     public AudioClip activateSound;
     public string activationAnimationTrigger = "skill";
 

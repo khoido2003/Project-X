@@ -10,6 +10,9 @@ public class StatusEffectComponent : MonoBehaviour, IStatusEffect
     // 1f = 100% speed, smaller than 1f make object slower like 50%, 80%
     private float slowMultiplier = 1f;
 
+    private float defenseBoost = 0f;
+    private float defenseBoostEndtime = -Mathf.Infinity;
+
     private void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -46,5 +49,22 @@ public class StatusEffectComponent : MonoBehaviour, IStatusEffect
             slowMultiplier = 1f;
         }
         return slowMultiplier;
+    }
+
+    public float GetDefenseBoost()
+    {
+        if (Time.time > defenseBoostEndtime)
+        {
+            defenseBoost = 0f;
+        }
+
+        return defenseBoost;
+    }
+
+    public void ApplyDefenseBoost(float boost, float duration)
+    {
+        defenseBoostEndtime = Mathf.Max(defenseBoostEndtime, Time.time + duration);
+
+        defenseBoost = Mathf.Max(defenseBoost, boost);
     }
 }

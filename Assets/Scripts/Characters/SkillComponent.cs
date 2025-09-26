@@ -36,7 +36,7 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelayR
     void Update()
     {
         if (selectedSkillIndex != -1)
-            UpdateVisuals();
+            UpdateRangeVisuals();
     }
 
     public void Initialize(SkillData[] skillDatas, bool isPlayerControlled)
@@ -71,16 +71,21 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelayR
         {
             return;
         }
-        selectedSkillIndex = index;
 
-        // Range ring
-        rangeRing = Drawer.CreateCircle(skills[index].Data.castRange, ringSegments, ringWidth, rangeColor);
-        rangeRing.transform.position = transform.position + Vector3.up * 0.05f;
+        // Only need to press the key
+        if (skills[index].Data.isInstant)
+        {
+            UseSkill(index);
+        }
+        // Need press key + click mouse
+        else
+        {
+            selectedSkillIndex = index;
 
-        // Target indicator
-        indicatorRing = Drawer.CreateCircle(indicatorRadius, ringSegments, ringWidth, indicatorColor);
+            skills[index].Data.OnWeaponVfxEffectStart(gameObject);
 
-        skills[index].Data.OnWeaponVfxEffectStart(gameObject);
+            ShowRangeVisuals(index);
+        }
     }
 
     private void CancelSkill(int index)
@@ -88,6 +93,7 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelayR
         if (selectedSkillIndex == index)
         {
             skills[index].Data.OnWeaponVfxEffectStop(gameObject);
+
             HideRangeVisuals();
         }
     }
@@ -126,7 +132,17 @@ public class SkillComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelayR
         skills[index].Use(gameObject, target, directionToTarget);
     }
 
-    private void UpdateVisuals()
+    private void ShowRangeVisuals(int index)
+    {
+        // Range ring
+        rangeRing = Drawer.CreateCircle(skills[index].Data.castRange, ringSegments, ringWidth, rangeColor);
+        rangeRing.transform.position = transform.position + Vector3.up * 0.05f;
+
+        // Target indicator
+        indicatorRing = Drawer.CreateCircle(indicatorRadius, ringSegments, ringWidth, indicatorColor);
+    }
+
+    private void UpdateRangeVisuals()
     {
         if (indicatorRing == null || mouseWorldPosition == null)
         {
