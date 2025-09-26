@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Characters\StatusEffectComponent.cs" />
+    <Compile Include="Assets\Scripts\Characters\StatusEffectComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MovementComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleCountdownLabel.cs" />
     <Compile Include="Assets\Scripts\Utils\Drawer.cs" />
@@ -66,6 +67,7 @@
     <Compile Include="Assets\Scripts\Characters\CharacterVisualComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
+    <Compile Include="Assets\Scripts\Characters\IStatusEffect.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\CharacterData.cs" />
     <Compile Include="Assets\Scripts\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\UI\HealthBarUI.cs" />
@@ -138,6 +140,7 @@
     <None Include="Assets\GameAssets\InterfaceApocalypseHUD\Fonts\SairaCondensed\OFL.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus Line.shader" />
     <None Include="Assets\GameAssets\PolygonCyberCity\Shaders\SyntyStudios_Parallax_Full.shader" />
+    <None Include="Assets\GameAssets\POLYGON - Particle FX v1.0\PolygonParticles\Materials\SHARED BY LUXURYPANDA.txt" />
     <None Include="Assets\GameAssets\POLYGON - Particle FX v1.0\PolygonParticles\Materials\SHARED BY LUXURYPANDA.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Snow.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
