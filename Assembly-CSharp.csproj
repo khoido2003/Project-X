@@ -49,27 +49,23 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Characters\StatusEffectComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MovementComponent.cs" />
-    <Compile Include="Assets\Scripts\Characters\Skills\AlexMeleeSkills\DaskStrikeSkill.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleCountdownLabel.cs" />
     <Compile Include="Assets\Scripts\Utils\Drawer.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponHolder.cs" />
-    <Compile Include="Assets\Scripts\Characters\Skills\SkillInstance.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
-    <Compile Include="Assets\Scripts\Characters\IAnimationRelayReceiver.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\SkillData.cs" />
     <Compile Include="Assets\Scripts\Characters\AnimationControllerComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\AnimatorActionData.cs" />
+    <Compile Include="Assets\Scripts\Characters\SkillInstance.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponVfxEffectSocket.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
     <Compile Include="Assets\Scripts\Characters\AttackComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\CharacterVisualComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
-    <Compile Include="Assets\Scripts\Characters\IAnimationTrigger.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
-    <Compile Include="Assets\Scripts\Characters\IStatusEffect.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\CharacterData.cs" />
     <Compile Include="Assets\Scripts\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\UI\HealthBarUI.cs" />
@@ -79,15 +75,19 @@
     <Compile Include="Assets\Scripts\Characters\AnimationEventRelay.cs" />
     <Compile Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.cs" />
     <Compile Include="Assets\Scripts\Utils\MouseWorldPosition.cs" />
+    <Compile Include="Assets\Scripts\Characters\Interfaces\IStatusEffect.cs" />
+    <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationTrigger.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleOscillateSliders.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleSceneLoader.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />
     <Compile Include="Assets\Scripts\Characters\HealthComponent.cs" />
-    <Compile Include="Assets\Scripts\Characters\Skills\AlexMeleeSkills\HomerunSwingSkill.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\StatsData.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
-    <Compile Include="Assets\Scripts\Characters\Skills\AlexMeleeSkills\PlasmaBatSkill.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexMeleeSkills\DaskStrikeSkill.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexMeleeSkills\PlasmaBatSkill.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexMeleeSkills\HomerunSwingSkill.cs" />
+    <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationRelayReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />
