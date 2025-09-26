@@ -2068,7 +2068,7 @@ GameObject:
   - component: {fileID: 8080717354167118602}
   - component: {fileID: -3042477195236301922}
   m_Layer: 0
-  m_Name: Alex
+  m_Name: AlexVisual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

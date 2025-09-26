@@ -68,14 +68,7 @@ public class AnimationControllerComponent : MonoBehaviour
     #endregion
 
 
-    private void GetRandomAttackIndexAnimation(int totalAttackAnimations)
-    {
-        int randomIndex = UnityEngine.Random.Range(-1, totalAttackAnimations);
-
-        animator.SetFloat(AttackIndex, randomIndex);
-    }
-
-    private void SwitchAnimationLayer(int layerIndex)
+    public void SwitchAnimationLayer(int layerIndex)
     {
         for (int i = 1; i < animator.layerCount; i++)
         {

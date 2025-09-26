@@ -29,6 +29,10 @@ public class HealthComponent : MonoBehaviour
         }
     }
 
+    public void ApplyDefenseBoost(float boost, float duration) {
+
+    }
+
     private void Die()
     {
         // TODO: add death state

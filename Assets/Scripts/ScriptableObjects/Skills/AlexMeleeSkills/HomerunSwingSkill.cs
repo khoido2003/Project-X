@@ -10,10 +10,14 @@ public class HomerunSwingSkill : SkillData
     public float knockbakcForce = 8f;
     public float stuntDuration = 1.5f;
 
+    // allow detect 120 degree damage in hit direction
+    public float coneAngle = 120f;
+
     private MonoBehaviour ownerMonoBehaviour;
     private HealthComponent currentHealth;
     private WeaponComponent weaponComponent;
     private StatusEffectComponent statusEffect;
+    private HealthComponent enemyHealth;
 
     private Vector3 lastHitPoint;
 
@@ -30,28 +34,49 @@ public class HomerunSwingSkill : SkillData
     {
         yield return new WaitForSeconds(chargeDuration);
 
-        Collider[] hits = Physics.OverlapSphere(targetPoint, attackRadius);
+        Transform ownerTransform = owner.transform;
+        lastHitPoint = Vector3.zero;
+        enemyHealth = null;
+
+        Collider[] hits = Physics.OverlapSphere(ownerTransform.position, attackRadius);
         foreach (Collider hit in hits)
         {
-            HealthComponent enemyHealth = hit.GetComponent<HealthComponent>();
+            HealthComponent hitHealth = hit.GetComponent<HealthComponent>();
+            if (hitHealth == null || hitHealth == currentHealth)
+                continue;
 
-            lastHitPoint = Vector3.zero;
-
-            if (enemyHealth != null && enemyHealth != owner.GetComponent<HealthComponent>())
+            // Vector from owner to this enemy
+            Vector3 toEnemy = hit.transform.position - ownerTransform.position;
+            float distanceToHit = toEnemy.magnitude;
+            if (distanceToHit < 0.001f)
             {
-                // Save hit point for VFX effect
-                lastHitPoint = hit.ClosestPoint(owner.transform.position);
+                continue;
+            }
 
-                enemyHealth.TakeDamage(damage);
+            // Ignore vertical differences
+            toEnemy.y = 0f;
+            direction.y = 0f;
 
-                // Stop the weapon vfx effect
+            Vector3 dirToEnemy = toEnemy.normalized;
+            Vector3 forward = direction.sqrMagnitude > 0 ? direction.normalized : ownerTransform.forward;
+
+            float angleToHit = Vector3.Angle(forward, dirToEnemy);
+
+            if (angleToHit <= coneAngle * 0.5f)
+            {
+                lastHitPoint = hit.ClosestPoint(ownerTransform.position);
+                enemyHealth = hitHealth;
+
                 OnWeaponVfxEffectStop(owner);
 
                 if (statusEffect != null)
                 {
-                    statusEffect.ApplyKnockback(direction, knockbakcForce);
+                    statusEffect.ApplyKnockback(forward, knockbakcForce);
                     statusEffect.ApplyStunt(stuntDuration);
                 }
+
+                // stop at first enemy, remove if multi-target
+                break;
             }
         }
     }
@@ -110,6 +135,12 @@ public class HomerunSwingSkill : SkillData
             Quaternion.identity,
             ownerMonoBehaviour.transform
         );
+
+        if (enemyHealth != null)
+        {
+            enemyHealth.TakeDamage(damage);
+            enemyHealth = null;
+        }
 
         Destroy(skillHitImpactEffectInstance.gameObject, 2f);
         OnWeaponVfxEffectStop(ownerMonoBehaviour.gameObject);
