@@ -1,25 +1,103 @@
+# 📚 Git Workflow (Team Rules)
 
-# 🎮 Roguelike Arena Game Design Document (Unity + Mirror)
+## 1. Branch Rules
+- **`main`**
+  - Always stable, production-ready.
+  - Only updated via **Pull Requests (PRs)**.
+  - Protected branch (no direct commits).
+
+- **Feature branches (`dev_xxx`)**
+  - Created from the latest `main`.
+  - One branch per feature/bugfix.
+  - Deleted after merge.
 
 ---
 
-## 0. Git Flow
+## 2. Starting New Work
+Always branch off the latest `main`:
 
-```cmd
+```bash
 git checkout main
+git pull origin main
+git checkout -b dev_featureName
+```
 
-git fetch origin main
+---
 
+## 3. While Working
+- Commit often with clear messages.
+- Push to remote frequently.
+- Open a Pull Request early (for visibility).
+
+---
+
+## 4. Syncing With Main (Avoiding Conflicts)
+If your branch is behind `main`:
+
+```bash
+git checkout main
+git pull origin main
+git checkout dev_featureName
+git rebase main   # or merge --ff-only if you prefer
+```
+
+Resolve conflicts **only once** here → not at PR merge.
+
+---
+
+## 5. Merging PRs
+On GitHub:
+- Use **Rebase and Merge** for clean history.
+- Never “Create a merge commit” (avoids messy trees).
+- Never push directly to `main`.
+
+---
+
+## 6. After Merge
+⚠️ Important: Do **not** keep working in the old feature branch after it’s merged.
+Instead, reset or start fresh:
+
+```bash
+# If you want to reuse the same branch:
+git checkout dev_featureName
+git fetch origin
+git reset --hard origin/main
+
+# OR (preferred) delete and recreate:
+git branch -D dev_featureName
+git checkout -b dev_newFeature origin/main
+```
+
+This avoids duplicate commits + random conflicts.
+
+---
+
+## 7. Quick Commands (Cheat Sheet)
+
+```bash
+# Update main
+git checkout main
 git pull origin main
 
-git checkout dev_mk
+# Start new feature branch
+git checkout -b dev_feature origin/main
 
-git stash
-
+# Sync feature with main
+git checkout main
+git pull origin main
+git checkout dev_feature
 git rebase main
 
+# Save WIP before reset
+git stash push -m "WIP"
+git reset --hard origin/main
 git stash pop
 ```
+
+---
+
+# 🎮 Roguelike Arena Game Design Document (Unity + Mirror)
+
 
 ## 1. Core Vision
 
