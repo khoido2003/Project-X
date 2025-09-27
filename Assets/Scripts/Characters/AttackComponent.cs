@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AttackComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelayReceiver
 {
-    private WeaponData weaponData;
+    protected WeaponData weaponData;
     private HealthComponent currentHealthComponent;
 
     private float lastAttackTime = -Mathf.Infinity;
@@ -72,7 +72,7 @@ public class AttackComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelay
         ExcuteAttack(hitDirection);
     }
 
-    private void ExcuteAttack(Vector3 direction)
+    protected virtual void ExcuteAttack(Vector3 direction)
     {
         // TODO: later refactor this to be cleaner
 

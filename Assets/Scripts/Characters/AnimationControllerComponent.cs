@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AnimationControllerComponent : MonoBehaviour
+public class AnimationControllerComponent : MonoBehaviour, IAnimationRelayReceiver
 {
     private Animator animator;
     private Transform characterTransform;
@@ -50,7 +50,7 @@ public class AnimationControllerComponent : MonoBehaviour
 
     #region ANIMATION_EVENTS
 
-    private void OnTriggerAnimation(string triggerName)
+    protected virtual void OnTriggerAnimation(string triggerName)
     {
         animator.SetTrigger(triggerName);
     }
@@ -72,9 +72,14 @@ public class AnimationControllerComponent : MonoBehaviour
     {
         for (int i = 1; i < animator.layerCount; i++)
         {
-            animator.SetLayerWeight(i, -1);
+            animator.SetLayerWeight(i, 0);
         }
 
-        animator.SetLayerWeight(layerIndex, 0);
+        animator.SetLayerWeight(layerIndex, 1);
+    }
+
+    public void OnAnimationEvent(AnimationEventRelayName eventName)
+    {
+        SwitchAnimationLayer(0);
     }
 }
