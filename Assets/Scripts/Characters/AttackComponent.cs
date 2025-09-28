@@ -55,7 +55,6 @@ public class AttackComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelay
 
         // TODO: Trigger sound here
 
-
         lastAttackTime = Time.time;
     }
 
