@@ -89,11 +89,11 @@
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />
     <Compile Include="Assets\Scripts\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MurderKitten\MurderKittenAttackComponent.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexMeleeSkills\PlasmaShieldSkill.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexBaseballBoySkills\PlasmaShieldSkill.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexBaseballBoySkills\HomerunSwingSkill.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexBaseballBoySkills\DaskStrikeSkill.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\StatsData.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexMeleeSkills\DaskStrikeSkill.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexMeleeSkills\HomerunSwingSkill.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationRelayReceiver.cs" />
   </ItemGroup>
   <ItemGroup>

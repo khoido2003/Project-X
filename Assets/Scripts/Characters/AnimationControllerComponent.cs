@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AnimationControllerComponent : MonoBehaviour, IAnimationRelayReceiver
+public class AnimationControllerComponent : MonoBehaviour
 {
     private Animator animator;
     private Transform characterTransform;
@@ -76,10 +76,5 @@ public class AnimationControllerComponent : MonoBehaviour, IAnimationRelayReceiv
         }
 
         animator.SetLayerWeight(layerIndex, 1);
-    }
-
-    public void OnAnimationEvent(AnimationEventRelayName eventName)
-    {
-        SwitchAnimationLayer(0);
     }
 }
