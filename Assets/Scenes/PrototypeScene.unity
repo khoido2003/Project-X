@@ -636,12 +636,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -4804,7 +4804,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1503168474
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5790,7 +5790,7 @@ MonoBehaviour:
     m_Bits: 128
   originalPosition: {fileID: 394017549}
   rayCastHeight: 10
-  enableVisualGrid: 1
+  enableVisualGrid: 0
   walkableMaterial: {fileID: 2100000, guid: c89fa13b76d0f2648a1fbc01a557cec5, type: 2}
   obstacleMaterial: {fileID: 2100000, guid: c2d310622f2a35f4ea8fd7c2f475b629, type: 2}
 --- !u!4 &1672054329
