@@ -133,22 +133,7 @@ public class AStartPathfinder
 
             for (int i = rawPath.Count - 1; i >= currentIndex; i--)
             {
-                Vector3 directionBetweenTwoPoint = (rawPath[i] - rawPath[currentIndex]).normalized;
-
-                float distanceBetweenTwoPoint = Vector3.Distance(rawPath[i], rawPath[currentIndex]);
-
-                float agentScanRadius = 0.25f;
-
-                if (
-                    !Physics.CapsuleCast(
-                        rawPath[currentIndex] + Vector3.up * 0.5f,
-                        rawPath[currentIndex] + Vector3.up * 1.5f,
-                        agentScanRadius,
-                        directionBetweenTwoPoint,
-                        distanceBetweenTwoPoint,
-                        GridSystem.Instance.GetObstacleLayer()
-                    )
-                )
+                if (HasNextNodeOfSight(rawPath[currentIndex], rawPath[i]))
                 {
                     nextIndex = i;
                     break;
@@ -167,20 +152,61 @@ public class AStartPathfinder
         return smoothPath;
     }
 
+    private bool HasNextNodeOfSight(Vector3 a, Vector3 b)
+    {
+        Vector3 direction = (b - a).normalized;
+        float distance = Vector3.Distance(a, b);
+        float radius = 0.25f;
+
+        float capsuleStart = 0.5f;
+        float capsuleEnd = 1.5f;
+
+        return !Physics.CapsuleCast(
+            a + Vector3.up * capsuleStart,
+            a + Vector3.up * capsuleEnd,
+            radius,
+            direction,
+            distance,
+            GridSystem.Instance.GetObstacleLayer()
+        );
+    }
+
     private List<Vector2Int> GetNeighbors(Vector2Int position)
     {
         List<Vector2Int> neighbors = new();
+        GridSystem gridSystemInstance = GridSystem.Instance;
+
+        GridLayer<bool> walkable = gridSystemInstance.GetLayer<bool>(GridLayerName.WALKABLE);
 
         for (int x = -1; x <= 1; x++)
         {
-            for (int z = -1; z <= 1; z++)
+            for (int y = -1; y <= 1; y++)
             {
-                if (x == 0 && z == 0)
+                if (x == 0 && y == 0)
                 {
                     continue;
                 }
 
-                neighbors.Add(new Vector2Int(position.x + x, position.y + z));
+                Vector2Int node = new(position.x + x, position.y + y);
+
+                if (!gridSystemInstance.IsValidPosition(node) || !walkable.GetValue(node.x, node.y))
+                {
+                    continue;
+                }
+
+                // Check for diaonal corner cutting
+                if (x != 0 && y != 0)
+                {
+                    Vector2Int node1 = new(position.x + x, position.y);
+                    Vector2Int node2 = new(position.x, position.y + y);
+
+                    if (!walkable.GetValue(node1.x, node1.y) || !walkable.GetValue(node2.x, node2.y))
+                    {
+                        continue;
+                    }
+                }
+
+                neighbors.Add(node);
             }
         }
 
