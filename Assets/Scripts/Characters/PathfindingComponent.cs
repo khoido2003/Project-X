@@ -18,7 +18,7 @@ public class PathfindingComponent : MonoBehaviour
     private float repathInterval = 1f;
 
     [SerializeField]
-    private float waypointTolerance = 0.25f;
+    private float waypointTolerance = 0.5f;
 
     [SerializeField]
     private bool enableDrawPath = true;
@@ -53,9 +53,30 @@ public class PathfindingComponent : MonoBehaviour
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
             }
 
+            // Make the agent slide away from corner instead of getting stuck
+            float rayMaxDistance = 0.5f;
+            if (
+                Physics.Raycast(
+                    transform.position + Vector3.up * 0.5f,
+                    moveDir,
+                    out RaycastHit hit,
+                    rayMaxDistance,
+                    GridSystem.Instance.GetObstacleLayer(),
+                    QueryTriggerInteraction.Ignore
+                )
+            )
+            {
+                if (hit.collider.gameObject != gameObject)
+                {
+                    Vector3 slideDirection = Vector3.Cross(Vector3.up, hit.normal).normalized;
+
+                    moveDir = (moveDir + slideDirection * 0.5f).normalized;
+                }
+            }
+
             transform.position = Vector3.MoveTowards(transform.position, nextPos, moveSpeed * Time.deltaTime);
 
-            if (Vector3.Distance(transform.position, nextPos) < 0.1f)
+            if (Vector3.Distance(transform.position, nextPos) < waypointTolerance)
             {
                 pathIndex++;
 
@@ -67,7 +88,6 @@ public class PathfindingComponent : MonoBehaviour
                 if (stuckTimer > 1.5f)
                 {
                     // Stuck too long -> Find new path to the target
-
                     ForceFindNewPath();
                     stuckTimer = 0f;
                 }
@@ -93,6 +113,23 @@ public class PathfindingComponent : MonoBehaviour
 
             Vector2Int targetGrid = gridSystemInstance.GetGridPosition(target.position);
 
+            GridLayer<bool> walkable = gridSystemInstance.GetLayer<bool>(GridLayerName.WALKABLE);
+
+            if (!walkable.GetValue(startGrid.x, startGrid.y))
+            {
+                startGrid = gridSystemInstance.FindNearestWalkable(startGrid);
+            }
+
+            if (!walkable.GetValue(targetGrid.x, targetGrid.y))
+            {
+                targetGrid = gridSystemInstance.FindNearestWalkable(targetGrid);
+            }
+
+            if (!gridSystemInstance.IsValidPosition(startGrid) || !gridSystemInstance.IsValidPosition(targetGrid))
+            {
+                return;
+            }
+
             Vector3 snappedTarget = gridSystemInstance.GetWorldPosition(targetGrid);
 
             if (Vector3.Distance(snappedTarget, gridSystemInstance.GetWorldPosition(lastTargetGrid)) > recalcThreshold)
@@ -103,8 +140,11 @@ public class PathfindingComponent : MonoBehaviour
 
                 if (currentPath != null && currentPath.Count > 0)
                 {
+                    // Reset before alignment
+                    pathIndex = 0;
+
                     // Snap the agent to the closest node in new path
-                    AlignPathToClosedNode();
+                    AlignPathToNextForwardNode();
 
                     lastTargetGrid = targetGrid;
                 }
@@ -119,7 +159,7 @@ public class PathfindingComponent : MonoBehaviour
         float moved = Vector3.Distance(transform.position, lastPosition);
 
         // No movement -> start counting time to force find new way
-        if (moved < 0.05f)
+        if (moved < 0.1f && currentPath != null && pathIndex < currentPath.Count)
         {
             noProgressTimer += Time.deltaTime;
             if (noProgressTimer > 2f)
@@ -147,20 +187,28 @@ public class PathfindingComponent : MonoBehaviour
         Vector2Int startGrid = gridSystemInstance.GetGridPosition(transform.position);
         Vector2Int targetGrid = gridSystemInstance.GetGridPosition(target.position);
 
-        currentPath = pathfinder.FindPath(
+        startGrid = gridSystemInstance.FindNearestWalkable(startGrid);
+        targetGrid = gridSystemInstance.FindNearestWalkable(targetGrid);
+
+        List<Vector3> newPath = pathfinder.FindPath(
             gridSystemInstance.GetWorldPosition(startGrid),
             gridSystemInstance.GetWorldPosition(targetGrid)
         );
 
-        if (currentPath != null && currentPath.Count > 0)
+        if (newPath != null && newPath.Count > 0)
         {
-            AlignPathToClosedNode();
-            lastTargetGrid = targetGrid;
             pathIndex = 0;
+            currentPath = newPath;
+            AlignPathToNextForwardNode();
+            lastTargetGrid = targetGrid;
+        }
+        else
+        {
+            Debug.LogWarning("ForceFindNewPath: no valid path found!");
         }
     }
 
-    private void AlignPathToClosedNode()
+    private void AlignPathToNextForwardNode()
     {
         if (currentPath == null || currentPath.Count == 0)
         {
@@ -168,10 +216,17 @@ public class PathfindingComponent : MonoBehaviour
         }
 
         float bestDistance = float.MaxValue;
-        int bestIndex = 0;
+        int bestIndex = pathIndex;
 
         for (int i = 0; i < currentPath.Count; i++)
         {
+            // Avoid use the nodes behind
+            // So the agent does not snapping back
+            if (Vector3.Dot((currentPath[i] - transform.position).normalized, transform.forward) < -0.2f)
+            {
+                continue;
+            }
+
             float distance = Vector3.Distance(transform.position, currentPath[i]);
             if (distance < bestDistance)
             {
@@ -199,6 +254,12 @@ public class PathfindingComponent : MonoBehaviour
         for (int i = 0; i < currentPath.Count - 1; i++)
         {
             Gizmos.DrawLine(currentPath[i] + Vector3.up * 0.3f, currentPath[i + 1] + Vector3.up * 0.3f);
+        }
+
+        if (currentPath != null && pathIndex < currentPath.Count)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawSphere(currentPath[pathIndex] + Vector3.up * 0.3f, 0.2f);
         }
     }
 }
