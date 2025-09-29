@@ -19,7 +19,7 @@ public class GridSystem : MonoBehaviour
     private float cellSize = 1f;
 
     [SerializeField]
-    private LayerMask obstackleLayer;
+    private LayerMask obstacleLayer;
 
     [SerializeField]
     private Transform originalPosition;
@@ -39,7 +39,7 @@ public class GridSystem : MonoBehaviour
     [SerializeField]
     private Material obstacleMaterial;
 
-    private Dictionary<GridLayerName, IGridLayer> layers = new Dictionary<GridLayerName, IGridLayer>();
+    private Dictionary<GridLayerName, IGridLayer> layers = new();
 
     private void Awake()
     {
@@ -99,7 +99,7 @@ public class GridSystem : MonoBehaviour
 
                 Vector3 rayStart = worldPos + Vector3.up * rayCastHeight;
 
-                bool isObstackle = Physics.Raycast(rayStart, Vector3.down, rayCastHeight * 2, obstackleLayer);
+                bool isObstackle = Physics.Raycast(rayStart, Vector3.down, rayCastHeight * 2, obstacleLayer);
 
                 walkableLayer.SetValue(x, z, !isObstackle);
             }
@@ -153,5 +153,10 @@ public class GridSystem : MonoBehaviour
     public bool IsValidPosition(Vector2Int gridPosition)
     {
         return gridPosition.x >= 0 && gridPosition.x < gridSize.x && gridPosition.y >= 0 && gridPosition.y < gridSize.y;
+    }
+
+    public LayerMask GetObstacleLayer()
+    {
+        return obstacleLayer;
     }
 }

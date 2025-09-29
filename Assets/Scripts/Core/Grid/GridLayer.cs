@@ -12,6 +12,8 @@ public class GridLayer<TGridCell> : IGridLayer
         gridData = new TGridCell[width, height];
 
         this.defaultValue = defaultValue;
+
+        Initialize();
     }
 
     private void Initialize()

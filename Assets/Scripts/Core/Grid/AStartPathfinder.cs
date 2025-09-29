@@ -63,7 +63,10 @@ public class AStartPathfinder
 
             if (currentNode.Position == end)
             {
-                return RetracePath(currentNode);
+                List<Vector3> rawPath = RetracePath(currentNode);
+
+                // MUST do this to avoid zig-zag or zittering path
+                return SmoothPath(rawPath);
             }
 
             closeSet.Add(currentNode.Position);
@@ -109,6 +112,59 @@ public class AStartPathfinder
         }
 
         return null;
+    }
+
+    private List<Vector3> SmoothPath(List<Vector3> rawPath)
+    {
+        if (rawPath == null || rawPath.Count < 2)
+        {
+            return rawPath;
+        }
+
+        List<Vector3> smoothPath = new();
+
+        smoothPath.Add(rawPath[0]);
+
+        int currentIndex = 0;
+
+        while (currentIndex < rawPath.Count - 1)
+        {
+            int nextIndex = rawPath.Count - 1;
+
+            for (int i = rawPath.Count - 1; i >= currentIndex; i--)
+            {
+                Vector3 directionBetweenTwoPoint = (rawPath[i] - rawPath[currentIndex]).normalized;
+
+                float distanceBetweenTwoPoint = Vector3.Distance(rawPath[i], rawPath[currentIndex]);
+
+                float agentScanRadius = 0.25f;
+
+                if (
+                    !Physics.CapsuleCast(
+                        rawPath[currentIndex] + Vector3.up * 0.5f,
+                        rawPath[currentIndex] + Vector3.up * 1.5f,
+                        agentScanRadius,
+                        directionBetweenTwoPoint,
+                        distanceBetweenTwoPoint,
+                        GridSystem.Instance.GetObstacleLayer()
+                    )
+                )
+                {
+                    nextIndex = i;
+                    break;
+                }
+            }
+
+            if (nextIndex == currentIndex)
+            {
+                break;
+            }
+
+            smoothPath.Add(rawPath[nextIndex]);
+            currentIndex = nextIndex;
+        }
+
+        return smoothPath;
     }
 
     private List<Vector2Int> GetNeighbors(Vector2Int position)
