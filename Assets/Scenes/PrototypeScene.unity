@@ -5135,9 +5135,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathfindingComponent
   target: {fileID: 166517131}
-  moveSpeed: 3
   repathInterval: 1
+  recalcThreshold: 0.5
   waypointTolerance: 0.1
+  moveSpeed: 3
+  stoppingDistance: 0
   enableDrawPath: 1
 --- !u!65 &1558655999
 BoxCollider:
@@ -5783,7 +5785,7 @@ MonoBehaviour:
   obstacleSweepHeight: 1
   obstacleCheckRadiusFactor: 0.45
   rayCastHeight: 10
-  enableVisualGrid: 1
+  enableVisualGrid: 0
   walkableMaterial: {fileID: 2100000, guid: c89fa13b76d0f2648a1fbc01a557cec5, type: 2}
   obstacleMaterial: {fileID: 2100000, guid: c2d310622f2a35f4ea8fd7c2f475b629, type: 2}
 --- !u!4 &1672054329
