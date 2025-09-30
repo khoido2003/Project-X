@@ -310,11 +310,16 @@ public class PathfindingComponent : MonoBehaviour
         float bestDistance = float.MaxValue;
         int bestIndex = pathIndex;
 
+        // 90 degree
+        float backwardAngleThreshold = 90f;
+        float cosThreshold = Mathf.Cos(backwardAngleThreshold * Mathf.Deg2Rad);
+
         for (int i = 0; i < currentPath.Count; i++)
         {
             // Avoid use the nodes behind
             // So the agent does not snapping back
-            if (Vector3.Dot((currentPath[i] - transform.position).normalized, transform.forward) < -0.2f)
+            Vector3 toNode = (currentPath[i] - transform.position).normalized;
+            if (Vector3.Dot(toNode, transform.forward) < cosThreshold)
             {
                 continue;
             }
