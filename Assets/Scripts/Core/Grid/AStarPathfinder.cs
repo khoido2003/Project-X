@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AStartPathfinder
+///
+/// A* Pathfinder with optional path smoothing using line-of-sight checks.
+///
+public class AStarPathfinder
 {
     private class Node
     {
@@ -12,6 +15,19 @@ public class AStartPathfinder
         public float FCost => GCost + HCost;
     }
 
+    // Agent parameters
+    private readonly float agentRadius;
+    private readonly float agentHeight;
+
+    public AStarPathfinder(float agentRadius = 0.25f, float agentHeight = 2f)
+    {
+        this.agentRadius = agentRadius;
+        this.agentHeight = agentHeight;
+    }
+
+    /// <summary>
+    /// Find a path between two world positions.
+    /// </summary>
     public List<Vector3> FindPath(Vector3 startWWorld, Vector3 endWorld)
     {
         GridSystem gridSystem = GridSystem.Instance;
@@ -114,6 +130,9 @@ public class AStartPathfinder
         return null;
     }
 
+    /// <summary>
+    /// Simplify the raw path by skipping unnecessary nodes.
+    /// </summary>
     private List<Vector3> SmoothPath(List<Vector3> rawPath)
     {
         if (rawPath == null || rawPath.Count < 2)
@@ -152,19 +171,21 @@ public class AStartPathfinder
         return smoothPath;
     }
 
-    private bool HasNextNodeOfSight(Vector3 a, Vector3 b)
+    /// <summary>
+    /// Line-of-sight check between two world positions.
+    /// </summary>
+    private bool HasNextNodeOfSight(Vector3 from, Vector3 to)
     {
-        Vector3 direction = (b - a).normalized;
-        float distance = Vector3.Distance(a, b);
-        float radius = 0.25f;
+        Vector3 direction = (to - from).normalized;
+        float distance = Vector3.Distance(from, to);
 
-        float capsuleStart = 0.5f;
-        float capsuleEnd = 1.5f;
+        Vector3 start = from + Vector3.up * (agentHeight * 0.25f);
+        Vector3 end = from + Vector3.up * (agentHeight * 0.75f);
 
         return !Physics.CapsuleCast(
-            a + Vector3.up * capsuleStart,
-            a + Vector3.up * capsuleEnd,
-            radius,
+            start,
+            end,
+            agentRadius,
             direction,
             distance,
             GridSystem.Instance.GetObstacleLayer()

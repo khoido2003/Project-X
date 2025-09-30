@@ -65,6 +65,7 @@
     <Compile Include="Assets\Scripts\Characters\WeaponVfxEffectSocket.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
     <Compile Include="Assets\Scripts\Characters\AttackComponent.cs" />
+    <Compile Include="Assets\Scripts\Core\Grid\AStarPathfinder.cs" />
     <Compile Include="Assets\Scripts\Characters\CharacterVisualComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MurderKitten\MurderKittenAnimationController.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
@@ -83,7 +84,6 @@
     <Compile Include="Assets\Scripts\Characters\Interfaces\IStatusEffect.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationTrigger.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
-    <Compile Include="Assets\Scripts\Core\Grid\AStartPathfinder.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleOscillateSliders.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleSceneLoader.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />
