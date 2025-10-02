@@ -7,6 +7,7 @@ public class HealthComponent : MonoBehaviour
     private float currentHealth;
 
     public event Action<float, float> OnHealthChanged;
+    public event EventHandler OnDeath;
 
     public void Initialize(StatsData statsData)
     {
@@ -29,12 +30,12 @@ public class HealthComponent : MonoBehaviour
         }
     }
 
-    public void ApplyDefenseBoost(float boost, float duration) {
-
-    }
+    public void ApplyDefenseBoost(float boost, float duration) { }
 
     private void Die()
     {
+        OnDeath?.Invoke(this, EventArgs.Empty);
+
         // TODO: add death state
         Debug.Log("Character die!");
     }

@@ -200,6 +200,7 @@ public class PathfindingComponent : MonoBehaviour
 
         if (!gridSystemInstance.IsValidPosition(startGrid) || !gridSystemInstance.IsValidPosition(targetGrid))
         {
+            HandlePathFailed("Invalid start or target grid");
             return;
         }
 
@@ -210,6 +211,9 @@ public class PathfindingComponent : MonoBehaviour
             Vector3 snappedStart = gridSystemInstance.GetWorldPosition(startGrid);
 
             currentPath = pathfinder.FindPath(snappedStart, snappedTarget);
+
+            // IMPORTANT to reset agent use it own y axis instead of using grid system y axis
+            ApplyAgentYToPath();
 
             if (currentPath != null && currentPath.Count > 0)
             {
@@ -225,7 +229,7 @@ public class PathfindingComponent : MonoBehaviour
             }
             else
             {
-                OnPathFailed?.Invoke();
+                HandlePathFailed("Invalid start or target grid");
             }
         }
 
@@ -284,7 +288,12 @@ public class PathfindingComponent : MonoBehaviour
         {
             pathIndex = 0;
             currentPath = newPath;
+
+            // IMPORTANT to reset agent use it own y axis instead of using grid system y axis
+            ApplyAgentYToPath();
+
             AlignPathToNextForwardNode();
+
             lastTargetGrid = targetGrid;
 
             OnPathCalculated?.Invoke(newPath);
@@ -345,6 +354,10 @@ public class PathfindingComponent : MonoBehaviour
     public void SetTargetPosition(Vector3 target)
     {
         currentPath = pathfinder.FindPath(transform.position, target);
+
+        // IMPORTANT to reset agent use it own y axis instead of using grid system y axis
+        ApplyAgentYToPath();
+
         pathIndex = 0;
 
         if (currentPath != null && currentPath.Count > 0)
@@ -353,14 +366,53 @@ public class PathfindingComponent : MonoBehaviour
         }
         else
         {
-            OnPathFailed?.Invoke();
+            HandlePathFailed("SetTargetPosition -> no path");
         }
     }
 
     public void ClearTarget() => target = null;
 
+    public void Stop()
+    {
+        currentPath = null;
+    }
+
+    public void SetMoveSpeed(float newMoveSpeed)
+    {
+        moveSpeed = newMoveSpeed;
+    }
+
     #endregion
 
+
+    #region  Agents Tweaking
+
+    private void HandlePathFailed(string reason = "")
+    {
+        Debug.LogWarning($"[PathfindingComponent] Path failed! {reason}");
+        currentPath = null;
+        pathIndex = 0;
+        OnPathFailed?.Invoke();
+    }
+
+    private void ApplyAgentYToPath()
+    {
+        if (currentPath == null)
+        {
+            return;
+        }
+
+        float agentY = transform.position.y;
+
+        for (int i = 0; i < currentPath.Count; i++)
+        {
+            Vector3 p = currentPath[i];
+            p.y = agentY;
+            currentPath[i] = p;
+        }
+    }
+
+    #endregion
 
     // Debug Gizmos
     private void OnDrawGizmos()

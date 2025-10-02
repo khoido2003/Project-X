@@ -53,15 +53,19 @@
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleCountdownLabel.cs" />
     <Compile Include="Assets\Scripts\Utils\Drawer.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponHolder.cs" />
+    <Compile Include="Assets\Scripts\Enemies\EnemyPatrolPoints.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridLayer.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Skills\SkillData.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
+    <Compile Include="Assets\Scripts\Enemies\AIState.cs" />
+    <Compile Include="Assets\Scripts\Enemies\EnemyIdleState.cs" />
     <Compile Include="Assets\Scripts\Characters\AnimationControllerComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\AnimatorActionData.cs" />
     <Compile Include="Assets\Scripts\Characters\SkillInstance.cs" />
+    <Compile Include="Assets\Scripts\Enemies\AIStateMachine.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponVfxEffectSocket.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
     <Compile Include="Assets\Scripts\Characters\AttackComponent.cs" />
@@ -83,17 +87,23 @@
     <Compile Include="Assets\Scripts\Characters\PathfindingComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IStatusEffect.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationTrigger.cs" />
+    <Compile Include="Assets\Scripts\Enemies\AIConfig.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleOscillateSliders.cs" />
+    <Compile Include="Assets\Scripts\Enemies\EnemyTakeCoverState.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleSceneLoader.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />
+    <Compile Include="Assets\Scripts\Enemies\EnemyAttackState.cs" />
     <Compile Include="Assets\Scripts\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MurderKitten\MurderKittenAttackComponent.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexBaseballBoySkills\PlasmaShieldSkill.cs" />
+    <Compile Include="Assets\Scripts\Enemies\EnemyPatrolState.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexBaseballBoySkills\HomerunSwingSkill.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Skills\AlexBaseballBoySkills\DaskStrikeSkill.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\StatsData.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
+    <Compile Include="Assets\Scripts\Enemies\EnemyAI.cs" />
+    <Compile Include="Assets\Scripts\Enemies\EnemyChaseState.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationRelayReceiver.cs" />
   </ItemGroup>
   <ItemGroup>

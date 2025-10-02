@@ -50,17 +50,17 @@ public class AnimationControllerComponent : MonoBehaviour
 
     #region ANIMATION_EVENTS
 
-    protected virtual void OnTriggerAnimation(string triggerName)
+    public virtual void OnTriggerAnimation(string triggerName)
     {
         animator.SetTrigger(triggerName);
     }
 
-    private void OnSetFloatParameter(string parameterName, float value)
+    public virtual void OnSetFloatParameter(string parameterName, float value)
     {
         animator.SetFloat(parameterName, value);
     }
 
-    private void OnSetBoolParameter(string parameterName, bool value)
+    public virtual void OnSetBoolParameter(string parameterName, bool value)
     {
         animator.SetBool(parameterName, value);
     }
