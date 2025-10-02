@@ -17,7 +17,7 @@ MonoBehaviour:
   castRange: 5
   isInstant: 1
   activateSound: {fileID: 0}
-  activationAnimationTrigger: skill
+  activationAnimationTrigger: attack
   skillHitImpactEffectPrefab: {fileID: 0}
   skillHitImpactEffectInstance: {fileID: 0}
   skillVfxEffectPrefab: {fileID: 9182071414042874320, guid: d157ae1c06c365d4fb024376bdf83cab, type: 3}

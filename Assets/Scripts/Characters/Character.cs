@@ -82,4 +82,9 @@ public class Character : MonoBehaviour
             weaponComponent?.Initialize(Data.weapon, weaponHolderTransform);
         }
     }
+
+    public bool GetIsPlayerControlled()
+    {
+        return isPlayerControlled;
+    }
 }

@@ -15,6 +15,7 @@ MonoBehaviour:
   skillName: HomerunSwingSkill
   coolDown: 1
   castRange: 1.5
+  isInstant: 0
   activateSound: {fileID: 0}
   activationAnimationTrigger: attack
   skillHitImpactEffectPrefab: {fileID: 7100685650444493368, guid: e7ff2c64bb834a34b8089f9494736530, type: 3}
@@ -26,3 +27,4 @@ MonoBehaviour:
   attackRadius: 2
   knockbakcForce: 8
   stuntDuration: 1.5
+  coneAngle: 120
