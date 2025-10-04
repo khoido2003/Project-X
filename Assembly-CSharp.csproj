@@ -55,12 +55,15 @@
     <Compile Include="Assets\Scripts\Characters\WeaponHolder.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyPatrolPoints.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridLayer.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\EntityId.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\World.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Skills\SkillData.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
     <Compile Include="Assets\Scripts\Enemies\AIState.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\EntityView.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyIdleState.cs" />
     <Compile Include="Assets\Scripts\Characters\AnimationControllerComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\AnimatorActionData.cs" />
@@ -68,14 +71,18 @@
     <Compile Include="Assets\Scripts\Enemies\AIStateMachine.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponVfxEffectSocket.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
     <Compile Include="Assets\Scripts\Characters\AttackComponent.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\AStarPathfinder.cs" />
     <Compile Include="Assets\Scripts\Characters\CharacterVisualComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MurderKitten\MurderKittenAnimationController.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\EventBus.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\CharacterData.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\ServiceLocator.cs" />
     <Compile Include="Assets\Scripts\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\UI\HealthBarUI.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
@@ -103,7 +110,9 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\StatsData.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyAI.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\ComponentStore.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyChaseState.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\EntityManager.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationRelayReceiver.cs" />
   </ItemGroup>
   <ItemGroup>
