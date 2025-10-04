@@ -162,326 +162,71 @@ Augment 3 (Crazy/Powerful)
 
 ---
 
-## 4. ScriptableObject / Data Models
+## 4. New Architecture & Refactor Roadmap
 
-### HeroData
-```csharp
-class HeroData : ScriptableObject {
-  string HeroID;
-  string DisplayName;
-  Sprite Portrait;
+### Overview
+The project will be refactored to a clean, ECS-inspired, SOLID, and data-driven architecture using classic Unity (not DOTS). This will make the codebase scalable, maintainable, and ready for networking.
 
-  int MaxHP;
-  float MoveSpeed;
-  float BaseAttackDamage;
-  float AttackRange;
-  float AttackSpeed;
+### Architecture Principles
+- **ECS-Inspired:** Separate data (components), logic (systems), and Unity integration (views/adapters).
+- **SOLID:** Each class has a single responsibility, is open for extension, uses interfaces, and depends on abstractions.
+- **Data-Driven:** All gameplay data (stats, skills, weapons, etc.) is in ScriptableObjects or data files.
+- **Networking-Ready:** Core logic is agnostic to networking; Mirror is integrated as a service/adapter.
 
-  WeaponData Weapon;
-  List<SkillData> Skills;
-  List<string> Tags; // e.g. ["melee","mobility"]
-}
+### Folder Structure
+```
+Assets/Scripts/
+  Core/ECS/         # ECS core (World, Entity, System, etc.)
+  Components/       # Pure data components (no logic, no MonoBehaviour)
+  Systems/          # Pure logic systems (no Unity dependencies)
+  Views/            # MonoBehaviours for Unity integration (EntityView, MovementView, etc.)
+  Services/         # Input, Audio, Network, etc. (interfaces + implementations)
+  ScriptableObjects/# Data assets for configuration
+  UI/               # UI logic
 ```
 
-### WeaponData
-```csharp
-class WeaponData : ScriptableObject {
-  string WeaponID;
-  string DisplayName;
-  enum WeaponType { Melee, Projectile, Hitscan }
-  WeaponType Type;
-  float Damage;
-  float AttackRate;
-  float Range;
-  GameObject ProjectilePrefab;
-  List<string> Tags;
-}
-```
+### How the New Architecture Works
+- **Entities:** IDs managed by the ECS core, not MonoBehaviours.
+- **Components:** Pure C# classes holding data (e.g., HealthComponent, MovementComponent).
+- **Systems:** Pure C# classes operating on entities with specific components (e.g., MovementSystem, HealthSystem).
+- **Views:** MonoBehaviours that sync ECS data to Unity objects (e.g., position, animation, rendering).
+- **Services:** Input, audio, and networking are abstracted behind interfaces and injected into systems.
+- **ScriptableObjects:** All gameplay configuration and data is stored in SOs, referenced by components/systems.
 
-### SkillData
-```csharp
-class SkillData : ScriptableObject {
-  string SkillID;
-  string DisplayName;
-  string Description;
-  SkillCategory Category;   // Active, Passive, Ultimate
-  SkillType Type;           // Dash, Projectile, AoE, Buff
-  float Cooldown;
-  float CastTime;
-  float Range;
-  EffectDefinition[] Effects;
-  List<string> Tags;        // for augment filtering
-}
-```
+### Refactor Checklist
+- [ ] Finalize and polish ECS core (World, EntityManager, ComponentStore, SystemManager, EventBus).
+- [ ] Organize folders as per new structure.
+- [ ] Migrate movement to ECS (MovementComponent, MovementSystem, MovementView).
+- [ ] Migrate health to ECS (HealthComponent, HealthSystem, HealthView).
+- [ ] Migrate attack to ECS (AttackComponent, AttackSystem, AttackView).
+- [ ] Migrate skills to ECS (SkillComponent, SkillSystem, SkillView).
+- [ ] Migrate status effects to ECS (StatusEffectComponent, StatusEffectSystem, StatusEffectView).
+- [ ] Refactor input, audio, and networking as services (IInputService, IAudioService, INetworkService).
+- [ ] Move all gameplay data/config to ScriptableObjects.
+- [ ] Refactor UI to use ECS data and events.
+- [ ] Remove old tightly-coupled MonoBehaviour logic after migration.
+- [ ] Add Mirror networking as a service/adapter.
+- [ ] Test and validate after each migration step.
 
-###  AugmentData
-```csharp
-class AugmentData : ScriptableObject {
-  string AugmentID;
-  string DisplayName;
-  string Description;
-  AugmentCategory Category; // universal, melee, ranged, caster, etc.
-  float Weight;
-  Modifier[] Modifiers;
-  Condition[] Conditions;
-  float Duration;
+### Roadmap (Step-by-Step)
+1. **ECS Core:** Finalize ECS core and ensure it supports all needed operations.
+2. **Folder Structure:** Reorganize scripts into the new folder structure.
+3. **Movement:** Migrate movement logic/data to ECS (MovementComponent, MovementSystem, MovementView).
+4. **Health:** Migrate health logic/data to ECS.
+5. **Attack:** Migrate attack logic/data to ECS.
+6. **Skills:** Migrate skill logic/data to ECS.
+7. **Status Effects:** Migrate status effect logic/data to ECS.
+8. **Services:** Refactor input, audio, and networking as services and inject into systems.
+9. **ScriptableObjects:** Move all gameplay data/config to SOs and refactor systems/components to use them.
+10. **UI:** Refactor UI to use ECS data/events.
+11. **Cleanup:** Remove old MonoBehaviour logic and test thoroughly.
+12. **Networking:** Integrate Mirror as a service/adapter, keeping core logic agnostic to networking.
+
+---
+
+**After this refactor, the project will be clean, modular, scalable, and ready for rapid feature development and networking.**
   bool Exclusive;
+
   string[] Tags;
+
   int InternalCooldownMs;
-  bool ShowOnTurn1;
-  bool ShowOnTurn2;
-  bool ShowOnTurn3;
-}
-```
-
-### EnemyData
-```csharp
-class EnemyData : ScriptableObject {
-  string EnemyID;
-  string Name;
-  int MaxHP;
-  float MoveSpeed;
-  float Damage;
-  float AttackRange;
-  EnemyAIType AIType;     // Hunter, Ranged, Summoner, Exploder
-  SpawnWeight SpawnWeight;
-  List<SkillData> Abilities;
-  List<string> Tags;
-}
-```
-
-### BossData
-```csharp
-class BossData : ScriptableObject {
-  string BossID;
-  string Name;
-  int MaxHP;
-  List<BossPhase> Phases; // HPThreshold, Abilities, Modifiers
-  float AggroRadius;
-  List<string> TargetingRules;
-}
-```
-
-### MapData & HazardData
-```csharp
-class MapData : ScriptableObject {
-  string MapID;
-  string DisplayName;
-  int SizeX; int SizeZ;
-  float ShrinkPerWavePct;
-  List<HazardData> Hazards;
-  List<SpawnNode> EnemySpawnNodes;
-}
-
-class HazardData {
-  string HazardID;
-  string DisplayName;
-  HazardType Type;          // Lava, Ice, Ghost, Lightning
-  float DamagePerSecond;
-  float ActiveDuration;
-  float Cooldown;
-  float Radius;
-  float TelegraphTime;
-}
-```
-
-
-## 5.Interfaces
-```csharp
-
-interface IDamageable {
-  int CurrentHP { get; }
-  void TakeDamage(int amount, DamageContext ctx);
-  void Heal(int amount);
-  bool IsAlive();
-}
-
-interface IAugmentable {
-  void ApplyAugment(AugmentInstance instance);
-  void RemoveAugment(string augmentID);
-}
-
-interface ISkillUser {
-  bool CanCast(string skillID);
-  void CastSkill(string skillID, SkillTarget target);
-}
-
-interface IMovable {
-  Vector3 Position { get; }
-  void Move(Vector3 dir, float deltaTime);
-}
-```
-
-## 6. Runtime Components
-- MatchManager: controls waves, augments, map shrink.
-
-- AugmentManager: samples augments, validates picks, applies effects.
-
-- PlayerState: holds HP, augments, score (SyncVars).
-
-- HeroController: runtime instance from HeroData, executes attacks/skills.
-
-- SkillSystem: executes SkillData into effects/projectiles.
-
-- EnemyAIController: runs FSM based on EnemyData.
-
-- AggroManager: calculates lowest-aggression player to pressure.
-
-## 7. Networking(Mirror)
-
-### Commands(Client -> Server)
-```
-CmdRequestMove(Vector3 dir, float timeStamp);
-CmdCastSkill(string skillID, Vector3 aimPos);
-CmdPickAugment(string augmentID);
-```
-
-
-### RPCs (Server -> Client)
-```
-RpcSpawnProjectile(int netId, Vector3 pos, Vector3 dir, float speed);
-RpcPlayVFX(string vfxKey, Vector3 pos);
-TargetShowAugmentChoices(conn, List<AugmentDTO> choices);
-```
-
-## 8. Sequence Flows
-
-### Augment Phase
-
-1.MatchManager ends wave → start augment phase.
-2.AugmentManager samples 3 augments per player.
-3.Send to client via TargetShowAugmentChoices.
-4.Client picks → CmdPickAugment.
-5.Server validates + applies augment.
-6.Resume combat.
-
-### Wave progression
-
-- Server spawns enemies per wave config.
-- Hazards intensify over time.
-- Every few waves → boss spawn.
-- Map shrinks gradually.
-
-## 9. Example Data (JSON)
-
-Hero Example
-
-```json
-{
-  "HeroID":"blademaster",
-  "DisplayName":"Blademaster",
-  "MaxHP":1000,
-  "MoveSpeed":6.0,
-  "BaseAttackDamage":120,
-  "AttackRange":1.5,
-  "AttackSpeed":1.0,
-  "Weapon":"katana_01",
-  "Skills":["dash_strike","whirlwind","parry"],
-  "Tags":["melee","mobility"]
-}
-```
-
-Augment Example
-
-```json
-{
-  "AugmentID":"uni_swift_feet",
-  "DisplayName":"Swift Feet",
-  "Description":"+15% movement speed",
-  "Category":"universal",
-  "Weight":1.2,
-  "Modifiers":[{"type":"MoveSpeedPct","value":15}],
-  "Duration":0,
-  "Exclusive":false,
-  "ShowOnTurn1":true,
-  "ShowOnTurn2":true,
-  "ShowOnTurn3":false
-}
-```
-
-## 10. Augment Pool
-
-### Universal
-
-- Swift Feet → +15% movement speed.
-- Tough Skin → +20% max HP.
-- Berserker Rage → +25% attack speed when HP < 50%.
-- Sharpened Instincts → +15% crit chance.
-- Energy Overload → cooldowns reduced by 15%.
-- Momentum → kills grant +10% move speed for 3s.
-- Resilient Core → take 20% less hazard damage.
-- Blood Pact → heal 15% on kill.
-
-### Melee
-
-- Cleave → attacks hit in arc.
-- Vampiric Edge → heal 10% of melee damage dealt.
-- Heavy Strikes → +30% melee damage, -10% attack speed.
-- Chain Slash → melee hits can chain to 1 extra enemy.
-
-### Ranged
-
-- Piercing Shot → projectiles pierce 1 enemy.
-- Explosive Tips → projectiles deal AoE splash.
-- Rapid Fire → +25% fire rate.
-- Longshot → +20% range, +10% crit.
-
-### Caster
-
-- Mana Surge → cooldown -25%.
-- Arcane Echo → spells repeat at 50% power.
-- Elemental Infusion → random element adds burn/freeze.
-- Mystic Overload → +40% skill damage, takes +15% damage.
-
-### Defensive
-
-- Iron Wall → -25% dmg taken for 2s after skill cast.
-- Guardian’s Aura → allies within 5m take -10% damage.
-- Adaptive Shell → gain 15% resist after hazard hit.
-- Second Wind → revive with 30% HP once per match.
-
-### Mobility
-
-- Double Dash → +1 dash charge.
-- Blinkstrike → dash resets basic attack cooldown.
-- Slippery → immune to slows.
-- Wall Cling → jump off walls for bonus height.
-
-### Chaos / Power Spikes
-
-- Overdrive → +100% dmg for 10s, then stunned 3s.
-- Last Stand → gain +50% dmg when below 25% HP.
-- Chaos Storm → spawn random hazard around you every 15s.
-- Juggernaut → become unstoppable, -20% move speed.
-
-## 11. Dev Checklist
-
-- Define SOs for heroes, weapons, skills, augments, enemies, bosses, maps.
-
-- Implement MatchManager (server state machine).
-
-- Implement HeroFactory + HeroController.
-
-- Implement SkillSystem (data-driven).
-
-- Implement AugmentManager + UI flow.
-
-- Add AI controllers & AggroManager.
-
-- Add MapController + hazards.
-
-- Implement Mirror networking.
-
-- Add boss controllers + phases.
-
-- Playtest & balance via SO values.
-
-## 12. Key Design Principles
-
-- Data-driven: All stats in SO/JSON, no har
-- SOLID: Separate responsibilities (e.g., SkillSystem vs HeroController).
-- Server-authoritative: All combat validated by server.
-- Replayable: Random augments, hazards, spawn patterns.
-- Anti-hide: Aggro system, hazard pressure, map shrink.
-
-
