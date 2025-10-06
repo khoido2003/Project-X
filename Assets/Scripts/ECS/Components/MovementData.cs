@@ -10,4 +10,5 @@ public class MovementData
     public bool IsPlayerControlled;
     public bool IsGrounded;
     public bool IsStunned;
+    public bool IsMoving;
 }

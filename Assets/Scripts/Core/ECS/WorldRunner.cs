@@ -55,5 +55,6 @@ public class WorldRunner : MonoBehaviour
         World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
         World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new AnimationSystem(), World);
+        World.Systems.AddSystem(new CameraFollowSystem(), World);
     }
 }

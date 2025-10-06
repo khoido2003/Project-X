@@ -12,10 +12,9 @@ public class MovementSystem : ISystem
 
     public void Update(float dt)
     {
-        foreach (var pair in _world.Components.Query<MovementData>())
+        foreach (var (entity, movement) in _world.Components.Query<MovementData>())
         {
-            EntityId entity = pair.Key;
-            MovementData movement = pair.Value;
+            Vector3 previousDirection = movement.MoveDirection;
 
             // Apply Gravity
             if (movement.IsGrounded)
@@ -30,6 +29,7 @@ public class MovementSystem : ISystem
             // Stun effect
             if (movement.IsStunned)
             {
+                movement.IsMoving = false;
                 movement.MoveDirection = Vector3.zero;
                 continue;
             }
@@ -40,10 +40,28 @@ public class MovementSystem : ISystem
                 Vector3 localInput = new(movement.InputDirection.x, 0f, movement.InputDirection.y);
 
                 movement.MoveDirection = localInput.normalized * movement.ForwardMultiplier;
+
+                movement.IsMoving = true;
             }
             else
             {
                 movement.MoveDirection = Vector3.zero;
+                movement.IsMoving = false;
+            }
+
+            // Event publishing
+            if (movement.IsMoving)
+            {
+                _world.Events.Publish(new MovementStartedEvent(entity));
+            }
+            if (!movement.IsMoving)
+            {
+                _world.Events.Publish(new MovementStoppedEvent(entity));
+            }
+
+            if ((movement.MoveDirection - previousDirection).sqrMagnitude > 0.001f)
+            {
+                _world.Events.Publish(new MovementDirectionChangedEvent(entity, movement.MoveDirection));
             }
         }
     }
