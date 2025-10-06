@@ -41,7 +41,9 @@ public class SpawnSystem : ISystem
     private void SpawnPlayer()
     {
         if (_spawnPoints.Count == 0)
+        {
             _spawnPoints.AddRange(Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None));
+        }
 
         if (_config == null)
         {
@@ -69,8 +71,13 @@ public class SpawnSystem : ISystem
 
             SpawnPoint spawn = shuffleSpawns[i];
 
-            _factory.CreateCharacter(data, spawn.transform.position);
-            SetupCameraFollow(data);
+            GameObject playerObj = _factory.CreateCharacter(data, spawn.transform.position);
+
+            EntityView view = playerObj.GetComponent<EntityView>();
+
+            _world.Events.Publish(new PlayerSpawnEvent(view.EntityInstance, playerObj, playerObj.transform));
+
+            Debug.Log($"[SpawnSystem] Published PlayerSpawnEvent for {playerObj.name}");
         }
     }
 
@@ -80,21 +87,6 @@ public class SpawnSystem : ISystem
         {
             int rand = Random.Range(i, points.Count);
             (points[i], points[rand]) = (points[rand], points[i]);
-        }
-    }
-
-    private void SetupCameraFollow(CharacterSO data)
-    {
-        if (!data.isPlayer)
-        {
-            return;
-        }
-
-        var cameraService = _world.Services.Resolve<ICameraService>();
-        if (cameraService != null)
-        {
-            var playerView = Object.FindAnyObjectByType<MovementView>();
-            cameraService.Follow(playerView.transform);
         }
     }
 }

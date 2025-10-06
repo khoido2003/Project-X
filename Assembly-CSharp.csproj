@@ -60,6 +60,7 @@
     <Compile Include="Assets\Scripts\Enemies\EnemyPatrolPoints.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityId.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridLayer.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\MovementEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\World.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
@@ -87,6 +88,7 @@
     <Compile Include="Assets\Scripts\Characters\MurderKitten\MurderKittenAnimationController.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\CameraFollowSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EventBus.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
@@ -122,6 +124,7 @@
     <Compile Include="Assets\Scripts\Enemies\EnemyPatrolState.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\MovementSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\PlayerInputView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\PlayerSpawnEvent.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ComponentStore.cs" />

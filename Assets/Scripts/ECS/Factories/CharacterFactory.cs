@@ -9,7 +9,7 @@ public class CharacterFactory
         _world = world;
     }
 
-    public EntityId CreateCharacter(CharacterSO data, Vector3 spawnPos)
+    public GameObject CreateCharacter(CharacterSO data, Vector3 spawnPos)
     {
         GameObject instance = Object.Instantiate(data.prefab, spawnPos, Quaternion.identity);
 
@@ -34,6 +34,6 @@ public class CharacterFactory
 
         instance.name = $"{data.characterName}_Entity{entity.Id}";
 
-        return entity;
+        return instance;
     }
 }
