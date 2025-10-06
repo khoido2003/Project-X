@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public interface ISystem
@@ -21,19 +22,39 @@ public class SystemManager
     public void UpdateAll(float dt)
     {
         foreach (var s in _systems)
-            s.Update(dt);
+        {
+            try
+            {
+                s.Update(dt);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogException(ex);
+            }
+        }
     }
 
     public void FixedUpdateAll(float dt)
     {
         foreach (var s in _systems)
-            s.FixedUpdate(dt);
+        {
+            try
+            {
+                s.FixedUpdate(dt);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogException(ex);
+            }
+        }
     }
 
     public void ShutdownAll()
     {
         foreach (var s in _systems)
+        {
             s.Shutdown();
+        }
         _systems.Clear();
     }
 }

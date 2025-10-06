@@ -1,22 +1,30 @@
 using UnityEngine;
 
-[DisallowMultipleComponent]
 public class EntityView : MonoBehaviour
 {
-    public EntityId Entity;
-    private World _world;
+    public EntityId EntityInstance { get; private set; }
+    protected World WorldInstance { get; private set; }
 
     public void Bind(World world, EntityId entity)
     {
-        _world = world;
-        Entity = entity;
+        WorldInstance = world;
+        EntityInstance = entity;
     }
 
     private void OnDestroy()
     {
-        if (_world != null && _world.Entities.Exists(Entity))
+        if (WorldInstance == null || !WorldInstance.Entities.Exists(EntityInstance))
         {
-            _world.DestroyEntity(Entity);
+            return;
+        }
+
+        try
+        {
+            WorldInstance.DestroyEntity(EntityInstance);
+        }
+        catch (System.Exception ex)
+        {
+            UnityEngine.Debug.LogWarning($"Failed to destroy entity {EntityInstance}: {ex.Message}");
         }
     }
 }

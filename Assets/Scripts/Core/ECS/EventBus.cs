@@ -20,16 +20,17 @@ public class EventBus
 
     public void Unsubscribe<T>(Action<T> handler)
     {
-        Type t = typeof(T);
-
-        if (_subscribers.TryGetValue(t, out List<Delegate> list))
+        var t = typeof(T);
+        if (!_subscribers.TryGetValue(t, out var list))
         {
-            list.Remove(handler);
+            return;
+        }
 
-            if (list.Count == 0)
-            {
-                _subscribers.Remove(t);
-            }
+        list.Remove(handler);
+
+        if (list.Count == 0)
+        {
+            _subscribers.Remove(t);
         }
     }
 

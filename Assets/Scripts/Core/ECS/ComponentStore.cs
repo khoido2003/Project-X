@@ -3,32 +3,39 @@ using System.Collections.Generic;
 
 public class ComponentStore
 {
-    private readonly Dictionary<Type, object> _storage = new();
+    private const int DICTIONARY_CAPACITY = 64;
+    private readonly Dictionary<Type, IDictionary<EntityId, object>> _storage = new();
 
     public void Add<T>(EntityId entity, T component)
         where T : class
     {
-        var t = typeof(T);
-        if (!_storage.TryGetValue(t, out var raw))
+        Type type = typeof(T);
+
+        if (!_storage.TryGetValue(type, out var dict))
         {
-            var dict = new Dictionary<EntityId, T> { [entity] = component };
-            _storage[t] = dict;
-            return;
+            dict = new Dictionary<EntityId, object>(DICTIONARY_CAPACITY);
+            _storage[type] = dict;
         }
 
-        var typed = (Dictionary<EntityId, T>)raw;
-        typed[entity] = component;
+        dict[entity] =
+            component
+            ?? throw new ArgumentNullException(
+                nameof(component),
+                $"Cannot add null component of type {typeof(T).Name}."
+            );
     }
 
     public bool TryGet<T>(EntityId entity, out T component)
         where T : class
     {
         component = null;
-        if (_storage.TryGetValue(typeof(T), out object raw))
+
+        if (_storage.TryGetValue(typeof(T), out var dict) && dict.TryGetValue(entity, out var obj))
         {
-            var typed = (Dictionary<EntityId, T>)raw;
-            return typed.TryGetValue(entity, out component);
+            component = obj as T;
+            return component != null;
         }
+
         return false;
     }
 
@@ -36,55 +43,45 @@ public class ComponentStore
         where T : class
     {
         if (TryGet(entity, out T component))
-        {
             return component;
-        }
-        throw new KeyNotFoundException($"Component {typeof(T).Name} for {entity} not found.");
+
+        throw new KeyNotFoundException($"Component {typeof(T).Name} for entity {entity} not found.");
     }
 
     public bool Has<T>(EntityId entity)
         where T : class
     {
-        return TryGet<T>(entity, out _);
+        return _storage.TryGetValue(typeof(T), out var dict) && dict.ContainsKey(entity);
     }
 
     public bool Remove<T>(EntityId entity)
         where T : class
     {
-        if (_storage.TryGetValue(typeof(T), out object raw))
+        if (_storage.TryGetValue(typeof(T), out var dict))
         {
-            var typed = (Dictionary<EntityId, T>)raw;
-            return typed.Remove(entity);
+            return dict.Remove(entity);
         }
+
         return false;
     }
 
     public IEnumerable<KeyValuePair<EntityId, T>> Query<T>()
         where T : class
     {
-        List<KeyValuePair<EntityId, T>> list = new();
-
-        if (_storage.TryGetValue(typeof(T), out object raw))
+        if (_storage.TryGetValue(typeof(T), out var dict))
         {
-            var typed = (Dictionary<EntityId, T>)raw;
-
-            foreach (var kv in typed)
+            foreach (var kvp in dict)
             {
-                list.Add(kv);
+                yield return new KeyValuePair<EntityId, T>(kvp.Key, (T)kvp.Value);
             }
         }
-        return list;
     }
 
     public void RemoveAllComponents(EntityId entity)
     {
-        var keys = new List<Type>(_storage.Keys);
-
-        foreach (var type in keys)
+        foreach (var dict in _storage.Values)
         {
-            object raw = _storage[type];
-            var removeMethod = raw.GetType().GetMethod("Remove");
-            removeMethod?.Invoke(raw, new object[] { entity });
+            dict.Remove(entity);
         }
     }
 }

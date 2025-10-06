@@ -1,28 +1,21 @@
 using UnityEngine;
 
-public interface ITimeService
-{
-    float DeltaTime { get; }
-    float FixedDeltaTime { get; }
-}
-
-public class UnityTimeService : ITimeService
-{
-    public float DeltaTime => Time.deltaTime;
-    public float FixedDeltaTime => Time.fixedDeltaTime;
-}
-
 public class WorldRunner : MonoBehaviour
 {
+    [Header("Game Config")]
+    [SerializeField]
+    private SpawnConfigSO spawnConfig;
+
     public World World { get; private set; }
+
+    private SpawnSystem _spawnSystem;
 
     private void Awake()
     {
         World = new World();
 
-        World.Services.Register<ITimeService>(new UnityTimeService());
-
-        // TODO register input/audio/network services here...
+        InitServices();
+        InitSystems();
     }
 
     private void Update()
@@ -40,5 +33,27 @@ public class WorldRunner : MonoBehaviour
     private void OnDestroy()
     {
         World.Systems.ShutdownAll();
+    }
+
+    private void InitServices()
+    {
+        World.Services.Register<ITimeService>(new UnityTimeService());
+
+        var cameraService = FindAnyObjectByType<CinemachineCameraService>();
+        if (cameraService == null)
+        {
+            Debug.LogError("No CinemachineCamera found");
+        }
+        if (cameraService != null)
+        {
+            World.Services.Register<ICameraService>(cameraService);
+        }
+    }
+
+    private void InitSystems()
+    {
+        World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
+        World.Systems.AddSystem(new MovementSystem(), World);
+        World.Systems.AddSystem(new AnimationSystem(), World);
     }
 }

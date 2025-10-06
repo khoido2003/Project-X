@@ -173,6 +173,52 @@ The project will be refactored to a clean, ECS-inspired, SOLID, and data-driven 
 - **Data-Driven:** All gameplay data (stats, skills, weapons, etc.) is in ScriptableObjects or data files.
 - **Networking-Ready:** Core logic is agnostic to networking; Mirror is integrated as a service/adapter.
 
+
+```
+                   ┌────────────────────┐
+                   │      World         │
+                   │────────────────────│
+                   │ Entities           │
+                   │ Components         │
+                   │ Systems            │
+                   │ Services           │
+                   │ Events             │
+                   └────────────────────┘
+                            │
+        ┌───────────────────┼────────────────────┐
+        │                   │                    │
+        ▼                   ▼                    ▼
+┌────────────┐       ┌───────────────┐     ┌──────────────┐
+│ EntityMgr  │       │ ComponentStore│     │ SystemManager│
+│ creates,   │       │ stores data by│     │ updates logic│
+│ destroys,  │       │ entity+type   │     │ over entities│
+└────────────┘       └───────────────┘     └──────────────┘
+        │                   │                    │
+        │                   │                    │
+        ▼                   ▼                    ▼
+    ┌───────────┐       ┌────────────┐       ┌───────────────┐
+    │ Entity IDs│◄─────►│ Components │◄─────►│ Systems (Logic)│
+    └───────────┘       └────────────┘       └───────────────┘
+                                                   │
+                                            ┌──────┴───────┐
+                                            │ Services     │
+                                            │ (Time, Input)│
+                                            └──────────────┘
+```
+
+```
+WorldRunner
+    ↓
+World
+    ↓
+SystemManager → MovementSystem
+    ↓
+ComponentStore → MovementData for entity
+    ↓
+EntityView (updates GameObject)
+```
+
+
 ### Folder Structure
 ```
 Assets/Scripts/
