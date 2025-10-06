@@ -18,6 +18,10 @@ public class ServiceLocator : IServiceLocator
     public void Register<T>(T instance)
         where T : class
     {
+        if (_services.ContainsKey(typeof(T)))
+        {
+            UnityEngine.Debug.LogWarning($"Service {typeof(T).Name} already registered — overwriting.");
+        }
         _services[typeof(T)] = instance;
     }
 
