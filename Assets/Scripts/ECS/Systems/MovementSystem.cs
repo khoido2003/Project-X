@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MovementSystem : ISystem
@@ -8,11 +9,12 @@ public class MovementSystem : ISystem
     public void Initialize(World world)
     {
         _world = world;
+        _world.Events.Subscribe<MoveInputEvent>(OnMoveInput);
     }
 
     public void Update(float dt)
     {
-        foreach (var (entity, movement) in _world.Components.Query<MovementData>())
+        foreach (var (entity, movement) in _world.Components.Query<MovementDataComponent>())
         {
             Vector3 previousDirection = movement.MoveDirection;
 
@@ -49,24 +51,50 @@ public class MovementSystem : ISystem
                 movement.IsMoving = false;
             }
 
+            ///////////////////////////////////////////////////////////
+
             // Event publishing
+            _world.Events.Publish(
+                new AnimationParameterEvent(entity, "isMoving", AnimationParameterType.Bool, movement.IsMoving)
+            );
+
             if (movement.IsMoving)
             {
-                _world.Events.Publish(new MovementStartedEvent(entity));
-            }
-            if (!movement.IsMoving)
-            {
-                _world.Events.Publish(new MovementStoppedEvent(entity));
-            }
+                Vector3 forward = Vector3.forward;
+                Vector3 right = Vector3.right;
 
-            if ((movement.MoveDirection - previousDirection).sqrMagnitude > 0.001f)
-            {
-                _world.Events.Publish(new MovementDirectionChangedEvent(entity, movement.MoveDirection));
+                float forwardDot = Vector3.Dot(movement.MoveDirection, forward);
+                float rightDot = Vector3.Dot(movement.MoveDirection, right);
+
+                _world.Events.Publish(
+                    new AnimationParameterEvent(entity, "moveY", AnimationParameterType.Float, -forwardDot)
+                );
+
+                _world.Events.Publish(
+                    new AnimationParameterEvent(entity, "moveX", AnimationParameterType.Float, rightDot)
+                );
             }
+            else
+            {
+                _world.Events.Publish(new AnimationParameterEvent(entity, "moveY", AnimationParameterType.Float, 0f));
+
+                _world.Events.Publish(new AnimationParameterEvent(entity, "moveX", AnimationParameterType.Float, 0f));
+            }
+        }
+    }
+
+    private void OnMoveInput(MoveInputEvent @event)
+    {
+        if (_world.Components.TryGet(@event.Entity, out MovementDataComponent movement))
+        {
+            movement.InputDirection = @event.Input;
         }
     }
 
     public void FixedUpdate(float dt) { }
 
-    public void Shutdown() { }
+    public void Shutdown()
+    {
+        _world.Events.Unsubscribe<MoveInputEvent>(OnMoveInput);
+    }
 }

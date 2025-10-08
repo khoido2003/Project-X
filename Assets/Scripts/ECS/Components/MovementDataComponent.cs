@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class MovementData
+public class MovementDataComponent
 {
     public Vector3 MoveDirection;
     public Vector2 InputDirection;

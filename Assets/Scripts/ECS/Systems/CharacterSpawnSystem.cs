@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SpawnSystem : ISystem
+public class CharacterSpawnSystem : ISystem
 {
     private readonly SpawnConfigSO _config;
     private readonly List<SpawnPoint> _spawnPoints = new();
     private CharacterFactory _factory;
     private World _world;
 
-    public SpawnSystem(SpawnConfigSO config)
+    public CharacterSpawnSystem(SpawnConfigSO config)
     {
         _config = config;
     }
@@ -75,6 +75,7 @@ public class SpawnSystem : ISystem
 
             EntityView view = playerObj.GetComponent<EntityView>();
 
+            // Publish events
             _world.Events.Publish(new PlayerSpawnEvent(view.EntityInstance, playerObj, playerObj.transform));
 
             Debug.Log($"[SpawnSystem] Published PlayerSpawnEvent for {playerObj.name}");

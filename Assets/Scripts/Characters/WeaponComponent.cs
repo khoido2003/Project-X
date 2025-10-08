@@ -6,7 +6,7 @@ public class WeaponComponent : MonoBehaviour
     private Transform weaponHolder;
     private WeaponVfxEffectSocket vfxEffectSocket;
 
-    public void Initialize(WeaponData weaponData, Transform holder = null)
+    public void Initialize(WeaponDataSO weaponData, Transform holder = null)
     {
         if (weaponData == null || weaponData.weaponPrefab == null)
         {

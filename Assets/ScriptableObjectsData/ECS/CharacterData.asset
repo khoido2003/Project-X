@@ -20,3 +20,4 @@ MonoBehaviour:
   isMoving: isMoving
   moveX: moveX
   moveY: moveY
+  weaponData: {fileID: 11400000, guid: 5c9b3b66d8ad88043b629dfaaa8daf8c, type: 2}

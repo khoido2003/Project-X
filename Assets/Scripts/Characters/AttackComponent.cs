@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AttackComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelayReceiver
 {
-    protected WeaponData weaponData;
+    protected WeaponDataSO weaponData;
     private HealthComponent currentHealthComponent;
 
     private float lastAttackTime = -Mathf.Infinity;
@@ -21,7 +21,7 @@ public class AttackComponent : MonoBehaviour, IAnimationTrigger, IAnimationRelay
         currentHealthComponent = GetComponent<HealthComponent>();
     }
 
-    public void Initialize(WeaponData data, bool isPlayerControlled)
+    public void Initialize(WeaponDataSO data, bool isPlayerControlled)
     {
         weaponData = data;
         isPlayer = isPlayerControlled;

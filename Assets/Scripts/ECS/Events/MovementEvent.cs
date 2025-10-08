@@ -1,19 +1,5 @@
 using UnityEngine;
 
-public struct MovementStartedEvent
-{
-    public readonly EntityId Entity;
-
-    public MovementStartedEvent(EntityId entity) => Entity = entity;
-}
-
-public struct MovementStoppedEvent
-{
-    public readonly EntityId Entity;
-
-    public MovementStoppedEvent(EntityId entity) => Entity = entity;
-}
-
 public struct MovementDirectionChangedEvent
 {
     public readonly EntityId Entity;

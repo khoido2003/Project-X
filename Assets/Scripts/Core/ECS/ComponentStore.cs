@@ -65,6 +65,7 @@ public class ComponentStore
         return false;
     }
 
+    // 1 component
     public IEnumerable<KeyValuePair<EntityId, T>> Query<T>()
         where T : class
     {
@@ -73,6 +74,53 @@ public class ComponentStore
             foreach (var kvp in dict)
             {
                 yield return new KeyValuePair<EntityId, T>(kvp.Key, (T)kvp.Value);
+            }
+        }
+    }
+
+    // 2 components
+    public IEnumerable<(EntityId, T1, T2)> Query<T1, T2>()
+        where T1 : class
+        where T2 : class
+    {
+        if (!_storage.TryGetValue(typeof(T1), out var dict1))
+        {
+            yield break;
+        }
+
+        if (!_storage.TryGetValue(typeof(T2), out var dict2))
+        {
+            yield break;
+        }
+
+        foreach (var kvp in dict1)
+        {
+            if (dict2.TryGetValue(kvp.Key, out var obj2))
+            {
+                yield return (kvp.Key, (T1)kvp.Value, (T2)obj2);
+            }
+        }
+    }
+
+    // 3 components
+    public IEnumerable<(EntityId, T1, T2, T3)> Query<T1, T2, T3>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+    {
+        if (!_storage.TryGetValue(typeof(T1), out var dict1))
+            yield break;
+        if (!_storage.TryGetValue(typeof(T2), out var dict2))
+            yield break;
+        if (!_storage.TryGetValue(typeof(T3), out var dict3))
+            yield break;
+
+        foreach (var kvp in dict1)
+        {
+            var id = kvp.Key;
+            if (dict2.TryGetValue(id, out var obj2) && dict3.TryGetValue(id, out var obj3))
+            {
+                yield return (id, (T1)kvp.Value, (T2)obj2, (T3)obj3);
             }
         }
     }

@@ -15,7 +15,7 @@ public class MovementView : EntityView
         World world = WorldInstance;
         EntityId entity = EntityInstance;
 
-        if (world.Components.TryGet(entity, out MovementData movement))
+        if (world.Components.TryGet(entity, out MovementDataComponent movement))
         {
             movement.IsGrounded = controller.isGrounded;
 

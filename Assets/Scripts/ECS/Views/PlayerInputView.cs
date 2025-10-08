@@ -4,21 +4,50 @@ public class PlayerInputView : EntityView
 {
     private void Start()
     {
-        InputManager.Instance.OnMove += InputManager_OnMove;
+        var input = InputManager.Instance;
+
+        input.OnMove += HandleMove;
+        input.OnAttackPressed += HandleAttack;
+
+        input.OnSkill1Pressed += () => HandleSkill(1, true);
+        input.OnSkill1Released += () => HandleSkill(1, false);
+
+        input.OnSkill2Pressed += () => HandleSkill(2, true);
+        input.OnSkill2Released += () => HandleSkill(2, false);
+
+        input.OnSkill3Pressed += () => HandleSkill(3, true);
+        input.OnSkill3Released += () => HandleSkill(3, false);
     }
 
     private void OnDestroy()
     {
-        InputManager.Instance.OnMove -= InputManager_OnMove;
+        var input = InputManager.Instance;
+
+        input.OnMove -= HandleMove;
+        input.OnAttackPressed -= HandleAttack;
+
+        input.OnSkill1Pressed -= () => HandleSkill(1, true);
+        input.OnSkill1Released -= () => HandleSkill(1, false);
+
+        input.OnSkill2Pressed -= () => HandleSkill(2, true);
+        input.OnSkill2Released -= () => HandleSkill(2, false);
+
+        input.OnSkill3Pressed -= () => HandleSkill(3, true);
+        input.OnSkill3Released -= () => HandleSkill(3, false);
     }
 
-    private void InputManager_OnMove(Vector2 input)
+    private void HandleSkill(int index, bool isPressed)
     {
-        EntityId entity = EntityInstance;
+        WorldInstance.Events.Publish(new SkillInputEvent(EntityInstance, index, isPressed));
+    }
 
-        if (WorldInstance.Components.TryGet(entity, out MovementData movement))
-        {
-            movement.InputDirection = input;
-        }
+    private void HandleAttack()
+    {
+        WorldInstance.Events.Publish(new AttackInputEvent(EntityInstance));
+    }
+
+    private void HandleMove(Vector2 input)
+    {
+        WorldInstance.Events.Publish(new MoveInputEvent(EntityInstance, input));
     }
 }

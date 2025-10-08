@@ -13,7 +13,7 @@ public class CharacterData : ScriptableObject
     public float forwardDirectionMultiplier = 1f;
 
     public StatsData stats;
-    public WeaponData weapon;
+    public WeaponDataSO weapon;
     public SkillData[] skills = new SkillData[3];
 
     public AudioClip moveSound;
