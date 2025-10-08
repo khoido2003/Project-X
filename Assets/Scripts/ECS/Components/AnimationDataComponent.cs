@@ -1,4 +1,4 @@
-public class AnimationData
+public class AnimationDataComponent
 {
     public bool IsMoving;
     public float MoveX;

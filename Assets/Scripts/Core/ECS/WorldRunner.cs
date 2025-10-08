@@ -8,7 +8,7 @@ public class WorldRunner : MonoBehaviour
 
     public World World { get; private set; }
 
-    private SpawnSystem _spawnSystem;
+    private CharacterSpawnSystem _spawnSystem;
 
     private void Awake()
     {
@@ -44,17 +44,16 @@ public class WorldRunner : MonoBehaviour
         {
             Debug.LogError("No CinemachineCamera found");
         }
-        if (cameraService != null)
-        {
-            World.Services.Register<ICameraService>(cameraService);
-        }
+        World.Services.Register<ICameraService>(cameraService);
     }
 
     private void InitSystems()
     {
-        World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
+        World.Systems.AddSystem(new CharacterSpawnSystem(spawnConfig), World);
         World.Systems.AddSystem(new MovementSystem(), World);
-        World.Systems.AddSystem(new AnimationSystem(), World);
         World.Systems.AddSystem(new CameraFollowSystem(), World);
+        World.Systems.AddSystem(new AnimationSystem(), World);
+        World.Systems.AddSystem(new AnimationSyncSystem(), World);
+        World.Systems.AddSystem(new AttackSystem(), World);
     }
 }

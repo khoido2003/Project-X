@@ -47,6 +47,7 @@
     <Analyzer Include="D:\unity\Editor\6000.2.6f2\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\ECS\Systems\AnimationSyncSystem.cs" />
     <Compile Include="Assets\Scripts\Characters\StatusEffectComponent.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\Skills\SkillData.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
@@ -60,11 +61,15 @@
     <Compile Include="Assets\Scripts\Enemies\EnemyPatrolPoints.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityId.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridLayer.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\AttackEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\MovementEvent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\AttackSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\World.cs" />
     <Compile Include="Assets\Scripts\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\Core\InputManager.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\AnimationDataComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\AttackDataComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
     <Compile Include="Assets\Scripts\Enemies\AIState.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityView.cs" />
@@ -93,7 +98,6 @@
     <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ServiceLocator.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\WeaponData.cs" />
     <Compile Include="Assets\Scripts\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\UI\HealthBarUI.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
@@ -102,26 +106,30 @@
     <Compile Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\Skills\AlexBaseballBoySkills\DaskStrikeSkill.cs" />
     <Compile Include="Assets\Scripts\Utils\MouseWorldPosition.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\WeaponDataComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\PathfindingComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IStatusEffect.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationTrigger.cs" />
     <Compile Include="Assets\Scripts\Enemies\AIConfig.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\ECS\WeaponDataSO.cs" />
     <Compile Include="Assets\Scripts\Utils\SpawnPoint.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\ECS\SpawnConfigSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleOscillateSliders.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyTakeCoverState.cs" />
-    <Compile Include="Assets\Scripts\ECS\Components\AnimationData.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\InputEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\TimeService.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleSceneLoader.cs" />
-    <Compile Include="Assets\Scripts\ECS\Systems\SpawnSystem.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\MovementDataComponent.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyAttackState.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AnimationView.cs" />
     <Compile Include="Assets\Scripts\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MurderKitten\MurderKittenAttackComponent.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyPatrolState.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\AnimationParameterEvent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\WeaponSpawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\MovementSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\PlayerInputView.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\PlayerSpawnEvent.cs" />
@@ -129,9 +137,10 @@
     <Compile Include="Assets\Scripts\Enemies\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ComponentStore.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyChaseState.cs" />
-    <Compile Include="Assets\Scripts\ECS\Components\MovementData.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\TakeDamageEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityManager.cs" />
     <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationRelayReceiver.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\CharacterSpawnSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />

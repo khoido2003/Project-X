@@ -16,4 +16,9 @@ public class CharacterSO : ScriptableObject
     public string isMoving = "isMoving";
     public string moveX = "moveX";
     public string moveY = "moveY";
+
+
+    [Header("Weapon")]
+    public WeaponDataSO weaponData;
+
 }
