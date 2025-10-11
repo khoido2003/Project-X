@@ -9,15 +9,22 @@ public class CharacterFactory
         _world = world;
     }
 
-    public GameObject CreateCharacter(CharacterSO data, Vector3 spawnPos)
+    public GameObject CreateCharacter(CharacterDefinitionSO data, Vector3 spawnPos)
     {
         GameObject instance = Object.Instantiate(data.prefab, spawnPos, Quaternion.identity);
+
+        WeaponHolder weaponHolder = instance.GetComponentInChildren<WeaponHolder>();
+
         EntityId entity = _world.CreateEntity();
 
         foreach (EntityView view in instance.GetComponents<EntityView>())
-        {
             view.Bind(_world, entity);
-        }
+
+        // Health
+        _world.Components.Add(
+            entity,
+            new HealthDataComponent { MaxHealth = data.maxHealth, CurrentHealth = data.maxHealth }
+        );
 
         // Movement
         _world.Components.Add(
@@ -31,33 +38,42 @@ public class CharacterFactory
         );
 
         // Animation
-        _world.Components.Add(entity, new AnimationDataComponent());
-
-        // Attack
         _world.Components.Add(
             entity,
-            new AttackDataComponent
+            new AnimationDataComponent
             {
-                IsPlayerControlled = data.isPlayer,
-                LastAttackTime = 0f,
-                IsAttacking = false,
+                IsMovingParam = data.isMovingParam,
+                MoveXParam = data.moveXParam,
+                MoveYParam = data.moveYParam,
             }
         );
 
-        // Weapon
-        var weaponObj = Object.Instantiate(data.weaponData.weaponPrefab, instance.transform);
-        weaponObj.transform.localPosition = data.weaponData.spawnPositionOffset;
-        weaponObj.transform.localRotation = Quaternion.Euler(data.weaponData.spawnRotationOffset);
+        // Attack + Weapon
+        if (data.hasWeapon && data.weaponData != null)
+        {
+            _world.Components.Add(entity, new AttackDataComponent { IsPlayerControlled = data.isPlayer });
 
-        _world.Components.Add(
-            entity,
-            new WeaponDataComponent
-            {
-                WeaponData = data.weaponData,
-                WeaponInstance = weaponObj,
-                WeaponHolder = instance.transform,
-            }
-        );
+            _world.Components.Add(
+                entity,
+                new WeaponDataComponent
+                {
+                    WeaponName = data.weaponData.weaponName,
+                    IsMelee = data.weaponData.isMelee,
+                    AttackDamage = data.weaponData.attackDamage,
+                    AttackCooldown = data.weaponData.attackCooldown,
+                    AttackRange = data.weaponData.attackRange,
+                    WeaponPrefab = data.weaponData.weaponPrefab,
+                    ProjectilePrefab = data.weaponData.projectilePrefab,
+                    SpawnPositionOffset = data.weaponData.spawnPositionOffset,
+                    SpawnRotationOffset = data.weaponData.spawnRotationOffset,
+                    HitImpactParticlePrefab = data.weaponData.hitImpactParticlePrefab,
+                    AttackAnimationTrigger = data.weaponData.attackAnimationTrigger,
+                    TotalAttackAnimations = data.weaponData.totalAttackAnimations,
+                    AttackSound = data.weaponData.attackSound,
+                    WeaponHolder = weaponHolder.transform,
+                }
+            );
+        }
 
         instance.name = $"{data.characterName}_Entity{entity.Id}";
         return instance;

@@ -15,18 +15,7 @@ public class AnimationView : EntityView
         WorldInstance.Events.Subscribe<AnimationParameterEvent>(OnAnimationParameter);
     }
 
-    private void Update()
-    {
-        if (WorldInstance == null)
-            return;
-
-        if (WorldInstance.Components.TryGet(EntityInstance, out AnimationDataComponent anim))
-        {
-            animator.SetBool("isMoving", anim.IsMoving);
-            animator.SetFloat("moveX", anim.MoveX);
-            animator.SetFloat("moveY", anim.MoveY);
-        }
-    }
+    private void Update() { }
 
     private void OnAnimationParameter(AnimationParameterEvent @event)
     {
@@ -56,7 +45,6 @@ public class AnimationView : EntityView
 
     private void OnDestroy()
     {
-        if (WorldInstance != null)
-            WorldInstance.Events.Unsubscribe<AnimationParameterEvent>(OnAnimationParameter);
+        WorldInstance?.Events.Unsubscribe<AnimationParameterEvent>(OnAnimationParameter);
     }
 }

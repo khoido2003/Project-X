@@ -50,6 +50,7 @@ public class WorldRunner : MonoBehaviour
     private void InitSystems()
     {
         World.Systems.AddSystem(new CharacterSpawnSystem(spawnConfig), World);
+        World.Systems.AddSystem(new WeaponSpawnSystem(), World);
         World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new CameraFollowSystem(), World);
         World.Systems.AddSystem(new AnimationSystem(), World);

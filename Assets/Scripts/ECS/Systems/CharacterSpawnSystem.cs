@@ -67,7 +67,7 @@ public class CharacterSpawnSystem : ISystem
 
         for (int i = 0; i < characterCount; i++)
         {
-            CharacterSO data = _config.possiblePlayers[i];
+            CharacterDefinitionSO data = _config.possiblePlayers[i];
 
             SpawnPoint spawn = shuffleSpawns[i];
 
@@ -77,8 +77,6 @@ public class CharacterSpawnSystem : ISystem
 
             // Publish events
             _world.Events.Publish(new PlayerSpawnEvent(view.EntityInstance, playerObj, playerObj.transform));
-
-            Debug.Log($"[SpawnSystem] Published PlayerSpawnEvent for {playerObj.name}");
         }
     }
 

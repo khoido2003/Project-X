@@ -73,7 +73,6 @@
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
     <Compile Include="Assets\Scripts\Enemies\AIState.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityView.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\ECS\CharacterSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MouseLookView.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyIdleState.cs" />
     <Compile Include="Assets\Scripts\Characters\AnimationControllerComponent.cs" />
@@ -92,6 +91,7 @@
     <Compile Include="Assets\Scripts\ECS\Systems\AnimationSystem.cs" />
     <Compile Include="Assets\Scripts\Characters\MurderKitten\MurderKittenAnimationController.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\HealthDataComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\CameraFollowSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EventBus.cs" />
@@ -112,7 +112,6 @@
     <Compile Include="Assets\Scripts\Characters\Interfaces\IAnimationTrigger.cs" />
     <Compile Include="Assets\Scripts\Enemies\AIConfig.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\ECS\WeaponDataSO.cs" />
     <Compile Include="Assets\Scripts\Utils\SpawnPoint.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\ECS\SpawnConfigSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
@@ -128,14 +127,18 @@
     <Compile Include="Assets\Scripts\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\MurderKitten\MurderKittenAttackComponent.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyPatrolState.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\ECS\CharacterDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AnimationParameterEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\WeaponSpawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\MovementSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\PlayerInputView.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\PlayerSpawnEvent.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\CharacterSO.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\WeaponDataSO.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ComponentStore.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\DamageEvent.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyChaseState.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\TakeDamageEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityManager.cs" />
