@@ -6,6 +6,8 @@ public class ComponentStore
     private const int DICTIONARY_CAPACITY = 64;
     private readonly Dictionary<Type, IDictionary<EntityId, object>> _storage = new();
 
+    public event Action<EntityId, Type> OnComponentAdded;
+
     public void Add<T>(EntityId entity, T component)
         where T : class
     {
@@ -23,6 +25,8 @@ public class ComponentStore
                 nameof(component),
                 $"Cannot add null component of type {typeof(T).Name}."
             );
+
+        OnComponentAdded?.Invoke(entity, type);
     }
 
     public bool TryGet<T>(EntityId entity, out T component)
@@ -43,7 +47,9 @@ public class ComponentStore
         where T : class
     {
         if (TryGet(entity, out T component))
+        {
             return component;
+        }
 
         throw new KeyNotFoundException($"Component {typeof(T).Name} for entity {entity} not found.");
     }

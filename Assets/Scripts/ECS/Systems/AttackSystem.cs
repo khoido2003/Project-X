@@ -38,7 +38,7 @@ public class AttackSystem : ISystem
             return;
         }
 
-        if (Time.time < attack.LastAttackTime + weapon.WeaponData.attackCooldown)
+        if (Time.time < attack.LastAttackTime + weapon.AttackCooldown)
         {
             return;
         }
@@ -47,7 +47,7 @@ public class AttackSystem : ISystem
         attack.LastAttackTime = Time.time;
         attack.AttackDirection = Vector3.forward;
 
-        int randomIndex = Random.Range(0, weapon.WeaponData.totalAttackAnimations);
+        int randomIndex = Random.Range(0, weapon.TotalAttackAnimations);
 
         ////////////////////////////////////////////////////////
 
@@ -61,7 +61,7 @@ public class AttackSystem : ISystem
         _world.Events.Publish(
             new AnimationParameterEvent(
                 @event.Entity,
-                weapon.WeaponData.attackAnimationTrigger,
+                weapon.AttackAnimationTrigger,
                 AnimationParameterType.Trigger,
                 null
             )

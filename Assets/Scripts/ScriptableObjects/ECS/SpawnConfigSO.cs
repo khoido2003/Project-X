@@ -10,5 +10,6 @@ public class SpawnConfigSO : ScriptableObject
     public int maxEnemies = 10;
 
     [Header("References")]
-    public CharacterSO[] possiblePlayers;
+    public CharacterDefinitionSO[] possiblePlayers;
+    public CharacterDefinitionSO[] possibleEnemies;
 }

@@ -7,39 +7,55 @@ public class WeaponSpawnSystem : ISystem
     public void Initialize(World world)
     {
         _world = world;
-    }
+        _world.Components.OnComponentAdded += HandleComponentAdded;
 
-    public void Update(float dt)
-    {
         foreach (var (entity, weapon) in _world.Components.Query<WeaponDataComponent>())
         {
-            if (weapon.WeaponInstance != null)
-            {
-                continue;
-            }
-
-            if (weapon.WeaponData == null || weapon.WeaponData.weaponPrefab == null)
-            {
-                Debug.LogError($"Entity {entity} has no valid WeaponData");
-                continue;
-            }
-
-            Transform holder = weapon.WeaponHolder;
-
-            if (holder == null)
-            {
-                Debug.LogError("Missing WeaponHolder!");
-            }
-
-            GameObject instance = Object.Instantiate(weapon.WeaponData.weaponPrefab, holder);
-            instance.transform.localPosition = weapon.WeaponData.spawnPositionOffset;
-            instance.transform.localRotation = Quaternion.Euler(weapon.WeaponData.spawnRotationOffset);
-
-            weapon.WeaponInstance = instance;
+            TrySpawnWeapon(entity, weapon);
         }
     }
 
+    private void HandleComponentAdded(EntityId entity, System.Type type)
+    {
+        if (type != typeof(WeaponDataComponent))
+            return;
+
+        if (_world.Components.TryGet(entity, out WeaponDataComponent weapon))
+        {
+            TrySpawnWeapon(entity, weapon);
+        }
+    }
+
+    private void TrySpawnWeapon(EntityId entity, WeaponDataComponent weapon)
+    {
+        if (weapon.WeaponInstance != null)
+            return;
+
+        if (weapon.WeaponPrefab == null)
+        {
+            Debug.LogWarning($"[WeaponSpawnSystem] Entity {entity.Id} has no weapon prefab!");
+            return;
+        }
+
+        if (weapon.WeaponHolder == null)
+        {
+            Debug.LogWarning($"[WeaponSpawnSystem] Entity {entity.Id} has no weapon holder!");
+            return;
+        }
+
+        GameObject instance = Object.Instantiate(weapon.WeaponPrefab, weapon.WeaponHolder);
+        instance.transform.localPosition = weapon.SpawnPositionOffset;
+        instance.transform.localRotation = Quaternion.Euler(weapon.SpawnRotationOffset);
+
+        weapon.WeaponInstance = instance;
+    }
+
+    public void Update(float dt) { }
+
     public void FixedUpdate(float dt) { }
 
-    public void Shutdown() { }
+    public void Shutdown()
+    {
+        _world.Components.OnComponentAdded -= HandleComponentAdded;
+    }
 }

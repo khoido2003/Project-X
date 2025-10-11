@@ -15,4 +15,5 @@ MonoBehaviour:
   maxPlayers: 4
   maxEnemies: 10
   possiblePlayers:
-  - {fileID: 11400000, guid: 9e7dadc8b8c4eb84db26788c320a6740, type: 2}
+  - {fileID: 11400000, guid: 14fd96a3bc0a659488a2b441064ebf86, type: 2}
+  possibleEnemies: []
