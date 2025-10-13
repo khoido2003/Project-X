@@ -29,7 +29,7 @@ public class CharacterDefinitionSO : ScriptableObject
     {
         [Header("Config")]
         public string weaponName;
-        public bool isMelee = true;
+        public AttackExecutionType ExecutionType;
 
         [Header("Stats")]
         public float attackDamage = 11f;

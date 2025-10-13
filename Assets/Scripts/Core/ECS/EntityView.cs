@@ -1,11 +1,12 @@
+using System;
 using UnityEngine;
 
 public class EntityView : MonoBehaviour
 {
     public EntityId EntityInstance { get; private set; }
-    protected World WorldInstance { get; private set; }
+    public World WorldInstance { get; private set; }
 
-    public void Bind(World world, EntityId entity)
+    public virtual void Bind(World world, EntityId entity)
     {
         WorldInstance = world;
         EntityInstance = entity;
@@ -26,5 +27,17 @@ public class EntityView : MonoBehaviour
         {
             UnityEngine.Debug.LogWarning($"Failed to destroy entity {EntityInstance}: {ex.Message}");
         }
+    }
+
+    protected void Subscribe<T>(Action<T> handler)
+        where T : struct
+    {
+        WorldInstance.Events.Subscribe(handler);
+    }
+
+    protected void Unsubscribe<T>(Action<T> handler)
+        where T : struct
+    {
+        WorldInstance.Events.Unsubscribe(handler);
     }
 }

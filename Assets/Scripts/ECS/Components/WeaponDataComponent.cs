@@ -4,12 +4,12 @@ public class WeaponDataComponent
 {
     [Header("Config")]
     public string WeaponName;
-    public bool IsMelee = true;
+    public AttackExecutionType ExecutionType;
 
     [Header("Stats")]
-    public float AttackDamage;
-    public float AttackCooldown;
-    public float AttackRange;
+    public float BaseDamage;
+    public float BaseCooldown;
+    public float BaseRange;
 
     [Header("Visuals")]
     public GameObject WeaponPrefab;

@@ -14,12 +14,21 @@ public struct AttackStartedEvent
 
 public struct AttackHitEvent
 {
-    public EntityId Attacker;
-    public Vector3 HitDirection;
+    public EntityId Entity;
 
-    public AttackHitEvent(EntityId attacker, Vector3 hitDirection)
+    public AttackHitEvent(EntityId entity)
     {
-        Attacker = attacker;
-        HitDirection = hitDirection;
+        Entity = entity;
     }
+}
+
+public struct AttackExecutionRequestEvent
+{
+    public EntityId Attacker;
+    public AttackExecutionType Type;
+    public Vector3 Direction;
+    public float Range;
+    public float Damage;
+    public GameObject ProjectilePrefab;
+    public ParticleSystem ImpactEffect;
 }

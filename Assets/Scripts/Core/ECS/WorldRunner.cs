@@ -6,13 +6,20 @@ public class WorldRunner : MonoBehaviour
     [SerializeField]
     private SpawnConfigSO spawnConfig;
 
+    [SerializeField]
+    private EntityViewRegistry registry;
+
     public World World { get; private set; }
+
+    public static WorldRunner Instance { get; private set; }
 
     private CharacterSpawnSystem _spawnSystem;
 
     private void Awake()
     {
         World = new World();
+
+        Instance = this;
 
         InitServices();
         InitSystems();
@@ -37,14 +44,19 @@ public class WorldRunner : MonoBehaviour
 
     private void InitServices()
     {
+        // Time Service
         World.Services.Register<ITimeService>(new UnityTimeService());
 
+        // Camera Service
         var cameraService = FindAnyObjectByType<CinemachineCameraService>();
         if (cameraService == null)
         {
             Debug.LogError("No CinemachineCamera found");
         }
         World.Services.Register<ICameraService>(cameraService);
+
+        // EntityView Registry
+        World.Services.Register<EntityViewRegistry>(registry);
     }
 
     private void InitSystems()
@@ -56,5 +68,6 @@ public class WorldRunner : MonoBehaviour
         World.Systems.AddSystem(new AnimationSystem(), World);
         World.Systems.AddSystem(new AnimationSyncSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
+        World.Systems.AddSystem(new DamageSystem(), World);
     }
 }

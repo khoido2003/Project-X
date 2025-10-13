@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,9 +18,20 @@ public class HealthBarUI : MonoBehaviour
 
     private Transform mainCameraTransform;
 
-    private void Start()
+    private World _world;
+    private EntityView _entityView;
+
+    private void Awake()
     {
         mainCameraTransform = Camera.main.transform;
+        _entityView = GetComponentInParent<EntityView>();
+    }
+
+    private void Start()
+    {
+        _world = WorldRunner.Instance.World;
+
+        _world.Events.Subscribe<HealthChangedEvent>(OnHealthChanged);
     }
 
     private void LateUpdate()
@@ -27,9 +39,25 @@ public class HealthBarUI : MonoBehaviour
         LookAtCamera();
     }
 
+    // LEGACY
     public void Bind(HealthComponent healthComponent)
     {
-        healthComponent.OnHealthChanged += UpdateHealth;
+        healthComponent.OnHealthChanged += UpdateHealthBar;
+    }
+
+    private void OnHealthChanged(HealthChangedEvent @event)
+    {
+        if (_entityView == null)
+        {
+            return;
+        }
+
+        if (@event.Entity != _entityView.EntityInstance)
+        {
+            return;
+        }
+
+        UpdateHealthBar(@event.CurrentHealth, @event.MaxHealth);
     }
 
     private void LookAtCamera()
@@ -40,7 +68,7 @@ public class HealthBarUI : MonoBehaviour
         transform.rotation = Quaternion.LookRotation(direction);
     }
 
-    private void UpdateHealth(float current, float max)
+    private void UpdateHealthBar(float current, float max)
     {
         float normalized = Mathf.Clamp01(current / max);
 

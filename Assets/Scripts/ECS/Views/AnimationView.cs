@@ -4,36 +4,34 @@ using UnityEngine;
 public class AnimationView : EntityView
 {
     private Animator animator;
+    private bool _isInitialized;
 
     private void Awake()
     {
         animator = GetComponentInChildren<Animator>();
     }
 
-    private void Start()
+    public override void Bind(World world, EntityId entity)
     {
-        WorldInstance.Events.Subscribe<AnimationParameterEvent>(OnAnimationParameter);
-    }
+        base.Bind(world, entity);
 
-    private void Update() { }
+        WorldInstance.Events.Subscribe<AnimationParameterEvent>(OnAnimationParameter);
+        _isInitialized = true;
+    }
 
     private void OnAnimationParameter(AnimationParameterEvent @event)
     {
-        if (@event.Entity != EntityInstance)
-        {
+        if (!_isInitialized || @event.Entity != EntityInstance)
             return;
-        }
 
         switch (@event.ParameterType)
         {
             case AnimationParameterType.Trigger:
                 animator.SetTrigger(@event.ParameterName);
                 break;
-
             case AnimationParameterType.Bool:
-                animator.SetBool(@event.ParameterName, (bool)@event.Value);
+                animator.SetBool(@event.ParameterName, Convert.ToBoolean(@event.Value));
                 break;
-
             case AnimationParameterType.Float:
                 animator.SetFloat(@event.ParameterName, Convert.ToSingle(@event.Value));
                 break;
@@ -45,6 +43,7 @@ public class AnimationView : EntityView
 
     private void OnDestroy()
     {
-        WorldInstance?.Events.Unsubscribe<AnimationParameterEvent>(OnAnimationParameter);
+        if (_isInitialized && WorldInstance != null)
+            WorldInstance.Events.Unsubscribe<AnimationParameterEvent>(OnAnimationParameter);
     }
 }
