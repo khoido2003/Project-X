@@ -27,6 +27,7 @@ public class CharacterSpawnSystem : ISystem
         }
 
         SpawnPlayer();
+        SpawnEnemies();
     }
 
     public void Update(float dt) { }
@@ -77,6 +78,32 @@ public class CharacterSpawnSystem : ISystem
 
             // Publish events
             _world.Events.Publish(new PlayerSpawnEvent(view.EntityInstance, playerObj, playerObj.transform));
+        }
+    }
+
+    private void SpawnEnemies()
+    {
+        var enemyPoints = _spawnPoints.FindAll(s => s.type == SpawnType.Enemy);
+
+        if (enemyPoints.Count == 0)
+        {
+            Debug.LogWarning("No Enemy Spawn points found!");
+
+            return;
+        }
+
+        int maxEnemies = Mathf.Min(_config.maxEnemies, enemyPoints.Count);
+        int enemyCount = Mathf.Min(_config.possibleEnemies.Length, maxEnemies);
+
+        var shuffleSpawns = new List<SpawnPoint>(enemyPoints);
+        Shuffle(shuffleSpawns);
+
+        for (int i = 0; i < enemyCount; i++)
+        {
+            CharacterDefinitionSO data = _config.possibleEnemies[i];
+            SpawnPoint spawn = shuffleSpawns[i];
+
+            GameObject enemyObj = _factory.CreateCharacter(data, spawn.transform.position);
         }
     }
 

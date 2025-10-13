@@ -52,11 +52,13 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\Skills\SkillData.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
     <Compile Include="Assets\Scripts\Characters\MovementComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\DamageSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Factories\CharacterFactory.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleCountdownLabel.cs" />
     <Compile Include="Assets\Scripts\Utils\Drawer.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponHolder.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\Skills\AlexBaseballBoySkills\PlasmaShieldSkill.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\AnimationEventRelayView.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\CharacterData.cs" />
     <Compile Include="Assets\Scripts\Enemies\EnemyPatrolPoints.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityId.cs" />
@@ -71,6 +73,7 @@
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AttackDataComponent.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\AnimationEventRelayEvent.cs" />
     <Compile Include="Assets\Scripts\Enemies\AIState.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityView.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MouseLookView.cs" />
@@ -93,7 +96,9 @@
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\HealthDataComponent.cs" />
     <Compile Include="Assets\Scripts\Characters\WeaponComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\AttackExecutionView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\CameraFollowSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\HealthEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EventBus.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
@@ -102,6 +107,7 @@
     <Compile Include="Assets\Scripts\UI\HealthBarUI.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\GameAssets\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
+    <Compile Include="Assets\Scripts\Core\ECS\EntityViewRegistry.cs" />
     <Compile Include="Assets\Scripts\Characters\AnimationEventRelay.cs" />
     <Compile Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\LEGACY\Skills\AlexBaseballBoySkills\DaskStrikeSkill.cs" />

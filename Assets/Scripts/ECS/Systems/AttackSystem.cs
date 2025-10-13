@@ -8,23 +8,10 @@ public class AttackSystem : ISystem
     {
         _world = world;
         _world.Events.Subscribe<AttackInputEvent>(OnAttack);
+        _world.Events.Subscribe<AnimationEventRelayEvent>(OnAnimationRelayEvent);
     }
 
-    public void Update(float dt)
-    {
-        foreach (var (entity, attack) in _world.Components.Query<AttackDataComponent>())
-        {
-            if (!attack.IsPlayerControlled)
-            {
-                continue;
-            }
-
-            if (!_world.Components.TryGet(entity, out WeaponDataComponent weapon))
-            {
-                continue;
-            }
-        }
-    }
+    public void Update(float dt) { }
 
     private void OnAttack(AttackInputEvent @event)
     {
@@ -38,7 +25,7 @@ public class AttackSystem : ISystem
             return;
         }
 
-        if (Time.time < attack.LastAttackTime + weapon.AttackCooldown)
+        if (!attack.CanAttack(weapon.BaseCooldown) || attack.IsAttacking)
         {
             return;
         }
@@ -76,5 +63,22 @@ public class AttackSystem : ISystem
     public void Shutdown()
     {
         _world.Events.Unsubscribe<AttackInputEvent>(OnAttack);
+        _world.Events.Unsubscribe<AnimationEventRelayEvent>(OnAnimationRelayEvent);
+    }
+
+    private void OnAnimationRelayEvent(AnimationEventRelayEvent @event)
+    {
+        switch (@event.EventType)
+        {
+            case AnimationEventRelayType.ATTACK_HIT:
+                break;
+
+            case AnimationEventRelayType.ATTACK_END:
+                if (_world.Components.TryGet(@event.Entity, out AttackDataComponent attack))
+                {
+                    attack.IsAttacking = false;
+                }
+                break;
+        }
     }
 }

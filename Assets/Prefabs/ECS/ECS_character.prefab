@@ -774,7 +774,7 @@ GameObject:
   m_Component:
   - component: {fileID: 572655876851501289}
   - component: {fileID: 5841828049531425427}
-  - component: {fileID: 8426478077264681479}
+  - component: {fileID: 4978194749517970273}
   m_Layer: 0
   m_Name: AlexVisual
   m_TagString: Untagged
@@ -838,7 +838,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &8426478077264681479
+--- !u!114 &4978194749517970273
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -847,9 +847,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 916952913232155219}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c6448fce1b71cc54aaa24a0af6b4089a, type: 3}
+  m_Script: {fileID: 11500000, guid: 16c7a6ad6fa17b248989627790e2d47e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimationEventRelay
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEventRelayView
 --- !u!1 &1248438591509285310
 GameObject:
   m_ObjectHideFlags: 0
@@ -2935,6 +2935,7 @@ GameObject:
   - component: {fileID: 3417600431774549459}
   - component: {fileID: 1463290615161989044}
   - component: {fileID: 487505957667454787}
+  - component: {fileID: 8980735487427860396}
   m_Layer: 0
   m_Name: ECS_character
   m_TagString: Untagged
@@ -2951,7 +2952,7 @@ Transform:
   m_GameObject: {fileID: 5191787420164104229}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: -15.26106, y: 0, z: -1.29585}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3080,6 +3081,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c85186ab83dab5b42834c76f97077d7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationView
+--- !u!114 &8980735487427860396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5497544505ef1264dacd1e7dd67c1553, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackExecutionView
 --- !u!1 &5366373656294912020
 GameObject:
   m_ObjectHideFlags: 0

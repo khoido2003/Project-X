@@ -13,6 +13,13 @@ public class AnimationSyncSystem : ISystem
 
     public void Update(float dt)
     {
+        SyncMovementAnimation();
+    }
+
+    public void FixedUpdate(float dt) { }
+
+    private void SyncMovementAnimation()
+    {
         foreach (
             var (entity, movement, animation) in _world.Components.Query<
                 MovementDataComponent,
@@ -37,6 +44,4 @@ public class AnimationSyncSystem : ISystem
             }
         }
     }
-
-    public void FixedUpdate(float dt) { }
 }
