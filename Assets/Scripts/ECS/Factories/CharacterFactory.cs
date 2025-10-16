@@ -27,6 +27,12 @@ public class CharacterFactory
             registry.Register(view);
         }
 
+        // Player Tag
+        _world.Components.Add(entity, new PlayerTagComponent { });
+
+        // --- Transform ---
+        _world.Components.Add(entity, new TransformComponent(instance.transform.position, Quaternion.identity));
+
         // --- Health ---
         _world.Components.Add(
             entity,
@@ -54,6 +60,12 @@ public class CharacterFactory
                 MoveYParam = data.moveYParam,
             }
         );
+
+        // Skills
+        _world.Components.Add(entity, new SkillSetComponent(data.skills));
+
+        // Combat State
+        _world.Components.Add(entity, new CombatStateComponent());
 
         // --- Attack + Weapon ---
         if (data.hasWeapon && data.weaponData != null)
@@ -121,6 +133,8 @@ public class CharacterFactory
         if (data.hasWeapon && data.weaponData != null)
         {
             _world.Components.Add(entity, new AttackDataComponent { IsPlayerControlled = false });
+
+            _world.Components.Add(entity, new TransformComponent(instance.transform.position, Quaternion.identity));
 
             _world.Components.Add(
                 entity,

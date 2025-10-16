@@ -103,7 +103,7 @@ public class CharacterSpawnSystem : ISystem
             CharacterDefinitionSO data = _config.possibleEnemies[i];
             SpawnPoint spawn = shuffleSpawns[i];
 
-            GameObject enemyObj = _factory.CreateCharacter(data, spawn.transform.position);
+            GameObject enemyObj = _factory.CreateEnemy(data, spawn.transform.position);
         }
     }
 

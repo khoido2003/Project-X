@@ -35,7 +35,7 @@ public class AttackExecutionView : EntityView
             return;
         }
 
-        if (!_registry.TryGetView(@event.Attacker, out EntityView attackerView))
+        if (!_registry.TryGet(@event.Attacker, out EntityView attackerView))
         {
             return;
         }

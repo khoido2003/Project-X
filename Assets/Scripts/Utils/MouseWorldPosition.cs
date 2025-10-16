@@ -1,13 +1,27 @@
 using System;
 using UnityEngine;
 
+[DefaultExecutionOrder(-110)]
 public class MouseWorldPosition : MonoBehaviour
 {
+    public static MouseWorldPosition Instance { get; private set; }
+
     public event Action<Vector3> OnDirectionToMouseChanged;
     private Vector3 directionToMouse = Vector3.forward;
 
     [SerializeField]
     private LayerMask mouseLayerMask;
+
+    private void Awake()
+    {
+        if (Instance != null)
+        {
+            Debug.LogError("MouseWorldPosition Instance already exists!");
+            return;
+        }
+
+        Instance = this;
+    }
 
     private void Update()
     {

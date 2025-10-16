@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "CharacterDefinition", menuName = "Game/Character Defintion")]
@@ -48,4 +49,7 @@ public class CharacterDefinitionSO : ScriptableObject
         public int totalAttackAnimations = 3;
         public AudioClip attackSound;
     }
+
+    [Header("Skills")]
+    public List<SkillDefinitionSO> skills = new();
 }

@@ -41,8 +41,6 @@ public class AnimationEventRelayView : EntityView
 
     private void HandleAttackHit()
     {
-        Debug.Log($"[AnimationEventRelayView] Publishing AttackExecutionRequestEvent for {_entityView.EntityInstance}");
-
         if (!_world.Components.TryGet(_entityView.EntityInstance, out AttackDataComponent attack))
             return;
 

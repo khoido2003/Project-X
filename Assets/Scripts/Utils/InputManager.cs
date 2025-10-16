@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[DefaultExecutionOrder(-110)]
 public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
@@ -13,6 +14,7 @@ public class InputManager : MonoBehaviour
 
     public event Action<Vector2> OnMove;
     public event Action OnAttackPressed;
+    public event Action OnAttackReleased;
 
     public event Action OnSkill1Pressed;
     public event Action OnSkill2Pressed;
@@ -121,6 +123,10 @@ public class InputManager : MonoBehaviour
         inputActions.Player.Attack.performed += (ctx) =>
         {
             OnAttackPressed?.Invoke();
+        };
+        inputActions.Player.Attack.canceled += (ctx) =>
+        {
+            OnAttackReleased?.Invoke();
         };
 
         inputActions.Player.Skill1.performed += (ctx) =>

@@ -7,7 +7,13 @@ public class WorldRunner : MonoBehaviour
     private SpawnConfigSO spawnConfig;
 
     [SerializeField]
-    private EntityViewRegistry registry;
+    private EntityViewRegistry entityViewRegistry;
+
+    [SerializeField]
+    private InputService inputService;
+
+    [SerializeField]
+    private CinemachineCameraService cameraService;
 
     public World World { get; private set; }
 
@@ -48,26 +54,43 @@ public class WorldRunner : MonoBehaviour
         World.Services.Register<ITimeService>(new UnityTimeService());
 
         // Camera Service
-        var cameraService = FindAnyObjectByType<CinemachineCameraService>();
         if (cameraService == null)
         {
             Debug.LogError("No CinemachineCamera found");
+            return;
         }
         World.Services.Register<ICameraService>(cameraService);
 
+        // InputService
+        if (inputService == null)
+        {
+            Debug.LogError("No InputService found!");
+            return;
+        }
+
+        World.Services.Register<IInputService>(inputService);
+
         // EntityView Registry
-        World.Services.Register<EntityViewRegistry>(registry);
+        if (entityViewRegistry == null)
+        {
+            Debug.LogError("No EntityViewRegistry found!");
+            return;
+        }
+        World.Services.Register<EntityViewRegistry>(entityViewRegistry);
     }
 
     private void InitSystems()
     {
+        World.Systems.AddSystem(new InputSystem(), World);
         World.Systems.AddSystem(new CharacterSpawnSystem(spawnConfig), World);
         World.Systems.AddSystem(new WeaponSpawnSystem(), World);
+        World.Systems.AddSystem(new TransformSyncSystem(), World);
         World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new CameraFollowSystem(), World);
         World.Systems.AddSystem(new AnimationSystem(), World);
         World.Systems.AddSystem(new AnimationSyncSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);
+        World.Systems.AddSystem(new SkillSystem(), World);
     }
 }

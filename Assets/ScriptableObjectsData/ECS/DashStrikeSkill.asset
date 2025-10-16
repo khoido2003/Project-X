@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a27c0dc08f5685845ab1639f3b7d6be6, type: 3}
+  m_Name: DashStrikeSkill
+  m_EditorClassIdentifier: Assembly-CSharp::DashStrikeSkillSO
+  skillName: Dash Strike
+  category: 0
+  damage: 20
+  castRange: 5
+  cooldown: 1
+  hitVfxPrefab: {fileID: 0}
+  vfxPrefab: {fileID: 0}
+  activateSound: {fileID: 0}
+  activationAnimationTrigger: skill
+  dashDistance: 5
+  dashDuration: 0.3
+  attackRadius: 1
+  dashTrailPrefab: {fileID: 3066829756271264116, guid: c188b547e908aed488fe0099093ca286, type: 3}

@@ -2,52 +2,57 @@ using UnityEngine;
 
 public class PlayerInputView : EntityView
 {
+    private IInputService _input;
+    private Vector2 _previousMoveInput;
+
     private void Start()
     {
-        var input = InputManager.Instance;
+        _input = WorldInstance.Services.Resolve<IInputService>();
 
-        input.OnMove += HandleMove;
-        input.OnAttackPressed += HandleAttack;
-
-        input.OnSkill1Pressed += () => HandleSkill(1, true);
-        input.OnSkill1Released += () => HandleSkill(1, false);
-
-        input.OnSkill2Pressed += () => HandleSkill(2, true);
-        input.OnSkill2Released += () => HandleSkill(2, false);
-
-        input.OnSkill3Pressed += () => HandleSkill(3, true);
-        input.OnSkill3Released += () => HandleSkill(3, false);
+        if (_input == null)
+        {
+            Debug.LogError("IInputService not found in world!");
+        }
     }
 
-    private void OnDestroy()
+    private void Update()
     {
-        var input = InputManager.Instance;
+        if (_input == null)
+        {
+            return;
+        }
 
-        input.OnMove -= HandleMove;
-        input.OnAttackPressed -= HandleAttack;
-
-        input.OnSkill1Pressed -= () => HandleSkill(1, true);
-        input.OnSkill1Released -= () => HandleSkill(1, false);
-
-        input.OnSkill2Pressed -= () => HandleSkill(2, true);
-        input.OnSkill2Released -= () => HandleSkill(2, false);
-
-        input.OnSkill3Pressed -= () => HandleSkill(3, true);
-        input.OnSkill3Released -= () => HandleSkill(3, false);
+        ListenMovementInput();
+        ListenAttackInput();
+        ListenSkillInput();
     }
 
-    private void HandleSkill(int index, bool isPressed)
+    private void ListenMovementInput()
     {
-        WorldInstance.Events.Publish(new SkillInputEvent(EntityInstance, index, isPressed));
+        Vector2 move = _input.GetMoveInput();
+        if (move != _previousMoveInput)
+        {
+            WorldInstance.Events.Publish(new MoveInputEvent(EntityInstance, move));
+            _previousMoveInput = move;
+        }
     }
 
-    private void HandleAttack()
+    private void ListenAttackInput()
     {
-        WorldInstance.Events.Publish(new AttackInputEvent(EntityInstance));
+        if (_input.IsAttackPressed())
+        {
+            WorldInstance.Events.Publish(new AttackInputEvent(EntityInstance));
+        }
     }
 
-    private void HandleMove(Vector2 input)
+    private void ListenSkillInput()
     {
-        WorldInstance.Events.Publish(new MoveInputEvent(EntityInstance, input));
+        for (int i = 1; i <= 3; i++)
+        {
+            if (_input.IsSkillPressed(i))
+            {
+                WorldInstance.Events.Publish(new SkillInputEvent(EntityInstance, i, true));
+            }
+        }
     }
 }
