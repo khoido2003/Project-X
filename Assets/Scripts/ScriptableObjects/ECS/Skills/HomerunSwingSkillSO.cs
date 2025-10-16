@@ -1,0 +1,11 @@
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "DashStrikeSkill", menuName = "Skills/HomerunSwingSkillSO")]
+public class HomerunSwingSkillSO : SkillDefinitionSO
+{
+    public float chargeDuration = 0.5f;
+    public float attackRadius = 2f;
+    public float coneAngle = 120f;
+    public float knockbackForce = 8f;
+    public float stunDuration = 1.5f;
+}

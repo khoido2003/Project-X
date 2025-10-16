@@ -2927,15 +2927,17 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 493780323552735550}
-  - component: {fileID: 2425903121233067537}
   - component: {fileID: 8971600808939855881}
   - component: {fileID: 502299433680423764}
   - component: {fileID: 228778587582711661}
-  - component: {fileID: 1124340274477347657}
   - component: {fileID: 3417600431774549459}
   - component: {fileID: 1463290615161989044}
+  - component: {fileID: 1124340274477347657}
   - component: {fileID: 487505957667454787}
   - component: {fileID: 8980735487427860396}
+  - component: {fileID: 7954091672798518682}
+  - component: {fileID: 2757686265512648201}
+  - component: {fileID: -4373423676645349117}
   m_Layer: 0
   m_Name: ECS_character
   m_TagString: Untagged
@@ -2960,21 +2962,6 @@ Transform:
   - {fileID: 195310479963726846}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
---- !u!114 &2425903121233067537
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5191787420164104229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 243bd3748aeb89a4f842d3ce5c4381c7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MouseWorldPosition
-  mouseLayerMask:
-    serializedVersion: 2
-    m_Bits: 192
 --- !u!143 &8971600808939855881
 CharacterController:
   m_ObjectHideFlags: 0
@@ -3033,18 +3020,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19fa5c928c6a91f4983e035851cee389, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntityView
---- !u!114 &1124340274477347657
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5191787420164104229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 55869768e945b1548a8c8f313b56b033, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MovementView
 --- !u!114 &3417600431774549459
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3069,6 +3044,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de2bbab6e425f8942857ef97a9220afc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseLookView
+--- !u!114 &1124340274477347657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55869768e945b1548a8c8f313b56b033, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovementView
 --- !u!114 &487505957667454787
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3093,6 +3080,47 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5497544505ef1264dacd1e7dd67c1553, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackExecutionView
+--- !u!114 &7954091672798518682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d128fb633bb3a5d42a71b5b0bb98489f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DashStrikeExecutorView
+--- !u!114 &2757686265512648201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a53894ca41e6b8f4592f5bb2a44f4a4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TransformSyncView
+--- !u!114 &-4373423676645349117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55890170a664d2a43a0e9227d2b67ac5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkillPreviewView
+  ringSegments: 64
+  ringWidth: 0.05
+  rangeColor: {r: 0, g: 0, b: 1, a: 1}
+  indicatorColor: {r: 1, g: 0.2705882, b: 0, a: 1}
+  indicatorRadius: 0.5
 --- !u!1 &5366373656294912020
 GameObject:
   m_ObjectHideFlags: 0

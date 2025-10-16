@@ -15,6 +15,9 @@ public class AttackSystem : ISystem
 
     private void OnAttack(AttackInputEvent @event)
     {
+        if (SkillPreviewView.IsPreviewActive)
+            return;
+
         if (!_world.Components.TryGet(@event.Entity, out AttackDataComponent attack))
         {
             return;
@@ -25,10 +28,24 @@ public class AttackSystem : ISystem
             return;
         }
 
+        if (!_world.Components.TryGet(@event.Entity, out CombatStateComponent state))
+        {
+            state = new CombatStateComponent { CurrentState = CombatState.Idle };
+            _world.Components.Add(@event.Entity, state);
+        }
+
+        if (state.CurrentState != CombatState.Idle)
+        {
+            return;
+        }
+
         if (!attack.CanAttack(weapon.BaseCooldown) || attack.IsAttacking)
         {
             return;
         }
+
+        state.CurrentState = CombatState.Attacking;
+        state.LastActionTime = Time.time;
 
         attack.IsAttacking = true;
         attack.LastAttackTime = Time.time;
@@ -77,6 +94,11 @@ public class AttackSystem : ISystem
                 if (_world.Components.TryGet(@event.Entity, out AttackDataComponent attack))
                 {
                     attack.IsAttacking = false;
+                }
+
+                if (_world.Components.TryGet(@event.Entity, out CombatStateComponent state))
+                {
+                    state.CurrentState = CombatState.Idle;
                 }
                 break;
         }
