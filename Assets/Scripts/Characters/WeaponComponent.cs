@@ -4,7 +4,7 @@ public class WeaponComponent : MonoBehaviour
 {
     private GameObject weaponInstance;
     private Transform weaponHolder;
-    private WeaponVfxEffectSocket vfxEffectSocket;
+    private SkillVfxEffectSocket vfxEffectSocket;
 
     public void Initialize(WeaponDataSO weaponData, Transform holder = null)
     {
@@ -22,7 +22,7 @@ public class WeaponComponent : MonoBehaviour
         weaponInstance.transform.localPosition = weaponData.spawnPositionOffset;
         weaponInstance.transform.localRotation = Quaternion.Euler(weaponData.spawnRotationOffset);
 
-        vfxEffectSocket = weaponInstance.GetComponentInChildren<WeaponVfxEffectSocket>();
+        vfxEffectSocket = weaponInstance.GetComponentInChildren<SkillVfxEffectSocket>();
 
         if (vfxEffectSocket == null)
         {
@@ -35,7 +35,7 @@ public class WeaponComponent : MonoBehaviour
         return weaponInstance;
     }
 
-    public Transform GetSocket(WeaponVfxEffectSocketName socketName)
+    public Transform GetSocket(SkillVfxEffectSocketName socketName)
     {
         return vfxEffectSocket?.GetSocket(socketName) ?? weaponInstance?.transform;
     }

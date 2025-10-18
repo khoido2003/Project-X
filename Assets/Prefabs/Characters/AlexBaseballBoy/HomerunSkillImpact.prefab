@@ -4927,7 +4927,7 @@ GameObject:
   - component: {fileID: 7100685650444493368}
   - component: {fileID: 7101566877384371412}
   m_Layer: 0
-  m_Name: ElectricHitImpact
+  m_Name: HomerunSkillImpact
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -20,7 +20,7 @@ public abstract class SkillDefinitionSO : ScriptableObject
 
     [Header("Common VFX / SFX")]
     public ParticleSystem hitVfxPrefab;
-    public ParticleSystem vfxPrefab;
+    public ParticleSystem skillVfxPrefab;
     public AudioClip activateSound;
     public string activationAnimationTrigger = "skill";
 }

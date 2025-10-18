@@ -42,10 +42,14 @@ public class AnimationEventRelayView : EntityView
     private void HandleAttackHit()
     {
         if (!_world.Components.TryGet(_entityView.EntityInstance, out AttackDataComponent attack))
+        {
             return;
+        }
 
         if (!_world.Components.TryGet(_entityView.EntityInstance, out WeaponDataComponent weapon))
+        {
             return;
+        }
 
         _world.Events.Publish(
             new AttackExecutionRequestEvent
@@ -55,13 +59,32 @@ public class AnimationEventRelayView : EntityView
                 Direction = attack.AttackDirection,
                 Range = weapon.BaseRange,
                 Damage = weapon.BaseDamage,
-                ProjectilePrefab = weapon.ProjectilePrefab,
                 ImpactEffect = weapon.HitImpactParticlePrefab,
             }
         );
     }
 
-    private void HandleSkillHit() { }
+    private void HandleSkillHit()
+    {
+        if (!_world.Components.TryGet(_entityView.EntityInstance, out SkillCastBufferComponent skillBuffer))
+        {
+            return;
+        }
+
+        _world.Events.Publish(
+            new SkillConfirmExecutionEvent
+            {
+                Caster = _entityView.EntityInstance,
+                Skill = skillBuffer.Skill,
+                TargetPoint = skillBuffer.TargetPoint,
+                Direction = skillBuffer.Direction,
+            }
+        );
+
+        // skillBuffer.Skill = null;
+        // skillBuffer.TargetPoint = Vector3.zero;
+        // skillBuffer.Direction = Vector3.forward;
+    }
 
     private void HandleAttackEnd()
     {

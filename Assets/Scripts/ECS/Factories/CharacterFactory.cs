@@ -67,6 +67,9 @@ public class CharacterFactory
         // Skills
         _world.Components.Add(entity, new SkillSetComponent(data.skills));
 
+        // Skill Buffer
+        _world.Components.Add(entity, new SkillCastBufferComponent());
+
         // Combat State
         _world.Components.Add(entity, new CombatStateComponent());
 
@@ -84,15 +87,10 @@ public class CharacterFactory
                     BaseDamage = data.weaponData.attackDamage,
                     BaseCooldown = data.weaponData.attackCooldown,
                     BaseRange = data.weaponData.attackRange,
-                    WeaponPrefab = data.weaponData.weaponPrefab,
-                    ProjectilePrefab = data.weaponData.projectilePrefab,
-                    SpawnPositionOffset = data.weaponData.spawnPositionOffset,
-                    SpawnRotationOffset = data.weaponData.spawnRotationOffset,
                     HitImpactParticlePrefab = data.weaponData.hitImpactParticlePrefab,
                     AttackAnimationTrigger = data.weaponData.attackAnimationTrigger,
                     TotalAttackAnimations = data.weaponData.totalAttackAnimations,
                     AttackSound = data.weaponData.attackSound,
-                    WeaponHolder = weaponHolder?.transform,
                 }
             );
         }
@@ -148,7 +146,6 @@ public class CharacterFactory
                     BaseDamage = data.weaponData.attackDamage,
                     BaseCooldown = data.weaponData.attackCooldown,
                     BaseRange = data.weaponData.attackRange,
-                    ProjectilePrefab = data.weaponData.projectilePrefab,
                     HitImpactParticlePrefab = data.weaponData.hitImpactParticlePrefab,
                     AttackAnimationTrigger = data.weaponData.attackAnimationTrigger,
                     TotalAttackAnimations = data.weaponData.totalAttackAnimations,

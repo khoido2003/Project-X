@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07e7b928afb9556468a6d5c0fbd62b39, type: 3}
-  m_Name: CharacterDefinition
+  m_Name: CipherSO
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDefinitionSO
-  characterName: Alex
+  characterName: Cipher
   prefab: {fileID: 5191787420164104229, guid: 0e6643263c7117845ab2cca53ecec692, type: 3}
   isPlayer: 1
   maxHealth: 100
@@ -28,13 +28,11 @@ MonoBehaviour:
     attackDamage: 10
     attackCooldown: 0.5
     attackRange: 1
-    weaponPrefab: {fileID: 6270620331197016252, guid: 4e9f5748a1536464c829a251c4edae87, type: 3}
-    projectilePrefab: {fileID: 0}
-    spawnPositionOffset: {x: 0, y: 0, z: 0, w: 0}
-    spawnRotationOffset: {x: 0, y: 0, z: 0, w: 0}
     hitImpactParticlePrefab: {fileID: 7089567446671028007, guid: a3015979818be2645a5a7a5907241fe8, type: 3}
     attackAnimationTrigger: attack
     totalAttackAnimations: 2
     attackSound: {fileID: 0}
   skills:
   - {fileID: 11400000, guid: c40e34a1af067074aaa6321e56dfa191, type: 2}
+  - {fileID: 11400000, guid: 61eb7046a1612ad4687f18c4a482b5ea, type: 2}
+  - {fileID: 11400000, guid: f3a53398fc9123f4b804ec8111e7164e, type: 2}

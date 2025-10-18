@@ -60,7 +60,7 @@ GameObject:
   - component: {fileID: 1275574561609735167}
   - component: {fileID: 7954095799002068131}
   m_Layer: 0
-  m_Name: Alex_Weapon
+  m_Name: Cipher_Weapon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -10,6 +10,11 @@ public class DashStrikeExecutorView : SkillExecutorView
     {
         base.ExecuteSkill(@event);
 
+        if (@event.Skill is not DashStrikeSkillSO skill)
+        {
+            return;
+        }
+
         EntityViewRegistry registry = WorldInstance.Services.Resolve<EntityViewRegistry>();
         if (!registry.TryGet(@event.Caster, out EntityView view))
         {
@@ -17,13 +22,8 @@ public class DashStrikeExecutorView : SkillExecutorView
         }
 
         GameObject owner = view.gameObject;
-        DashStrikeSkillSO dashSkill = @event.Skill as DashStrikeSkillSO;
-        if (dashSkill == null)
-        {
-            return;
-        }
 
-        StartCoroutine(DashRoutine(owner, dashSkill, @event.TargetPoint));
+        StartCoroutine(DashRoutine(owner, skill, @event.TargetPoint));
     }
 
     private IEnumerator DashRoutine(GameObject owner, DashStrikeSkillSO skill, Vector3 targetPoint)
