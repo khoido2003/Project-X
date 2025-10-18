@@ -29,6 +29,5 @@ public struct AttackExecutionRequestEvent
     public Vector3 Direction;
     public float Range;
     public float Damage;
-    public GameObject ProjectilePrefab;
     public ParticleSystem ImpactEffect;
 }

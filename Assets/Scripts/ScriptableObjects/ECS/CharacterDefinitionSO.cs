@@ -38,10 +38,6 @@ public class CharacterDefinitionSO : ScriptableObject
         public float attackRange = 2f;
 
         [Header("Visuals")]
-        public GameObject weaponPrefab;
-        public GameObject projectilePrefab;
-        public Vector4 spawnPositionOffset = Vector3.zero;
-        public Vector4 spawnRotationOffset = Vector3.zero;
         public ParticleSystem hitImpactParticlePrefab;
 
         [Header("Animation & Audio")]

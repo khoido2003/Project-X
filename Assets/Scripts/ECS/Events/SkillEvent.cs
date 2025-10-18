@@ -1,15 +1,5 @@
 using UnityEngine;
 
-public struct SkillExecutionRequestEvent
-{
-    public EntityId Caster;
-
-    public SkillExecutionRequestEvent(EntityId caster)
-    {
-        Caster = caster;
-    }
-}
-
 public struct SkillPreviewRequestEvent
 {
     public EntityId Entity;
@@ -24,6 +14,16 @@ public struct SkillPreviewRequestEvent
     }
 }
 
+public struct SkillExecutionRequestEvent
+{
+    public EntityId Caster;
+
+    public SkillExecutionRequestEvent(EntityId caster)
+    {
+        Caster = caster;
+    }
+}
+
 public struct SkillConfirmExecutionEvent
 {
     public EntityId Caster;
@@ -32,6 +32,22 @@ public struct SkillConfirmExecutionEvent
     public Vector3 Direction;
 
     public SkillConfirmExecutionEvent(EntityId caster, SkillDefinitionSO skill, Vector3 targetPoint, Vector3 direction)
+    {
+        Caster = caster;
+        Skill = skill;
+        TargetPoint = targetPoint;
+        Direction = direction;
+    }
+}
+
+public struct SkillEffectTriggerEvent
+{
+    public EntityId Caster;
+    public SkillDefinitionSO Skill;
+    public Vector3 TargetPoint;
+    public Vector3 Direction;
+
+    public SkillEffectTriggerEvent(EntityId caster, SkillDefinitionSO skill, Vector3 targetPoint, Vector3 direction)
     {
         Caster = caster;
         Skill = skill;

@@ -22,8 +22,15 @@ public class SkillPreviewView : EntityView
     private LineRenderer rangeRing;
     private LineRenderer indicatorRing;
     private int selectedSkillIndex = -1;
-
     private Vector3 mouseWorldPos;
+
+    private SkillVfxEffectSocket weaponVfxEffectSocket;
+    private ParticleSystem skillVfxEffectInstance;
+
+    private void Start()
+    {
+        weaponVfxEffectSocket = GetComponentInChildren<SkillVfxEffectSocket>();
+    }
 
     public override void Bind(World world, EntityId entity)
     {
@@ -56,9 +63,11 @@ public class SkillPreviewView : EntityView
         if (@event.IsActive)
         {
             ShowPreview(@event.Skill);
+            ShowSkillVfxEffect();
         }
         else
         {
+            HideSkillVfxEffect();
             HidePreview();
         }
     }
@@ -197,7 +206,7 @@ public class SkillPreviewView : EntityView
         state.LastActionTime = Time.time;
 
         WorldInstance.Events.Publish(
-            new SkillConfirmExecutionEvent
+            new SkillEffectTriggerEvent
             {
                 Caster = EntityInstance,
                 Skill = skill,
@@ -205,7 +214,53 @@ public class SkillPreviewView : EntityView
                 Direction = direction,
             }
         );
+
         HidePreview();
+    }
+
+    private void ShowSkillVfxEffect()
+    {
+        if (weaponVfxEffectSocket == null)
+        {
+            weaponVfxEffectSocket = GetComponentInChildren<SkillVfxEffectSocket>();
+
+            if (weaponVfxEffectSocket == null)
+            {
+                Debug.LogWarning($"[{name}] No WeaponVfxEffectSocket found in children!");
+                return;
+            }
+        }
+
+        Transform vfxEffectSocketTransform = weaponVfxEffectSocket.GetSocket(SkillVfxEffectSocketName.CHARGE);
+
+        if (vfxEffectSocketTransform == null)
+        {
+            return;
+        }
+
+        var currentSkill = GetCurrentSkill();
+
+        if (currentSkill.skillVfxPrefab == null)
+        {
+            return;
+        }
+
+        skillVfxEffectInstance = Instantiate(
+            currentSkill.skillVfxPrefab,
+            vfxEffectSocketTransform.position,
+            Quaternion.identity,
+            vfxEffectSocketTransform
+        );
+    }
+
+    private void HideSkillVfxEffect()
+    {
+        if (skillVfxEffectInstance != null)
+        {
+            skillVfxEffectInstance.Stop();
+            Destroy(skillVfxEffectInstance.gameObject, 1f);
+            skillVfxEffectInstance = null;
+        }
     }
 
     private void OnDestroy()

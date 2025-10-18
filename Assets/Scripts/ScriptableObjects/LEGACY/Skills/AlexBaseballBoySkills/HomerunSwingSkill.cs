@@ -90,7 +90,7 @@ public class HomerunSwingSkill : SkillData
             return;
         }
 
-        Transform vfxEffectSocketTransform = weapon.GetSocket(WeaponVfxEffectSocketName.CHARGE);
+        Transform vfxEffectSocketTransform = weapon.GetSocket(SkillVfxEffectSocketName.CHARGE);
 
         if (vfxEffectSocketTransform == null)
         {

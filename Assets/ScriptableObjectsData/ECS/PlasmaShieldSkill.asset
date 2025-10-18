@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d21e4e1b5852db44b60ab3dc56fcc44, type: 3}
+  m_Name: PlasmaShieldSkill
+  m_EditorClassIdentifier: Assembly-CSharp::PlasmaShieldSkillSO
+  skillName: Plasma Shileld
+  category: 2
+  isInstant: 1
+  damage: 0
+  castRange: 0
+  cooldown: 1
+  hitVfxPrefab: {fileID: 0}
+  skillVfxPrefab: {fileID: 9182071414042874320, guid: d157ae1c06c365d4fb024376bdf83cab, type: 3}
+  activateSound: {fileID: 0}
+  activationAnimationTrigger: skill
+  defenseBoost: 20
+  boostDuration: 5
+  shieldPrefab: {fileID: 3889418507306871139, guid: 03c1f03cba6281f41b0b9ec840738ad9, type: 3}

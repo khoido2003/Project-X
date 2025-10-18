@@ -14,13 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DashStrikeSkillSO
   skillName: Dash Strike
   category: 0
+  isInstant: 0
   damage: 20
   castRange: 5
   cooldown: 1
-  hitVfxPrefab: {fileID: 0}
+  hitVfxPrefab: {fileID: 5683715703724972373, guid: e55b07d1dee51c947ba23ff5d4e3afbc, type: 3}
   vfxPrefab: {fileID: 0}
   activateSound: {fileID: 0}
-  activationAnimationTrigger: skill
+  activationAnimationTrigger: skill1
   dashDistance: 5
   dashDuration: 0.3
   attackRadius: 1
