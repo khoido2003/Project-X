@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class EntityViewRegistry : MonoBehaviour
 {
-    private readonly Dictionary<EntityId, EntityView> _views = new();
+    private readonly Dictionary<EntityId, List<EntityView>> _views = new();
 
     /// <summary>
-    /// Registers a new EntityView for its EntityId.
+    /// Registers an EntityView to the registry under its EntityId.
     /// </summary>
     public void Register(EntityView view)
     {
@@ -15,48 +15,63 @@ public class EntityViewRegistry : MonoBehaviour
             return;
         }
 
-        if (_views.ContainsKey(view.EntityInstance))
+        if (!_views.TryGetValue(view.EntityInstance, out var list))
         {
-            Debug.LogWarning($"EntityView for {view.EntityInstance} already registed");
+            list = new List<EntityView>();
+            _views[view.EntityInstance] = list;
+        }
 
+        if (list.Contains(view))
+        {
+            Debug.LogWarning($"EntityView {view.name} already registered for {view.EntityInstance}");
             return;
         }
 
-        _views[view.EntityInstance] = view;
+        list.Add(view);
     }
 
     /// <summary>
-    /// Removes a registered EntityView.
+    /// Unregisters a specific EntityView.
     /// </summary>
     public void Unregister(EntityView view)
     {
         if (view == null)
-        {
             return;
-        }
 
-        _views.Remove(view.EntityInstance);
+        if (_views.TryGetValue(view.EntityInstance, out var list))
+        {
+            list.Remove(view);
+
+            if (list.Count == 0)
+            {
+                _views.Remove(view.EntityInstance);
+            }
+        }
     }
 
     /// <summary>
-    /// Attempts to get an EntityView for a given EntityId.
+    /// Try to get the first EntityView for an entity.
     /// </summary>
     public bool TryGet(EntityId entity, out EntityView view)
     {
-        return _views.TryGetValue(entity, out view);
+        if (_views.TryGetValue(entity, out var list) && list.Count > 0)
+        {
+            view = list[0];
+            return true;
+        }
+
+        view = null;
+        return false;
     }
 
     /// <summary>
-    /// Checks if an EntityView exists for a given EntityId.
+    /// Gets all EntityViews registered for an entity.
     /// </summary>
-    public bool Has(EntityId entity)
+    public bool TryGetAll(EntityId entity, out List<EntityView> list)
     {
-        return _views.ContainsKey(entity);
+        return _views.TryGetValue(entity, out list);
     }
 
-    /// <summary>
-    /// Optionally clear all views (e.g. when resetting the world).
-    /// </summary>
     public void Clear()
     {
         _views.Clear();

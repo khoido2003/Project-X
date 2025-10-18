@@ -87,7 +87,6 @@ public class WorldRunner : MonoBehaviour
         World.Systems.AddSystem(new TransformSyncSystem(), World);
         World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new CameraFollowSystem(), World);
-        World.Systems.AddSystem(new AnimationSystem(), World);
         World.Systems.AddSystem(new AnimationSyncSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);

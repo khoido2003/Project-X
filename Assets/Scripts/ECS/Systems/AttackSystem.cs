@@ -7,16 +7,20 @@ public class AttackSystem : ISystem
     public void Initialize(World world)
     {
         _world = world;
-        _world.Events.Subscribe<AttackInputEvent>(OnAttack);
+        _world.Events.Subscribe<AttackPressedInputEvent>(OnAttack);
         _world.Events.Subscribe<AnimationEventRelayEvent>(OnAnimationRelayEvent);
     }
 
     public void Update(float dt) { }
 
-    private void OnAttack(AttackInputEvent @event)
+    private void OnAttack(AttackPressedInputEvent @event)
     {
-        if (SkillPreviewView.IsPreviewActive)
+        if (
+            _world.Components.TryGet(@event.Entity, out ActionFlagComponent flags) && flags.Get(ActionFlag.SkillPreview)
+        )
+        {
             return;
+        }
 
         if (!_world.Components.TryGet(@event.Entity, out AttackDataComponent attack))
         {
@@ -55,8 +59,6 @@ public class AttackSystem : ISystem
 
         ////////////////////////////////////////////////////////
 
-        // Publish event
-
         // ANIMATION
         _world.Events.Publish(
             new AnimationParameterEvent(@event.Entity, "attackIndex", AnimationParameterType.Float, randomIndex)
@@ -70,16 +72,13 @@ public class AttackSystem : ISystem
                 null
             )
         );
-
-        // GAMEPLAY LOGIC
-        _world.Events.Publish(new AttackStartedEvent(@event.Entity, randomIndex));
     }
 
     public void FixedUpdate(float dt) { }
 
     public void Shutdown()
     {
-        _world.Events.Unsubscribe<AttackInputEvent>(OnAttack);
+        _world.Events.Unsubscribe<AttackPressedInputEvent>(OnAttack);
         _world.Events.Unsubscribe<AnimationEventRelayEvent>(OnAnimationRelayEvent);
     }
 

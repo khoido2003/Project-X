@@ -22,9 +22,14 @@ public class LookAtMouseView : EntityView
                 return;
         }
 
-        Vector3 aimDir = _inputService.GetAimDirection(_transform.position);
+        Vector3 aimDir = (_inputService.GetMouseWorldPosition() - transform.position).normalized;
+
+        aimDir.y = 0;
+
         if (aimDir.sqrMagnitude < 0.01f)
+        {
             return;
+        }
 
         Quaternion targetRotation = Quaternion.LookRotation(aimDir);
         _transform.rotation = Quaternion.RotateTowards(
@@ -37,7 +42,9 @@ public class LookAtMouseView : EntityView
     private void TryResolveInput()
     {
         if (WorldInstance == null)
+        {
             return;
+        }
 
         _inputService = WorldInstance.Services.Resolve<IInputService>();
     }

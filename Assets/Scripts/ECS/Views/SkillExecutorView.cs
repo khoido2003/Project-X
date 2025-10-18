@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class SkillExecutorView : EntityView
@@ -8,21 +7,25 @@ public abstract class SkillExecutorView : EntityView
 
     protected virtual void Start()
     {
-        WorldInstance.Events.Subscribe<SkillExecutionRequestEvent>(OnSkillExecution);
+        WorldInstance.Events.Subscribe<SkillConfirmExecutionEvent>(OnSkillConfirmExecutionEvent);
     }
 
-    protected virtual void OnSkillExecution(SkillExecutionRequestEvent @event)
+    protected virtual void OnSkillConfirmExecutionEvent(SkillConfirmExecutionEvent @event)
     {
         if (@event.Skill == null || @event.Skill.category != Category)
         {
             return;
         }
-        Debug.Log($"SkillExecutionEvent received for category {@event.Skill?.category}, executor expects {Category}");
+
+        if (@event.Caster != EntityInstance)
+        {
+            return;
+        }
 
         ExecuteSkill(@event);
     }
 
-    protected virtual void ExecuteSkill(SkillExecutionRequestEvent @event)
+    protected virtual void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
         if (WorldInstance.Components.TryGet(@event.Caster, out CombatStateComponent state))
         {
@@ -32,6 +35,6 @@ public abstract class SkillExecutorView : EntityView
 
     protected virtual void OnDestroy()
     {
-        WorldInstance.Events.Unsubscribe<SkillExecutionRequestEvent>(OnSkillExecution);
+        WorldInstance.Events.Unsubscribe<SkillConfirmExecutionEvent>(OnSkillConfirmExecutionEvent);
     }
 }

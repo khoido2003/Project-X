@@ -74,20 +74,33 @@ public class AttackExecutionView : EntityView
         Vector3 origin = attackerTf.position + attackerTf.forward * 0.5f;
         float radius = @event.Range * 0.5f;
 
+
+
+
+
         Collider[] hits = Physics.OverlapSphere(origin, radius);
+
+
+
 
         foreach (Collider hit in hits)
         {
             if (!hit.TryGetComponent(out EntityView targetView))
+            {
                 continue;
+            }
 
             EntityId targetEntity = targetView.EntityInstance;
 
             if (targetEntity.Equals(@event.Attacker))
+            {
                 continue;
+            }
 
             if (damagedEntities.Contains(targetEntity))
+            {
                 continue;
+            }
 
             damagedEntities.Add(targetEntity);
 

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class SkillPreviewView : EntityView
@@ -20,37 +21,61 @@ public class SkillPreviewView : EntityView
 
     private LineRenderer rangeRing;
     private LineRenderer indicatorRing;
-    private Vector3 _clampedTarget;
-    private IInputService inputService;
-    private SkillSetComponent skillSet;
     private int selectedSkillIndex = -1;
 
-    public static bool IsPreviewActive { get; private set; }
+    private Vector3 mouseWorldPos;
 
     public override void Bind(World world, EntityId entity)
     {
         base.Bind(world, entity);
 
-        inputService = WorldInstance.Services.Resolve<IInputService>();
+        WorldInstance.Events.Subscribe<MouseWorldInputEvent>(OnMouseWorldInputEvent);
+
+        WorldInstance.Events.Subscribe<SkillPreviewRequestEvent>(OnSkillPreviewRequestEvent);
+
+        WorldInstance.Events.Subscribe<SkillExecutionRequestEvent>(OnSkillExecutionRequestEvent);
     }
 
     private void Update()
     {
         if (selectedSkillIndex == -1)
+        {
             return;
+        }
 
         UpdateRangeVisuals();
+    }
 
-        if (inputService.IsAttackPressed())
+    private void OnSkillPreviewRequestEvent(SkillPreviewRequestEvent @event)
+    {
+        if (@event.Entity != EntityInstance)
         {
-            TryCastSkill();
+            return;
+        }
+
+        if (@event.IsActive)
+        {
+            ShowPreview(@event.Skill);
+        }
+        else
+        {
+            HidePreview();
         }
     }
 
-    public void ShowPreview(SkillDefinitionSO skill)
+    private void OnMouseWorldInputEvent(MouseWorldInputEvent @event)
+    {
+        mouseWorldPos = @event.MousePosition;
+    }
+
+    private void OnSkillExecutionRequestEvent(SkillExecutionRequestEvent @event)
+    {
+        TryCastSkill();
+    }
+
+    private void ShowPreview(SkillDefinitionSO skill)
     {
         HidePreview();
-        IsPreviewActive = true;
 
         // Range
         rangeRing = Drawer.CreateCircle(skill.castRange, ringSegments, ringWidth, rangeColor);
@@ -59,15 +84,14 @@ public class SkillPreviewView : EntityView
         // Indicator
         indicatorRing = Drawer.CreateCircle(indicatorRadius, ringSegments, ringWidth, indicatorColor);
 
-        Vector3 target = inputService.GetMouseWorldPosition();
+        Vector3 target = mouseWorldPos;
         indicatorRing.transform.position = target + Vector3.up * 0.05f;
 
         selectedSkillIndex = FindSkillIndex(skill);
     }
 
-    public void HidePreview()
+    private void HidePreview()
     {
-        IsPreviewActive = false;
         selectedSkillIndex = -1;
 
         if (indicatorRing)
@@ -88,7 +112,9 @@ public class SkillPreviewView : EntityView
             for (int i = 0; i < skillSet.Skills.Count; i++)
             {
                 if (skillSet.Skills[i] == skill)
+                {
                     return i;
+                }
             }
         }
 
@@ -98,22 +124,26 @@ public class SkillPreviewView : EntityView
     private SkillDefinitionSO GetCurrentSkill()
     {
         if (selectedSkillIndex == -1)
+        {
             return null;
+        }
 
         if (WorldInstance.Components.TryGet(EntityInstance, out SkillSetComponent skillSet))
+        {
             return skillSet.Skills[selectedSkillIndex];
+        }
 
         return null;
     }
 
     private void UpdateRangeVisuals()
     {
-        if (indicatorRing == null || inputService == null)
+        if (indicatorRing == null)
         {
             return;
         }
 
-        Vector3 target = inputService.GetMouseWorldPosition();
+        Vector3 target = mouseWorldPos;
         float range = GetCurrentSkill()?.castRange ?? 0f;
 
         Vector3 dir = (target - transform.position).normalized;
@@ -124,7 +154,6 @@ public class SkillPreviewView : EntityView
             target = transform.position + dir * range;
         }
 
-        _clampedTarget = target;
         indicatorRing.transform.position = target + Vector3.up * 0.05f;
 
         if (rangeRing != null)
@@ -136,23 +165,39 @@ public class SkillPreviewView : EntityView
     private void TryCastSkill()
     {
         if (!WorldInstance.Components.TryGet(EntityInstance, out CombatStateComponent state))
+        {
             return;
+        }
 
         if (state.CurrentState == CombatState.Attacking)
+        {
             return;
+        }
 
         SkillDefinitionSO skill = GetCurrentSkill();
         if (skill == null)
+        {
             return;
+        }
 
-        Vector3 target = _clampedTarget;
-        Vector3 direction = inputService.GetAimDirection(transform.position);
+        Vector3 target = mouseWorldPos;
+        float range = GetCurrentSkill()?.castRange ?? 0f;
+
+        Vector3 dir = (target - transform.position).normalized;
+        dir.y = 0;
+
+        if (Vector3.Distance(transform.position, target) > range)
+        {
+            target = transform.position + dir * range;
+        }
+
+        Vector3 direction = dir.normalized;
 
         state.CurrentState = CombatState.CastingSkill;
         state.LastActionTime = Time.time;
 
         WorldInstance.Events.Publish(
-            new SkillExecutionRequestEvent
+            new SkillConfirmExecutionEvent
             {
                 Caster = EntityInstance,
                 Skill = skill,
@@ -160,7 +205,6 @@ public class SkillPreviewView : EntityView
                 Direction = direction,
             }
         );
-
         HidePreview();
     }
 

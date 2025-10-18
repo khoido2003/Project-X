@@ -27,6 +27,9 @@ public class CharacterFactory
             registry.Register(view);
         }
 
+        // Action Flag
+        _world.Components.Add(entity, new ActionFlagComponent { });
+
         // Player Tag
         _world.Components.Add(entity, new PlayerTagComponent { });
 

@@ -1,17 +1,16 @@
 using System.Collections;
-using Unity.VisualScripting;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DashStrikeExecutorView : SkillExecutorView
 {
     public override SkillCategory Category => SkillCategory.DashStrike;
 
-    protected override void ExecuteSkill(SkillExecutionRequestEvent @event)
+    protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
         base.ExecuteSkill(@event);
 
         EntityViewRegistry registry = WorldInstance.Services.Resolve<EntityViewRegistry>();
-
         if (!registry.TryGet(@event.Caster, out EntityView view))
         {
             return;
@@ -19,16 +18,15 @@ public class DashStrikeExecutorView : SkillExecutorView
 
         GameObject owner = view.gameObject;
         DashStrikeSkillSO dashSkill = @event.Skill as DashStrikeSkillSO;
-
         if (dashSkill == null)
         {
             return;
         }
 
-        StartCoroutine(DashRoutine(owner, dashSkill, @event.Direction));
+        StartCoroutine(DashRoutine(owner, dashSkill, @event.TargetPoint));
     }
 
-    private IEnumerator DashRoutine(GameObject owner, DashStrikeSkillSO skill, Vector3 direction)
+    private IEnumerator DashRoutine(GameObject owner, DashStrikeSkillSO skill, Vector3 targetPoint)
     {
         CharacterController controller = owner.GetComponent<CharacterController>();
 
@@ -37,20 +35,22 @@ public class DashStrikeExecutorView : SkillExecutorView
             yield break;
         }
 
-        Vector3 start = owner.transform.position;
-        Vector3 end = start + direction.normalized * skill.dashDistance;
-        float elapsed = 0f;
-
         TrailRenderer trail = null;
         if (skill.dashTrailPrefab)
         {
-            trail = Object.Instantiate(skill.dashTrailPrefab, owner.transform);
+            trail = Instantiate(skill.dashTrailPrefab, owner.transform);
         }
+
+        Vector3 start = owner.transform.position;
+        float elapsed = 0f;
+        targetPoint.y = start.y;
 
         while (elapsed < skill.dashDuration)
         {
             elapsed += Time.deltaTime;
-            Vector3 newPos = Vector3.Lerp(start, end, elapsed / skill.dashDuration);
+            float t = Mathf.Clamp01(elapsed / skill.dashDuration);
+
+            Vector3 newPos = Vector3.Lerp(start, targetPoint, t);
             controller.Move(newPos - owner.transform.position);
 
             yield return null;
@@ -59,20 +59,49 @@ public class DashStrikeExecutorView : SkillExecutorView
         if (trail)
         {
             trail.transform.SetParent(null);
-            Object.Destroy(trail.gameObject, 1f);
+            Destroy(trail.gameObject, 1f);
         }
 
-        Collider[] hits = Physics.OverlapSphere(end, skill.attackRadius);
+        ApplyDashDamage(skill, targetPoint);
+    }
+
+    private void ApplyDashDamage(DashStrikeSkillSO skill, Vector3 hitPoint)
+    {
+        HashSet<EntityId> damageCache = new();
+
+        Collider[] hits = Physics.OverlapSphere(hitPoint, skill.attackRadius);
         foreach (var hit in hits)
         {
-            if (hit.TryGetComponent(out HealthComponent health))
+            if (!hit.TryGetComponent(out EntityView targetView))
             {
-                health.TakeDamage(skill.damage);
+                continue;
+            }
 
-                if (skill.hitVfxPrefab)
+            EntityId targetEntity = targetView.EntityInstance;
+            if (targetEntity.Equals(EntityInstance))
+            {
+                continue;
+            }
+
+            if (damageCache.Contains(targetEntity))
+            {
+                continue;
+            }
+
+            damageCache.Add(targetEntity);
+
+            WorldInstance.Events.Publish(
+                new DamageEvent
                 {
-                    Object.Instantiate(skill.hitVfxPrefab, hit.ClosestPoint(end), Quaternion.identity);
+                    Target = targetEntity,
+                    Attacker = EntityInstance,
+                    Amount = skill.damage,
                 }
+            );
+
+            if (skill.hitVfxPrefab)
+            {
+                Instantiate(skill.hitVfxPrefab, hit.ClosestPoint(hitPoint), Quaternion.identity);
             }
         }
     }

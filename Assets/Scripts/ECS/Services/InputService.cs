@@ -3,11 +3,17 @@ using UnityEngine;
 public class InputService : MonoBehaviour, IInputService
 {
     [SerializeField]
-    private LayerMask mouseLayerMask = ~0;
+    private LayerMask mouseLayerMask;
 
     private Vector2 _moveInput;
-    private bool _attackPressed;
-    private bool[] _skills = new bool[3];
+    private bool _attackHeld;
+    private bool _attackDown;
+    private bool _attackUp;
+
+    private bool[] _skillHeld = new bool[3];
+    private bool[] _skillDown = new bool[3];
+    private bool[] _skillUp = new bool[3];
+
     private Camera _mainCamera;
 
     private void Awake()
@@ -15,7 +21,7 @@ public class InputService : MonoBehaviour, IInputService
         _mainCamera = Camera.main;
         if (_mainCamera == null)
         {
-            Debug.LogError("Main Camera not found! Please tag your camera as MainCamera.");
+            Debug.LogError("Main Camera not found! Please tag camera as MainCamera.");
         }
     }
 
@@ -24,63 +30,96 @@ public class InputService : MonoBehaviour, IInputService
         SubscribeInput();
     }
 
+    private void LateUpdate()
+    {
+        _attackDown = false;
+        _attackUp = false;
+
+        for (int i = 0; i < 3; i++)
+        {
+            _skillDown[i] = false;
+            _skillUp[i] = false;
+        }
+    }
+
     private void SubscribeInput()
     {
-        InputManager.Instance.OnMove += (v) => _moveInput = v;
+        var input = InputManager.Instance;
 
-        InputManager.Instance.OnAttackPressed += () => _attackPressed = true;
-        InputManager.Instance.OnAttackReleased += () => _attackPressed = false;
+        input.OnMove += (v) => _moveInput = v;
 
-        InputManager.Instance.OnSkill1Pressed += () => _skills[0] = true;
-        InputManager.Instance.OnSkill2Pressed += () => _skills[1] = true;
-        InputManager.Instance.OnSkill3Pressed += () => _skills[2] = true;
+        // Attack
+        input.OnAttackPressed += () =>
+        {
+            _attackHeld = true;
+            _attackDown = true;
+        };
+        input.OnAttackReleased += () =>
+        {
+            _attackHeld = false;
+            _attackUp = true;
+        };
 
-        InputManager.Instance.OnSkill1Released += () => _skills[0] = false;
-        InputManager.Instance.OnSkill2Released += () => _skills[1] = false;
-        InputManager.Instance.OnSkill3Released += () => _skills[2] = false;
+        // Skills
+        input.OnSkill1Pressed += () =>
+        {
+            _skillHeld[0] = true;
+            _skillDown[0] = true;
+        };
+        input.OnSkill2Pressed += () =>
+        {
+            _skillHeld[1] = true;
+            _skillDown[1] = true;
+        };
+        input.OnSkill3Pressed += () =>
+        {
+            _skillHeld[2] = true;
+            _skillDown[2] = true;
+        };
+
+        input.OnSkill1Released += () =>
+        {
+            _skillHeld[0] = false;
+            _skillUp[0] = true;
+        };
+        input.OnSkill2Released += () =>
+        {
+            _skillHeld[1] = false;
+            _skillUp[1] = true;
+        };
+        input.OnSkill3Released += () =>
+        {
+            _skillHeld[2] = false;
+            _skillUp[2] = true;
+        };
     }
 
     public Vector2 GetMoveInput() => _moveInput;
 
-    public bool IsAttackPressed()
-    {
-        bool pressed = _attackPressed;
-        return pressed;
-    }
+    public bool IsLeftMouseDown() => _attackDown;
 
-    public bool IsSkillPressed(int index)
-    {
-        if (index < 1 || index > _skills.Length)
-        {
-            return false;
-        }
+    public bool IsLeftMouseHeld() => _attackHeld;
 
-        return _skills[index - 1];
-    }
+    public bool IsLeftMouseUp() => _attackUp;
+
+    public bool IsSkillDown(int index) => index >= 1 && index <= 3 && _skillDown[index - 1];
+
+    public bool IsSkillUp(int index) => index >= 1 && index <= 3 && _skillUp[index - 1];
 
     public Vector3 GetMouseWorldPosition()
     {
         if (_mainCamera == null)
+        {
             return Vector3.zero;
+        }
 
         Ray ray = _mainCamera.ScreenPointToRay(InputManager.Instance.GetMouseScreeenPosition());
+
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, mouseLayerMask))
         {
             return hit.point;
         }
 
         return Vector3.zero;
-    }
-
-    public Vector3 GetAimDirection(Vector3 origin)
-    {
-        Vector3 worldPos = GetMouseWorldPosition();
-        if (worldPos == Vector3.zero)
-            return Vector3.zero;
-
-        Vector3 dir = (worldPos - origin).normalized;
-        dir.y = 0f;
-
-        return dir;
     }
 }

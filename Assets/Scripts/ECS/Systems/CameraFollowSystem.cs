@@ -17,7 +17,6 @@ public class CameraFollowSystem : ISystem
         }
 
         world.Events.Subscribe<PlayerSpawnEvent>(OnPlayerSpawned);
-        Debug.Log("[CameraFollowSystem] Subscribed to PlayerSpawnEvent");
     }
 
     public void Shutdown()
