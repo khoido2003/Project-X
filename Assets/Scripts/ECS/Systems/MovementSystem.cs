@@ -9,7 +9,7 @@ public class MovementSystem : ISystem
     public void Initialize(World world)
     {
         _world = world;
-        _world.Events.Subscribe<MoveInputEvent>(OnMoveInput);
+        _world.Events.Subscribe<MovePressedInputEvent>(OnMoveInput);
     }
 
     public void Update(float dt)
@@ -83,7 +83,7 @@ public class MovementSystem : ISystem
         }
     }
 
-    private void OnMoveInput(MoveInputEvent @event)
+    private void OnMoveInput(MovePressedInputEvent @event)
     {
         if (_world.Components.TryGet(@event.Entity, out MovementDataComponent movement))
         {
@@ -95,6 +95,6 @@ public class MovementSystem : ISystem
 
     public void Shutdown()
     {
-        _world.Events.Unsubscribe<MoveInputEvent>(OnMoveInput);
+        _world.Events.Unsubscribe<MovePressedInputEvent>(OnMoveInput);
     }
 }

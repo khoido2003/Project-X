@@ -2930,7 +2930,6 @@ GameObject:
   - component: {fileID: 8971600808939855881}
   - component: {fileID: 502299433680423764}
   - component: {fileID: 228778587582711661}
-  - component: {fileID: 3417600431774549459}
   - component: {fileID: 1463290615161989044}
   - component: {fileID: 1124340274477347657}
   - component: {fileID: 487505957667454787}
@@ -3020,18 +3019,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19fa5c928c6a91f4983e035851cee389, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntityView
---- !u!114 &3417600431774549459
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5191787420164104229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9725a0b1abd5cc64e9fefa31f60fa6ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputView
 --- !u!114 &1463290615161989044
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -16,20 +16,35 @@ public class InputSystem : ISystem
         foreach (var (entity, _) in _world.Components.Query<PlayerTagComponent>())
         {
             // Movement
-            _world.Events.Publish(new MoveInputEvent(entity, _input.GetMoveInput()));
+            _world.Events.Publish(new MovePressedInputEvent(entity, _input.GetMoveInput()));
 
-            // Attack
-            if (_input.IsAttackPressed() && !SkillPreviewView.IsPreviewActive)
+            // LeftMouse clicked
+            if (_input.IsLeftMouseDown() && _world.Components.TryGet(entity, out ActionFlagComponent flags))
             {
-                _world.Events.Publish(new AttackInputEvent(entity));
+                if (flags.Get(ActionFlag.SkillPreview))
+                {
+                    _world.Events.Publish(new SkillExecutionRequestEvent(entity));
+                }
+                else
+                {
+                    _world.Events.Publish(new AttackPressedInputEvent(entity));
+                }
             }
 
             // Skills
             for (int i = 1; i <= 3; i++)
             {
-                bool pressed = _input.IsSkillPressed(i);
-                _world.Events.Publish(new SkillInputEvent(entity, i, pressed));
+                if (_input.IsSkillDown(i))
+                {
+                    _world.Events.Publish(new SkillPressedInputEvent(entity, i, true));
+                }
+                else if (_input.IsSkillUp(i))
+                {
+                    _world.Events.Publish(new SkillPressedInputEvent(entity, i, false));
+                }
             }
+
+            _world.Events.Publish(new MouseWorldInputEvent(entity, _input.GetMouseWorldPosition()));
         }
     }
 

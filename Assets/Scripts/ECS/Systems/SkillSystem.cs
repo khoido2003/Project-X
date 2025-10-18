@@ -6,46 +6,21 @@ public class SkillSystem : ISystem
     public World _world;
     private EntityViewRegistry _registry;
 
+    private SkillDefinitionSO currentChosenSkill;
+
     public void Initialize(World world)
     {
         _world = world;
         _registry = world.Services.Resolve<EntityViewRegistry>();
 
-        _world.Events.Subscribe<SkillInputEvent>(OnSkillInput);
-        _world.Events.Subscribe<SkillExecutionRequestEvent>(OnExecuteSkill);
+        _world.Events.Subscribe<SkillPressedInputEvent>(OnSkillPressedInput);
     }
 
     public void Update(float dt) { }
 
     public void FixedUpdate(float dt) { }
 
-    private void OnExecuteSkill(SkillExecutionRequestEvent @event)
-    {
-        if (!_world.Components.TryGet(@event.Caster, out SkillSetComponent skillSet))
-        {
-            return;
-        }
-
-        int index = skillSet.Skills.IndexOf(@event.Skill);
-        if (index < 0)
-        {
-            return;
-        }
-
-        if (Time.time < skillSet.CooldownUntil[index])
-        {
-            return;
-        }
-
-        skillSet.CooldownUntil[index] = Time.time + @event.Skill.cooldown;
-
-        if (_world.Components.TryGet(@event.Caster, out CombatStateComponent state))
-        {
-            state.CurrentState = CombatState.Idle;
-        }
-    }
-
-    private void OnSkillInput(SkillInputEvent @event)
+    private void OnSkillPressedInput(SkillPressedInputEvent @event)
     {
         if (!_world.Components.TryGet(@event.Entity, out SkillSetComponent skillSet))
         {
@@ -58,11 +33,18 @@ public class SkillSystem : ISystem
             return;
         }
 
+        if (Time.time < skillSet.CooldownUntil[index])
+        {
+            return;
+        }
+
         SkillDefinitionSO skill = skillSet.Skills[index];
         if (skill == null)
         {
             return;
         }
+
+        currentChosenSkill = skill;
 
         if (!_world.Components.TryGet(@event.Entity, out CombatStateComponent state))
         {
@@ -70,28 +52,32 @@ public class SkillSystem : ISystem
             _world.Components.Add(@event.Entity, state);
         }
 
-        if (state.CurrentState != CombatState.Idle)
+        if (state.CurrentState == CombatState.Attacking)
         {
             return;
         }
 
-        if (_registry.TryGet(@event.Entity, out EntityView view) && view.TryGetComponent(out SkillPreviewView preview))
+        if (!_world.Components.TryGet(@event.Entity, out ActionFlagComponent flags))
         {
-            if (@event.IsPressed)
+            return;
+        }
+
+        if (@event.IsPressed)
+        {
+            if (skill.isInstant)
             {
-                if (skill.isInstant)
-                {
-                    ExecuteSkill(@event.Entity, skill);
-                }
-                else
-                {
-                    preview.ShowPreview(skill);
-                }
+                ExecuteSkill(@event.Entity, currentChosenSkill);
             }
             else
             {
-                preview.HidePreview();
+                flags.Set(ActionFlag.SkillPreview, true);
+                _world.Events.Publish(new SkillPreviewRequestEvent(@event.Entity, skill, true));
             }
+        }
+        else
+        {
+            flags.Set(ActionFlag.SkillPreview, false);
+            _world.Events.Publish(new SkillPreviewRequestEvent(@event.Entity, skill, false));
         }
     }
 
@@ -105,16 +91,7 @@ public class SkillSystem : ISystem
         state.CurrentState = CombatState.CastingSkill;
         state.LastActionTime = Time.time;
 
-        _world.Events.Publish(
-            new SkillExecutionRequestEvent
-            {
-                Caster = caster,
-
-                Skill = skill,
-                TargetPoint = Vector3.zero,
-                Direction = Vector3.forward,
-            }
-        );
+        _world.Events.Publish(new SkillConfirmExecutionEvent(caster, skill, Vector3.zero, Vector3.forward));
     }
 
     public void Shutdown() { }
