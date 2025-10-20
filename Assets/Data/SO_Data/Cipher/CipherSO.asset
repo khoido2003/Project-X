@@ -27,7 +27,7 @@ MonoBehaviour:
     ExecutionType: 0
     attackDamage: 10
     attackCooldown: 0.5
-    attackRange: 1
+    attackRange: 1.5
     hitImpactParticlePrefab: {fileID: 7089567446671028007, guid: a3015979818be2645a5a7a5907241fe8, type: 3}
     attackAnimationTrigger: attack
     totalAttackAnimations: 2

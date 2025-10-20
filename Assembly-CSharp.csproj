@@ -91,6 +91,7 @@
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\CinemachineCameraService.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\CombatStateEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\AStarPathfinder.cs" />
     <Compile Include="Assets\Scripts\SO\CharacterDefinitionSO.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="Assets\Scripts\ECS\Events\SkillEvent.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\DashStrikeSkillSO.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\Skills\SkillData.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\CombatStateSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\WeaponSpawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\MovementSystem.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />

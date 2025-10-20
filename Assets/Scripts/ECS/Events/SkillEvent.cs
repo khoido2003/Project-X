@@ -55,3 +55,15 @@ public struct SkillEffectTriggerEvent
         Direction = direction;
     }
 }
+
+public struct SkillExecutionFinishedEvent
+{
+    public EntityId Caster;
+    public SkillDefinitionSO Skill;
+
+    public SkillExecutionFinishedEvent(EntityId caster, SkillDefinitionSO skill)
+    {
+        Caster = caster;
+        Skill = skill;
+    }
+}

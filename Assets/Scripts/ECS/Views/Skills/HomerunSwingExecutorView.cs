@@ -7,8 +7,6 @@ public class HomerunSwingExecutorView : SkillExecutorView
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
-        base.ExecuteSkill(@event);
-
         if (@event.Skill is not HomerunSwingSkillSO skill)
         {
             return;
@@ -19,6 +17,8 @@ public class HomerunSwingExecutorView : SkillExecutorView
             return;
         }
         StartCoroutine(ChargeAndSwing(casterView, skill, @event.Direction));
+
+        base.ExecuteSkill(@event);
     }
 
     private IEnumerator ChargeAndSwing(EntityView casterView, HomerunSwingSkillSO skill, Vector3 direction)
@@ -100,5 +100,7 @@ public class HomerunSwingExecutorView : SkillExecutorView
             var swingFx = Instantiate(skill.swingVfxPrefab, origin, Quaternion.LookRotation(direction));
             Destroy(swingFx.gameObject, 2f);
         }
+
+        FinishSkill(skill);
     }
 }

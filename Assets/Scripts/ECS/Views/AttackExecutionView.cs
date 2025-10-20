@@ -74,14 +74,7 @@ public class AttackExecutionView : EntityView
         Vector3 origin = attackerTf.position + attackerTf.forward * 0.5f;
         float radius = @event.Range * 0.5f;
 
-
-
-
-
         Collider[] hits = Physics.OverlapSphere(origin, radius);
-
-
-
 
         foreach (Collider hit in hits)
         {

@@ -33,7 +33,9 @@ public class AnimationEventRelayView : EntityView
             case AnimationEventRelayType.ATTACK_END:
                 HandleAttackEnd();
                 break;
-
+            case AnimationEventRelayType.SKILL_END:
+                HandleSkillEnd();
+                break;
             default:
                 break;
         }
@@ -81,15 +83,22 @@ public class AnimationEventRelayView : EntityView
             }
         );
 
-        // skillBuffer.Skill = null;
-        // skillBuffer.TargetPoint = Vector3.zero;
-        // skillBuffer.Direction = Vector3.forward;
+        skillBuffer.Skill = null;
+        skillBuffer.TargetPoint = Vector3.zero;
+        skillBuffer.Direction = Vector3.forward;
     }
 
     private void HandleAttackEnd()
     {
         _world.Events.Publish(
             new AnimationEventRelayEvent(_entityView.EntityInstance, AnimationEventRelayType.ATTACK_END)
+        );
+    }
+
+    private void HandleSkillEnd()
+    {
+        _world.Events.Publish(
+            new AnimationEventRelayEvent(_entityView.EntityInstance, AnimationEventRelayType.SKILL_END)
         );
     }
 }

@@ -38,7 +38,7 @@ public class AttackSystem : ISystem
             _world.Components.Add(@event.Entity, state);
         }
 
-        if (state.CurrentState != CombatState.Idle)
+        if (state.CurrentState == CombatState.CastingSkill)
         {
             return;
         }
@@ -48,8 +48,10 @@ public class AttackSystem : ISystem
             return;
         }
 
-        state.CurrentState = CombatState.Attacking;
-        state.LastActionTime = Time.time;
+        // Switch Combat State
+        _world.Events.Publish(
+            new EnterCombatStateEvent { Entity = @event.Entity, TargetState = CombatState.Attacking }
+        );
 
         attack.IsAttacking = true;
         attack.LastAttackTime = Time.time;

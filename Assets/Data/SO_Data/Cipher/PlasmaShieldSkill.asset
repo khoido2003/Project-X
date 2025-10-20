@@ -21,7 +21,7 @@ MonoBehaviour:
   hitVfxPrefab: {fileID: 0}
   skillVfxPrefab: {fileID: 9182071414042874320, guid: d157ae1c06c365d4fb024376bdf83cab, type: 3}
   activateSound: {fileID: 0}
-  activationAnimationTrigger: skill
+  activationAnimationTrigger: 
   defenseBoost: 20
   boostDuration: 5
   shieldPrefab: {fileID: 3889418507306871139, guid: 03c1f03cba6281f41b0b9ec840738ad9, type: 3}

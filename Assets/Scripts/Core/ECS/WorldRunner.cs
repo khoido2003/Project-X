@@ -90,5 +90,6 @@ public class WorldRunner : MonoBehaviour
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);
         World.Systems.AddSystem(new SkillSystem(), World);
+        World.Systems.AddSystem(new CombatStateSystem(), World);
     }
 }
