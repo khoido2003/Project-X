@@ -48,7 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\ECS\Systems\AnimationSyncSystem.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyAttackState.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\DamageSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Factories\CharacterFactory.cs" />
@@ -70,17 +69,20 @@
     <Compile Include="Assets\Scripts\Core\Grid\GridLayer.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\PlayerTagComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AttackEvent.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyChaseStateAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\MovementEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\AttackSystem.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\MurderKitten\MurderKittenAnimationController.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\World.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\LookAtMouseView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\EnemyPathfindingSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AnimationDataComponent.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleSceneLoader.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\DashStrikeExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AttackDataComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\EnemyComponent.cs" />
     <Compile Include="Assets\Scripts\SO\SkillDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\CharacterVisualComponent.cs" />
@@ -88,9 +90,12 @@
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleCountdownLabel.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\TransformSyncView.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
+    <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\CinemachineCameraService.cs" />
+    <Compile Include="Assets\Scripts\ECS\Interfaces\IEnemyState.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\EnemyMovementView.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\CombatStateEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\AStarPathfinder.cs" />
@@ -105,7 +110,9 @@
     <Compile Include="Assets\Scripts\ECS\Events\HealthEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EventBus.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\SkillPreviewView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\EnemyAISystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyAttackStateAI.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ServiceLocator.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IStatusEffect.cs" />
@@ -113,6 +120,7 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIStateMachine.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IAnimationTrigger.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\SkillSetComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\EnemyEvent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\MovementComponent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityViewRegistry.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\HealthComponent.cs" />
@@ -124,9 +132,11 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\AnimationControllerComponent.cs" />
     <Compile Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\EnemyVisionSystem.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\AttackComponent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIConfig.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\WeaponDataComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyIdleStateAI.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolState.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\HomerunSwingExecutorView.cs" />
@@ -136,7 +146,6 @@
     <Compile Include="Assets\Scripts\ECS\Systems\SkillSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IInputService.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyTakeCoverState.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\WeaponDataSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\PlasmaShieldExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\CombatStateComponent.cs" />
@@ -144,10 +153,12 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\MurderKitten\MurderKittenAttackComponent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IAnimationRelayReceiver.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\TimeService.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyAIHelpers.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillInstance.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\InputService.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\StatusEffectComponent.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyChaseState.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\SpawnSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\EnemyMovementSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\MovementDataComponent.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AnimationView.cs" />
@@ -155,11 +166,14 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\PathfindingComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\SkillEvent.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\DashStrikeSkillSO.cs" />
+    <Compile Include="Assets\Scripts\Utils\EnemyPatrolPointGizmo.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\Skills\SkillData.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\CombatStateSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\WeaponSpawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\MovementSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyPatrolStateAI.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyDeadStateAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\PlayerSpawnEvent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\AnimationEventRelay.cs" />
     <Compile Include="Assets\Scripts\SO\SpawnConfigSO.cs" />
@@ -169,9 +183,9 @@
     <Compile Include="Assets\Scripts\ECS\Systems\TransformSyncSystem.cs" />
     <Compile Include="Assets\Scripts\Utils\SkillVfxEffectSocket.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\InputSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Factories\EnemyFactory.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\HomerunSwingSkillSO.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityManager.cs" />
-    <Compile Include="Assets\Scripts\ECS\Systems\CharacterSpawnSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />

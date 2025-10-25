@@ -32,8 +32,8 @@ public class AIStateMachine : MonoBehaviour
     public AnimationControllerComponent Animation { get; private set; }
     public EnemyPatrolPoints PatrolPoints { get; private set; }
 
-    public EnemyIdleState IdleState { get; private set; }
-    public EnemyPatrolState PatrolState { get; private set; }
+    public EnemyIdleStateOld IdleState { get; private set; }
+    public EnemyPatrolStateOld PatrolState { get; private set; }
 
     public Transform ClosestPlayer { get; set; }
 
@@ -47,8 +47,8 @@ public class AIStateMachine : MonoBehaviour
         Animation = GetComponent<AnimationControllerComponent>();
         PatrolPoints = GetComponent<EnemyPatrolPoints>();
 
-        IdleState = GetComponent<EnemyIdleState>();
-        PatrolState = GetComponent<EnemyPatrolState>();
+        IdleState = GetComponent<EnemyIdleStateOld>();
+        PatrolState = GetComponent<EnemyPatrolStateOld>();
     }
 
     private void Start()
