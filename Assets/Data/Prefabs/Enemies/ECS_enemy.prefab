@@ -137,6 +137,8 @@ GameObject:
   - component: {fileID: -81442132387304630}
   - component: {fileID: 487505957667454787}
   - component: {fileID: 8980735487427860396}
+  - component: {fileID: -8348925622634892066}
+  - component: {fileID: 1161952398805926987}
   m_Layer: 10
   m_Name: ECS_enemy
   m_TagString: Untagged
@@ -230,6 +232,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5497544505ef1264dacd1e7dd67c1553, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackExecutionView
+--- !u!114 &-8348925622634892066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac35603e987501d4eb14782a31f729ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyMovementView
+  SmoothPosition: 1
+  PositionLerpSpeed: 10
+  RotationLerpSpeed: 10
+  SnapThreshold: 0.5
+--- !u!114 &1161952398805926987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3273ab979e595b74685293587a9dec8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyPatrolPointGizmo
+  patrolColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  pathColor: {r: 0, g: 1, b: 1, a: 1}
+  pointSize: 0.2
 --- !u!1 &5463701898387434300
 GameObject:
   m_ObjectHideFlags: 0
@@ -452,7 +485,7 @@ PrefabInstance:
     - target: {fileID: 512506106991999978, guid: 8e120e0631295bf4d8304ebac8213d2f, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 67515ba126ba4314d9e6561d1f8db452, type: 2}
+      objectReference: {fileID: 9100000, guid: 56c64b70b8f694f438d7de34462a2ac2, type: 2}
     - target: {fileID: 512506106991999978, guid: 8e120e0631295bf4d8304ebac8213d2f, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0

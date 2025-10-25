@@ -1,14 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharacterSpawnSystem : ISystem
+public class SpawnSystem : ISystem
 {
     private readonly SpawnConfigSO _config;
     private readonly List<SpawnPoint> _spawnPoints = new();
-    private CharacterFactory _factory;
+    private CharacterFactory _characterFactory;
+    private EnemyFactory _enemyFactory;
     private World _world;
 
-    public CharacterSpawnSystem(SpawnConfigSO config)
+    public SpawnSystem(SpawnConfigSO config)
     {
         _config = config;
     }
@@ -16,7 +17,8 @@ public class CharacterSpawnSystem : ISystem
     public void Initialize(World world)
     {
         _world = world;
-        _factory = new CharacterFactory(world);
+        _characterFactory = new CharacterFactory(world);
+        _enemyFactory = new EnemyFactory(world);
 
         _spawnPoints.AddRange(Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None));
 
@@ -72,7 +74,7 @@ public class CharacterSpawnSystem : ISystem
 
             SpawnPoint spawn = shuffleSpawns[i];
 
-            GameObject playerObj = _factory.CreateCharacter(data, spawn.transform.position);
+            GameObject playerObj = _characterFactory.CreateCharacter(data, spawn.transform.position);
 
             EntityView view = playerObj.GetComponent<EntityView>();
 
@@ -100,10 +102,10 @@ public class CharacterSpawnSystem : ISystem
 
         for (int i = 0; i < enemyCount; i++)
         {
-            CharacterDefinitionSO data = _config.possibleEnemies[i];
+            EnemyDefinitionSO data = _config.possibleEnemies[i];
             SpawnPoint spawn = shuffleSpawns[i];
 
-            GameObject enemyObj = _factory.CreateEnemy(data, spawn.transform.position);
+            GameObject enemyObj = _enemyFactory.CreateEnemy(data, spawn.transform.position);
         }
     }
 

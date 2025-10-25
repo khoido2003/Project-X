@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class EnemyIdleState : AIState, IAnimationTrigger
+public class EnemyIdleStateOld : AIState, IAnimationTrigger
 {
     private float enterTime;
     private AIStateMachine machine;
