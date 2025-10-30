@@ -11,5 +11,5 @@ public class SpawnConfigSO : ScriptableObject
 
     [Header("References")]
     public CharacterDefinitionSO[] possiblePlayers;
-    public CharacterDefinitionSO[] possibleEnemies;
+    public EnemyDefinitionSO[] possibleEnemies;
 }

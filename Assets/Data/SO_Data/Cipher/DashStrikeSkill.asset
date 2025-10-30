@@ -19,10 +19,10 @@ MonoBehaviour:
   castRange: 5
   cooldown: 1
   hitVfxPrefab: {fileID: 5683715703724972373, guid: e55b07d1dee51c947ba23ff5d4e3afbc, type: 3}
-  vfxPrefab: {fileID: 0}
+  skillVfxPrefab: {fileID: 0}
   activateSound: {fileID: 0}
   activationAnimationTrigger: skill1
   dashDistance: 5
-  dashDuration: 0.3
+  dashDuration: 0.5
   attackRadius: 1
   dashTrailPrefab: {fileID: 3066829756271264116, guid: c188b547e908aed488fe0099093ca286, type: 3}

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Http.Headers;
 using UnityEngine;
 
 public enum GridLayerName
@@ -9,6 +8,7 @@ public enum GridLayerName
     TERRAIN_COST,
 }
 
+[DefaultExecutionOrder(-100)]
 public class GridSystem : MonoBehaviour
 {
     public static GridSystem Instance { get; private set; }

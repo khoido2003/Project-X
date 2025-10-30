@@ -29,5 +29,14 @@ public struct AttackExecutionRequestEvent
     public Vector3 Direction;
     public float Range;
     public float Damage;
+
     public ParticleSystem ImpactEffect;
+
+    public GameObject ProjectilePrefab;
+    public float ProjectileSpeed;
+    public float ProjectileLifetime;
+    public Vector3 SpawnOffset;
+
+    public float AreaRadius;
+    public float AreaDuration;
 }

@@ -48,8 +48,6 @@
     <Analyzer Include="F:\program files\Unity\6000.2.8f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\ECS\Systems\AnimationSyncSystem.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyAttackState.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\DamageSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Factories\CharacterFactory.cs" />
@@ -69,8 +67,10 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\WeaponComponent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityId.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridLayer.cs" />
+    <Compile Include="Assets\Scripts\Utils\PoolParticlesAutoReturn.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\PlayerTagComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AttackEvent.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyChaseStateAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\MovementEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\AttackSystem.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\MurderKitten\MurderKittenAnimationController.cs" />
@@ -78,11 +78,14 @@
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\DoorController.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\LookAtMouseView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\EnemyPathfindingSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AnimationDataComponent.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleSceneLoader.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\DashStrikeExecutorView.cs" />
+    <Compile Include="Assets\Scripts\SO\AttackDefinition.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AttackDataComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\EnemyComponent.cs" />
     <Compile Include="Assets\Scripts\SO\SkillDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\CharacterVisualComponent.cs" />
@@ -93,9 +96,13 @@
     <Compile Include="Assets\Scripts\ECS\Views\TransformSyncView.cs" />
     <Compile Include="Assets\Scripts\Lobby\LobbyCharacterController.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
+    <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\CinemachineCameraService.cs" />
+    <Compile Include="Assets\Scripts\ECS\Interfaces\IEnemyState.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\EnemyMovementView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\CombatStateEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\AStarPathfinder.cs" />
     <Compile Include="Assets\Scripts\SO\CharacterDefinitionSO.cs" />
@@ -111,7 +118,9 @@
     <Compile Include="Assets\Scripts\Core\ECS\EventBus.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\SkillPreviewView.cs" />
     <Compile Include="Assets\Scripts\Lobby\VacuumController.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\EnemyAISystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyAttackStateAI.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ServiceLocator.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IStatusEffect.cs" />
@@ -119,10 +128,12 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIStateMachine.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IAnimationTrigger.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\SkillSetComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\EnemyEvent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\MovementComponent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityViewRegistry.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\AnimatorActionData.cs" />
+    <Compile Include="Assets\Scripts\ECS\Interfaces\IObjectPoolService.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\PlasmaShieldSkillSO.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\LoadSceneByIndex.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\SkillExecutorView.cs" />
@@ -132,14 +143,17 @@
     <Compile Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CheckCodeEntered.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\EnemyVisionSystem.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\AttackComponent.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\ThirdPersonController\Scripts\ThirdPersonController.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CustomSceneManager.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\StarterSceneStar.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIConfig.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\WeaponDataComponent.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolState.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyIdleStateAI.cs" />
+    <Compile Include="Assets\Scripts\Utils\ProjectileSpawnPos.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
+    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolState.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\HomerunSwingExecutorView.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\Scripts\Utils\SpawnPoint.cs" />
@@ -147,7 +161,6 @@
     <Compile Include="Assets\Scripts\ECS\Systems\SkillSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IInputService.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyTakeCoverState.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\WeaponDataSO.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\ThirdPersonController\Scripts\BasicRigidBodyPush.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\PlasmaShieldExecutorView.cs" />
@@ -156,21 +169,29 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\MurderKitten\MurderKittenAttackComponent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IAnimationRelayReceiver.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\TimeService.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyAIHelpers.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillInstance.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\ProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\InputService.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\StatusEffectComponent.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyChaseState.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\SpawnSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\EnemyMovementSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\MovementDataComponent.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AnimationView.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIState.cs" />
+    <Compile Include="Assets\Scripts\ECS\Services\ObjectPoolService.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\PathfindingComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\SkillEvent.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\DashStrikeSkillSO.cs" />
+    <Compile Include="Assets\Scripts\Utils\EnemyPatrolPointGizmo.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\Skills\SkillData.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\CombatStateSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\WeaponSpawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\MovementSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyPatrolStateAI.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyDeadStateAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\PlayerSpawnEvent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\AnimationEventRelay.cs" />
     <Compile Include="Assets\Scripts\SO\SpawnConfigSO.cs" />
@@ -182,9 +203,9 @@
     <Compile Include="Assets\Scripts\Utils\SkillVfxEffectSocket.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\InputSystem\StarterAssetsInputs.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\InputSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Factories\EnemyFactory.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\HomerunSwingSkillSO.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityManager.cs" />
-    <Compile Include="Assets\Scripts\ECS\Systems\CharacterSpawnSystem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />
@@ -1329,6 +1350,10 @@
       <HintPath>Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Animation.Rigging.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Animation.Rigging.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Editor.Bridge">
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Editor.Bridge.dll</HintPath>
       <Private>False</Private>
@@ -1379,6 +1404,10 @@
     </Reference>
     <Reference Include="Unity.Rendering.LightTransport.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Rendering.LightTransport.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Animation.Rigging">
+      <HintPath>Library\ScriptAssemblies\Unity.Animation.Rigging.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Editor.ConversionSystem">

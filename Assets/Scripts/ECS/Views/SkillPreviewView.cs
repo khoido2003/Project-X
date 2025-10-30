@@ -80,6 +80,7 @@ public class SkillPreviewView : EntityView
     private void OnSkillExecutionRequestEvent(SkillExecutionRequestEvent @event)
     {
         TryCastSkill();
+        HideSkillVfxEffect();
     }
 
     private void ShowPreview(SkillDefinitionSO skill)
@@ -202,8 +203,9 @@ public class SkillPreviewView : EntityView
 
         Vector3 direction = dir.normalized;
 
-        state.CurrentState = CombatState.CastingSkill;
-        state.LastActionTime = Time.time;
+        WorldInstance.Events.Publish(
+            new EnterCombatStateEvent { Entity = EntityInstance, TargetState = CombatState.CastingSkill }
+        );
 
         WorldInstance.Events.Publish(
             new SkillEffectTriggerEvent

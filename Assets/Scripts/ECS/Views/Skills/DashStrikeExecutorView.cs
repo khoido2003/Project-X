@@ -8,8 +8,6 @@ public class DashStrikeExecutorView : SkillExecutorView
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
-        base.ExecuteSkill(@event);
-
         if (@event.Skill is not DashStrikeSkillSO skill)
         {
             return;
@@ -24,6 +22,8 @@ public class DashStrikeExecutorView : SkillExecutorView
         GameObject owner = view.gameObject;
 
         StartCoroutine(DashRoutine(owner, skill, @event.TargetPoint));
+
+        base.ExecuteSkill(@event);
     }
 
     private IEnumerator DashRoutine(GameObject owner, DashStrikeSkillSO skill, Vector3 targetPoint)
@@ -63,6 +63,8 @@ public class DashStrikeExecutorView : SkillExecutorView
         }
 
         ApplyDashDamage(skill, targetPoint);
+
+        FinishSkill(skill);
     }
 
     private void ApplyDashDamage(DashStrikeSkillSO skill, Vector3 hitPoint)

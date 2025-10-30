@@ -19,7 +19,7 @@ public class WorldRunner : MonoBehaviour
 
     public static WorldRunner Instance { get; private set; }
 
-    private CharacterSpawnSystem _spawnSystem;
+    private SpawnSystem _spawnSystem;
 
     private void Awake()
     {
@@ -76,19 +76,31 @@ public class WorldRunner : MonoBehaviour
             Debug.LogError("No EntityViewRegistry found!");
             return;
         }
-        World.Services.Register<EntityViewRegistry>(entityViewRegistry);
+        World.Services.Register(entityViewRegistry);
+
+        // Object pool
+        var poolService = new ObjectPoolService();
+        World.Services.Register(poolService);
     }
 
     private void InitSystems()
     {
         World.Systems.AddSystem(new InputSystem(), World);
-        World.Systems.AddSystem(new CharacterSpawnSystem(spawnConfig), World);
-        World.Systems.AddSystem(new TransformSyncSystem(), World);
-        World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new CameraFollowSystem(), World);
-        World.Systems.AddSystem(new AnimationSyncSystem(), World);
+        World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
+        World.Systems.AddSystem(new TransformSyncSystem(), World);
+
+        World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);
         World.Systems.AddSystem(new SkillSystem(), World);
+        World.Systems.AddSystem(new CombatStateSystem(), World);
+
+        World.Systems.AddSystem(new EnemyVisionSystem(), World);
+        World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
+        World.Systems.AddSystem(new EnemyMovementSystem(), World);
+        World.Systems.AddSystem(new EnemyAISystem(), World);
+
+        EnemyAIHelpers.RegisterDefaultStates();
     }
 }

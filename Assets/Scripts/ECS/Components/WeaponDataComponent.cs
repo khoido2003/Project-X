@@ -2,20 +2,25 @@ using UnityEngine;
 
 public class WeaponDataComponent
 {
-    [Header("Config")]
     public string WeaponName;
-    public AttackExecutionType ExecutionType;
+    public AttackExecutionType ExecutionType = AttackExecutionType.Melee;
 
-    [Header("Stats")]
-    public float BaseDamage;
-    public float BaseCooldown;
-    public float BaseRange;
+    public float BaseDamage = 10f;
+    public float BaseCooldown = 1.2f;
+    public float BaseRange = 2f;
 
-    [Header("Visuals")]
     public ParticleSystem HitImpactParticlePrefab;
 
-    [Header("Animation & Audio")]
-    public string AttackAnimationTrigger;
-    public int TotalAttackAnimations;
+    public string AttackAnimationTrigger = "attack";
+    public int TotalAttackAnimations = 1;
+
     public AudioClip AttackSound;
+
+    public GameObject ProjectilePrefab;
+    public float ProjectileSpeed = 15f;
+    public float ProjectileLifetime = 5f;
+    public Vector3 ProjectileSpawnOffset = new(0, 0, 0);
+
+    public float AreaRadius = 2f;
+    public float AreaDuration = 0f;
 }
