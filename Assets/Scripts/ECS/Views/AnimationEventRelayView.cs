@@ -45,11 +45,13 @@ public class AnimationEventRelayView : EntityView
     {
         if (!_world.Components.TryGet(_entityView.EntityInstance, out AttackDataComponent attack))
         {
+            Debug.LogError("Missing AttackDataComponent");
             return;
         }
 
         if (!_world.Components.TryGet(_entityView.EntityInstance, out WeaponDataComponent weapon))
         {
+            Debug.LogError("Missing WeaponDataComponent");
             return;
         }
 
@@ -62,6 +64,14 @@ public class AnimationEventRelayView : EntityView
                 Range = weapon.BaseRange,
                 Damage = weapon.BaseDamage,
                 ImpactEffect = weapon.HitImpactParticlePrefab,
+
+                // Ranged / AoE support
+                ProjectilePrefab = weapon.ProjectilePrefab,
+                ProjectileSpeed = weapon.ProjectileSpeed,
+                ProjectileLifetime = weapon.ProjectileLifetime,
+                SpawnOffset = weapon.ProjectileSpawnOffset,
+                AreaRadius = weapon.AreaRadius,
+                AreaDuration = weapon.AreaDuration,
             }
         );
     }

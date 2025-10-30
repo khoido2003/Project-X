@@ -43,7 +43,15 @@ public class EnemyFactory
                 IsMovingParam = data.isMovingParam,
                 MoveXParam = data.moveXParam,
                 MoveYParam = data.moveYParam,
+                AttackTrigger = data.attackAnimationTrigger,
+                IsRunningParam = data.isRunningParam,
             }
+        );
+
+        // --- Attack Data (needed for AnimationEventRelayView) ---
+        _world.Components.Add(
+            entity,
+            new AttackDataComponent { IsPlayerControlled = false, AttackSpeedMultiplier = 1f }
         );
 
         EnemyComponent enemy = new EnemyComponent
@@ -98,24 +106,24 @@ public class EnemyFactory
         _world.Components.Add(entity, enemy);
 
         // --- Attack + Weapon ---
-        if (data.hasWeapon && data.weaponData != null)
+        if (data.attacks != null && data.attacks.Count > 0)
         {
-            _world.Components.Add(entity, new AttackDataComponent { IsPlayerControlled = false });
-
-            _world.Components.Add(entity, new TransformComponent(instance.transform.position, Quaternion.identity));
+            var attack = data.attacks[0];
 
             _world.Components.Add(
                 entity,
                 new WeaponDataComponent
                 {
-                    WeaponName = data.weaponData.weaponName,
-                    ExecutionType = data.weaponData.ExecutionType,
-                    BaseDamage = data.weaponData.attackDamage,
-                    BaseCooldown = data.weaponData.attackCooldown,
-                    BaseRange = data.weaponData.attackRange,
-                    HitImpactParticlePrefab = data.weaponData.hitImpactParticlePrefab,
-                    AttackAnimationTrigger = data.weaponData.attackAnimationTrigger,
-                    TotalAttackAnimations = data.weaponData.totalAttackAnimations,
+                    WeaponName = attack.attackName,
+                    ExecutionType = attack.executionType,
+                    BaseDamage = attack.damage,
+                    BaseCooldown = attack.cooldown,
+                    BaseRange = attack.range,
+                    HitImpactParticlePrefab = attack.hitImpactVFX,
+                    AttackAnimationTrigger = attack.animationTrigger,
+                    TotalAttackAnimations = attack.totalAnimations,
+                    AttackSound = attack.attackSound,
+                    ProjectilePrefab = attack.projectilePrefab,
                 }
             );
         }

@@ -21,17 +21,24 @@ MonoBehaviour:
   isMovingParam: isMoving
   moveXParam: moveX
   moveYParam: moveY
-  hasWeapon: 1
-  weaponData:
-    weaponName: Baseball
-    ExecutionType: 0
-    attackDamage: 10
-    attackCooldown: 0.5
-    attackRange: 1.5
-    hitImpactParticlePrefab: {fileID: 7089567446671028007, guid: a3015979818be2645a5a7a5907241fe8, type: 3}
-    attackAnimationTrigger: attack
-    totalAttackAnimations: 2
+  attackAnimationTrigger: attack
+  totalAttackAnimations: 4
+  attacks:
+  - attackName: Baseball Bat
+    executionType: 0
+    damage: 10
+    cooldown: 0.5
+    range: 1.2
+    animationTrigger: attack
+    totalAnimations: 2
+    hitImpactVFX: {fileID: 7089567446671028007, guid: a3015979818be2645a5a7a5907241fe8, type: 3}
     attackSound: {fileID: 0}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 0
+    projectileLifetime: 0
+    projectileSpawnOffset: {x: 0, y: 0, z: 0}
+    areaRadius: 0
+    areaDuration: 0
   skills:
   - {fileID: 11400000, guid: c40e34a1af067074aaa6321e56dfa191, type: 2}
   - {fileID: 11400000, guid: 61eb7046a1612ad4687f18c4a482b5ea, type: 2}

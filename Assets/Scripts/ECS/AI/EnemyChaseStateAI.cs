@@ -6,6 +6,12 @@ public class EnemyChaseStateAI : IEnemyState
 
     public void OnEnter(World world, EntityId entity)
     {
+        AnimationDataComponent animation = world.Components.Get<AnimationDataComponent>(entity);
+
+        world.Events.Publish(
+            new AnimationParameterEvent(entity, animation.IsRunningParam, AnimationParameterType.Bool, true)
+        );
+
         RequestPathToTarget(world, entity);
     }
 
@@ -28,14 +34,26 @@ public class EnemyChaseStateAI : IEnemyState
         }
 
         Vector3 targetPos = targetView.transform.position;
+
         float distance = Vector3.Distance(targetPos, world.Components.Get<TransformComponent>(entity).Position);
 
-        // if (distance <= enemy.AttackRange)
-        // {
-        //     EnemyAIHelpers.ChangeState(world, entity, EnemyState.Attack);
-        //     return;
-        // }
-
+        // Switch to attack if near player
+        if (enemy.IsRanged)
+        {
+            if (distance <= enemy.AttackRange)
+            {
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.Attack);
+                return;
+            }
+        }
+        else
+        {
+            if (distance <= enemy.AttackRange)
+            {
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.Attack);
+                return;
+            }
+        }
         if (Time.time - enemy.LastRequestTime > enemy.RequestCooldown)
         {
             RequestPathToTarget(world, entity);
@@ -47,12 +65,16 @@ public class EnemyChaseStateAI : IEnemyState
         EnemyComponent enemy = world.Components.Get<EnemyComponent>(entity);
 
         if (enemy.TargetEntity.Equals(default))
+        {
             return;
+        }
 
         EntityViewRegistry registry = world.Services.Resolve<EntityViewRegistry>();
 
         if (!registry.TryGet(enemy.TargetEntity, out EntityView targetView))
+        {
             return;
+        }
 
         Vector3 targetPos = targetView.transform.position;
         world.Events.Publish(new EnemyPathRequestEvent(entity, targetPos, enemy.StoppingDistance));
@@ -61,5 +83,12 @@ public class EnemyChaseStateAI : IEnemyState
         enemy.LastRequestTime = Time.time;
     }
 
-    public void OnExit(World world, EntityId entity) { }
+    public void OnExit(World world, EntityId entity)
+    {
+        AnimationDataComponent animation = world.Components.Get<AnimationDataComponent>(entity);
+
+        world.Events.Publish(
+            new AnimationParameterEvent(entity, animation.IsRunningParam, AnimationParameterType.Bool, false)
+        );
+    }
 }

@@ -6,9 +6,6 @@ public class AnimationDataComponent
     public string IsMovingParam;
     public string MoveXParam;
     public string MoveYParam;
-
-    [Header("Runtime State")]
-    public bool IsMoving;
-    public float MoveX;
-    public float MoveY;
+    public string IsRunningParam;
+    public string AttackTrigger;
 }
