@@ -26,8 +26,11 @@ public class EnemyDefinitionSO : ScriptableObject
 
     [Header("Animation")]
     public string isMovingParam = "isMoving";
+    public string isRunningParam = "isRunning";
     public string moveXParam = "moveX";
     public string moveYParam = "moveY";
+    public int totalAttackAnimations = 1;
+    public string attackAnimationTrigger = "attack";
 
     [Header("Vision")]
     public float detectionRange = 10f;
@@ -44,28 +47,6 @@ public class EnemyDefinitionSO : ScriptableObject
     [Header("AI Behavior")]
     public EnemyState defaultState = EnemyState.Idle;
 
-    [Header("Weapon Settings")]
-    public bool hasWeapon = true;
-    public WeaponData weaponData;
-
-    [System.Serializable]
-    public class WeaponData
-    {
-        [Header("Config")]
-        public string weaponName;
-        public AttackExecutionType ExecutionType;
-
-        [Header("Stats")]
-        public float attackDamage = 11f;
-        public float attackCooldown = 1.5f;
-        public float attackRange = 2f;
-
-        [Header("Visuals")]
-        public ParticleSystem hitImpactParticlePrefab;
-
-        [Header("Animation & Audio")]
-        public string attackAnimationTrigger = "attack";
-        public int totalAttackAnimations = 3;
-        public AudioClip attackSound;
-    }
+    [Header("Attacks")]
+    public List<AttackDefinition> attacks = new();
 }

@@ -45,10 +45,13 @@ public class EnemyAISystem : ISystem
             return;
         }
 
-        EnemyComponent ai = _world.Components.Get<EnemyComponent>(@event.Enemy);
-        ai.TargetEntity = @event.Player;
+        EnemyComponent enemy = _world.Components.Get<EnemyComponent>(@event.Enemy);
+        enemy.TargetEntity = @event.Player;
 
-        EnemyAIHelpers.ChangeState(_world, @event.Enemy, EnemyState.Chase);
+        if (enemy.CurrentState != EnemyState.Chase)
+        {
+            EnemyAIHelpers.ChangeState(_world, @event.Enemy, EnemyState.Chase);
+        }
     }
 
     private void OnEnemyPlayerLostEvent(EnemyPlayerLostEvent @event)

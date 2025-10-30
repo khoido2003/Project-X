@@ -47,7 +47,6 @@
     <Analyzer Include="D:\unity\Editor\6000.2.8f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\ECS\Systems\AnimationSyncSystem.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\DamageSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Factories\CharacterFactory.cs" />
@@ -67,6 +66,7 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\WeaponComponent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityId.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridLayer.cs" />
+    <Compile Include="Assets\Scripts\Utils\PoolParticlesAutoReturn.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\PlayerTagComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AttackEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyChaseStateAI.cs" />
@@ -81,6 +81,7 @@
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleSceneLoader.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\DashStrikeExecutorView.cs" />
+    <Compile Include="Assets\Scripts\SO\AttackDefinition.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AttackDataComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\EnemyComponent.cs" />
     <Compile Include="Assets\Scripts\SO\SkillDefinitionSO.cs" />
@@ -125,6 +126,7 @@
     <Compile Include="Assets\Scripts\Core\ECS\EntityViewRegistry.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\AnimatorActionData.cs" />
+    <Compile Include="Assets\Scripts\ECS\Interfaces\IObjectPoolService.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\PlasmaShieldSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\SkillExecutorView.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\StatsData.cs" />
@@ -137,8 +139,9 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIConfig.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\WeaponDataComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyIdleStateAI.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolState.cs" />
+    <Compile Include="Assets\Scripts\Utils\ProjectileSpawnPos.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleLoopAnimator.cs" />
+    <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolState.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\HomerunSwingExecutorView.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\Scripts\Utils\SpawnPoint.cs" />
@@ -155,6 +158,7 @@
     <Compile Include="Assets\Scripts\ECS\Services\TimeService.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAIHelpers.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillInstance.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\ProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\InputService.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\StatusEffectComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SpawnSystem.cs" />
@@ -163,6 +167,7 @@
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AnimationView.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIState.cs" />
+    <Compile Include="Assets\Scripts\ECS\Services\ObjectPoolService.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\PathfindingComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\SkillEvent.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\DashStrikeSkillSO.cs" />
@@ -1329,6 +1334,10 @@
       <HintPath>Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Animation.Rigging.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Animation.Rigging.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Editor.Bridge">
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Editor.Bridge.dll</HintPath>
       <Private>False</Private>
@@ -1379,6 +1388,10 @@
     </Reference>
     <Reference Include="Unity.Rendering.LightTransport.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Rendering.LightTransport.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Animation.Rigging">
+      <HintPath>Library\ScriptAssemblies\Unity.Animation.Rigging.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Editor.ConversionSystem">

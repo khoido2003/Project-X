@@ -16,13 +16,16 @@ MonoBehaviour:
   enemyName: Enemy
   maxHealth: 100
   moveSpeed: 3
-  attackRange: 1.5
+  attackRange: 5
   attackCooldown: 1.5
   damage: 10
-  isRanged: 0
+  isRanged: 1
   isMovingParam: isMoving
+  isRunningParam: isRunning
   moveXParam: moveX
   moveYParam: moveY
+  totalAttackAnimations: 1
+  attackAnimationTrigger: attack
   detectionRange: 10
   loseTargetRange: 15
   fieldOfView: 120
@@ -34,14 +37,19 @@ MonoBehaviour:
   patrolPointCount: 4
   patrolRadius: 10
   defaultState: 0
-  hasWeapon: 1
-  weaponData:
-    weaponName: 
-    ExecutionType: 0
-    attackDamage: 11
-    attackCooldown: 1.5
-    attackRange: 2
-    hitImpactParticlePrefab: {fileID: 0}
-    attackAnimationTrigger: attack
-    totalAttackAnimations: 3
+  attacks:
+  - attackName: Gun
+    executionType: 1
+    damage: 10
+    cooldown: 1
+    range: 5
+    animationTrigger: attack
+    totalAnimations: 1
+    hitImpactVFX: {fileID: 0}
     attackSound: {fileID: 0}
+    projectilePrefab: {fileID: 3093263165227071769, guid: 36341ae1e266f0e45b0a4e3fd8488bbf, type: 3}
+    projectileSpeed: 20
+    projectileLifetime: 5
+    projectileSpawnOffset: {x: 0, y: 0, z: 0}
+    areaRadius: 0
+    areaDuration: 0

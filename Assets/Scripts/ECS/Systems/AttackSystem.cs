@@ -7,13 +7,13 @@ public class AttackSystem : ISystem
     public void Initialize(World world)
     {
         _world = world;
-        _world.Events.Subscribe<AttackPressedInputEvent>(OnAttack);
+        _world.Events.Subscribe<AttackPressedInputEvent>(OnAttackRequest);
         _world.Events.Subscribe<AnimationEventRelayEvent>(OnAnimationRelayEvent);
     }
 
     public void Update(float dt) { }
 
-    private void OnAttack(AttackPressedInputEvent @event)
+    private void OnAttackRequest(AttackPressedInputEvent @event)
     {
         if (
             _world.Components.TryGet(@event.Entity, out ActionFlagComponent flags) && flags.Get(ActionFlag.SkillPreview)
@@ -80,7 +80,7 @@ public class AttackSystem : ISystem
 
     public void Shutdown()
     {
-        _world.Events.Unsubscribe<AttackPressedInputEvent>(OnAttack);
+        _world.Events.Unsubscribe<AttackPressedInputEvent>(OnAttackRequest);
         _world.Events.Unsubscribe<AnimationEventRelayEvent>(OnAnimationRelayEvent);
     }
 

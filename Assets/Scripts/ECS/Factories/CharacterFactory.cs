@@ -74,23 +74,26 @@ public class CharacterFactory
         _world.Components.Add(entity, new CombatStateComponent());
 
         // --- Attack + Weapon ---
-        if (data.hasWeapon && data.weaponData != null)
+
+        if (data.attacks != null && data.attacks.Count > 0)
         {
+            var attack = data.attacks[0]; // Primary attack, or loop for multiple later
+
             _world.Components.Add(entity, new AttackDataComponent { IsPlayerControlled = data.isPlayer });
 
             _world.Components.Add(
                 entity,
                 new WeaponDataComponent
                 {
-                    WeaponName = data.weaponData.weaponName,
-                    ExecutionType = data.weaponData.ExecutionType,
-                    BaseDamage = data.weaponData.attackDamage,
-                    BaseCooldown = data.weaponData.attackCooldown,
-                    BaseRange = data.weaponData.attackRange,
-                    HitImpactParticlePrefab = data.weaponData.hitImpactParticlePrefab,
-                    AttackAnimationTrigger = data.weaponData.attackAnimationTrigger,
-                    TotalAttackAnimations = data.weaponData.totalAttackAnimations,
-                    AttackSound = data.weaponData.attackSound,
+                    WeaponName = attack.attackName,
+                    ExecutionType = attack.executionType,
+                    BaseDamage = attack.damage,
+                    BaseCooldown = attack.cooldown,
+                    BaseRange = attack.range,
+                    HitImpactParticlePrefab = attack.hitImpactVFX,
+                    AttackAnimationTrigger = attack.animationTrigger,
+                    TotalAttackAnimations = attack.totalAnimations,
+                    AttackSound = attack.attackSound,
                 }
             );
         }

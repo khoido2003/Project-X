@@ -16,10 +16,14 @@ public class EnemyPathfindingSystem : ISystem
     private void OnEnemyPathRequest(EnemyPathRequestEvent e)
     {
         if (!_world.Entities.Exists(e.Entity))
+        {
             return;
+        }
 
         if (!_world.Components.TryGet(e.Entity, out TransformComponent trans))
+        {
             return;
+        }
 
         if (!_world.Components.TryGet(e.Entity, out EnemyComponent enemy))
         {

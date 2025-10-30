@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class AttackExecutionView : EntityView
 {
+    [SerializeField]
+    private Transform spawnTransform;
+
     private World _world;
     private EntityViewRegistry _registry;
     private bool _isInitialized;
@@ -113,6 +116,45 @@ public class AttackExecutionView : EntityView
         }
     }
 
+    private void ExecuteProjectileAttack(AttackExecutionRequestEvent @event, Transform attackerTf)
+    {
+        if (@event.ProjectilePrefab == null)
+        {
+            Debug.LogError($"No projectile prefab found!");
+            return;
+        }
+
+        Vector3 spawnPos = spawnTransform.position + attackerTf.TransformDirection(@event.SpawnOffset);
+
+        var pool = _world.Services.Resolve<ObjectPoolService>();
+
+        GameObject projectileGO = pool.Get(@event.ProjectilePrefab, spawnPos, attackerTf.rotation);
+
+        if (!projectileGO.TryGetComponent(out ProjectileView projectile))
+        {
+            projectile = projectileGO.AddComponent<ProjectileView>();
+        }
+
+        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
+
+        projectile.Initialize(
+            _world,
+            @event.Attacker,
+            @event.Damage,
+            @event.ProjectileSpeed,
+            @event.ProjectileLifetime,
+            forwardDir,
+            @event.ImpactEffect,
+            @event.ProjectilePrefab
+        );
+    }
+
+    private void ExecuteAreaAttack(AttackExecutionRequestEvent @event, Transform attackerTf) { }
+
+    private void ExecuteBeamAttack(AttackExecutionRequestEvent @event, Transform attackerTf) { }
+
+    private void ExecuteCustomAttack(AttackExecutionRequestEvent @event, Transform attackerTf) { }
+
     // Clears damage cache when attack animation ends
     private void OnAnimationRelay(AnimationEventRelayEvent @event)
     {
@@ -121,14 +163,6 @@ public class AttackExecutionView : EntityView
             _attackHitCache.Remove(@event.Entity);
         }
     }
-
-    private void ExecuteProjectileAttack(AttackExecutionRequestEvent @event, Transform attackerTf) { }
-
-    private void ExecuteAreaAttack(AttackExecutionRequestEvent @event, Transform attackerTf) { }
-
-    private void ExecuteBeamAttack(AttackExecutionRequestEvent @event, Transform attackerTf) { }
-
-    private void ExecuteCustomAttack(AttackExecutionRequestEvent @event, Transform attackerTf) { }
 
     private void OnDestroy()
     {

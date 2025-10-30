@@ -12,6 +12,10 @@ public class EnemyMovementSystem : ISystem
     private const float DEFAULT_REPATH_INTERVAL = 1f;
     private const float RECALC_DISTANCE_THRESHOLD = 0.5f;
 
+    private readonly float rotateSpeed = 50f;
+
+    private readonly Collider[] _overlapBuffer = new Collider[16];
+
     public void Initialize(World world) => _world = world;
 
     public void FixedUpdate(float dt) { }
@@ -22,6 +26,15 @@ public class EnemyMovementSystem : ISystem
     {
         foreach (var (entity, enemy, trans) in _world.Components.Query<EnemyComponent, TransformComponent>())
         {
+            if (
+                enemy.CurrentState == EnemyState.Idle
+                || enemy.CurrentState == EnemyState.Attack
+                || enemy.CurrentState == EnemyState.Dead
+            )
+            {
+                continue;
+            }
+
             if (!enemy.HasPath)
             {
                 ResetProgress(enemy, trans);
@@ -34,7 +47,6 @@ public class EnemyMovementSystem : ISystem
             MoveTowardsWaypoint(entity, enemy, trans, dt);
             CheckProgress(entity, enemy, trans, dt);
             CheckPeriodicRepath(entity, enemy, trans);
-            HandleAnimation(entity, enemy);
         }
     }
 
@@ -48,12 +60,16 @@ public class EnemyMovementSystem : ISystem
     private bool ReachedFinalDestination(EntityId entity, EnemyComponent enemy, TransformComponent trans)
     {
         if (enemy.WaypointIndex < enemy.Path.Count)
+        {
             return false;
+        }
 
         float distToGoal = Vector3.Distance(trans.Position, enemy.Path[^1]);
 
         if (distToGoal > enemy.StoppingDistance)
+        {
             return false;
+        }
 
         if (enemy.CurrentState == EnemyState.Chase || enemy.CurrentState == EnemyState.Patrol)
         {
@@ -64,13 +80,13 @@ public class EnemyMovementSystem : ISystem
             else
             {
                 enemy.Path.Clear();
-                enemy.WaypointIndex = enemy.Path.Count; // mark as finished but not null
+                enemy.WaypointIndex = enemy.Path.Count;
             }
         }
         else
         {
             enemy.Path.Clear();
-            enemy.WaypointIndex = enemy.Path.Count; // mark as finished but not null
+            enemy.WaypointIndex = enemy.Path.Count;
         }
         return true;
     }
@@ -78,13 +94,93 @@ public class EnemyMovementSystem : ISystem
     private void MoveTowardsWaypoint(EntityId entity, EnemyComponent enemy, TransformComponent trans, float dt)
     {
         if (enemy.Path == null || enemy.Path.Count == 0)
+        {
             return;
+        }
 
         // Guard against overflow
         if (enemy.WaypointIndex >= enemy.Path.Count)
+        {
             enemy.WaypointIndex = enemy.Path.Count - 1;
+        }
 
         Vector3 targetPos = enemy.Path[enemy.WaypointIndex];
+
+        //  --- Check Obstackle ahead ----
+        Vector3 forward = targetPos - trans.Position;
+
+        float forwardDist = Mathf.Min(1.0f, forward.magnitude);
+        Vector3 forwardDir = forward.normalized;
+
+        if (forwardDist > 0.05f)
+        {
+            float castRadius = 0.25f;
+
+            LayerMask mask = GridSystem.Instance.GetObstacleLayer();
+
+            if (
+                Physics.SphereCast(
+                    trans.Position + Vector3.up / 2,
+                    castRadius,
+                    forwardDir,
+                    out RaycastHit hit,
+                    forwardDist + 0.05f,
+                    mask,
+                    QueryTriggerInteraction.Ignore
+                )
+            )
+            {
+                // Find something in front -> fine new path
+                Vector3 nudge = hit.normal * 0.2f;
+                trans.Position += nudge;
+
+                RequestRepath(entity, enemy);
+
+                return;
+            }
+        }
+
+        // --- Avoid multiple enemy crowding and stick together ----
+        Vector3 separation = Vector3.zero;
+        float checkRadius = 0.6f;
+
+        int cnt = Physics.OverlapSphereNonAlloc(trans.Position, checkRadius, _overlapBuffer);
+
+        for (int i = 0; i < cnt; i++)
+        {
+            if (!_overlapBuffer[i].TryGetComponent(out EntityView ev))
+            {
+                continue;
+            }
+
+            if (ev.EntityInstance.Equals(entity))
+            {
+                continue;
+            }
+
+            if (!_world.Components.Has<EnemyComponent>(ev.EntityInstance))
+            {
+                continue;
+            }
+
+            Vector3 dirAway = trans.Position - ev.transform.position;
+
+            float sqr = dirAway.sqrMagnitude;
+            if (sqr < 0.0001f)
+            {
+                continue;
+            }
+
+            separation += dirAway.normalized / Mathf.Sqrt(sqr);
+
+            if (separation.sqrMagnitude > 0.0001f)
+            {
+                Vector3 sepMove = separation.normalized * enemy.MoveSpeed / 2 * dt;
+
+                trans.Position += sepMove;
+            }
+        }
+
         Vector3 newPos = Vector3.MoveTowards(trans.Position, targetPos, enemy.MoveSpeed * dt);
 
         trans.Position = newPos;
@@ -95,7 +191,7 @@ public class EnemyMovementSystem : ISystem
             trans.Rotation = Quaternion.Slerp(
                 trans.Rotation,
                 Quaternion.LookRotation(dir.normalized, Vector3.up),
-                dt * 10f
+                dt * rotateSpeed
             );
         }
 
@@ -139,10 +235,14 @@ public class EnemyMovementSystem : ISystem
     private void CheckPeriodicRepath(EntityId entity, EnemyComponent enemy, TransformComponent trans)
     {
         if (Time.time - enemy.LastRequestTime <= DEFAULT_REPATH_INTERVAL)
+        {
             return;
+        }
 
         if (enemy.LastRequestedTarget == Vector3.positiveInfinity)
+        {
             return;
+        }
 
         float dist = Vector3.Distance(trans.Position, enemy.LastRequestedTarget);
         if (dist > RECALC_DISTANCE_THRESHOLD)
@@ -155,20 +255,5 @@ public class EnemyMovementSystem : ISystem
     {
         _world.Events.Publish(new EnemyPathRequestEvent(entity, enemy.LastRequestedTarget, enemy.StoppingDistance));
         enemy.LastRequestTime = Time.time;
-    }
-
-    private void HandleAnimation(EntityId entity, EnemyComponent enemy)
-    {
-        if (_world.Components.TryGet(entity, out AnimationDataComponent anim))
-        {
-            bool isMoving = enemy.HasPath && enemy.WaypointIndex < enemy.Path.Count;
-            if (anim.IsMoving != isMoving)
-            {
-                anim.IsMoving = isMoving;
-                _world.Events.Publish(
-                    new AnimationParameterEvent(entity, anim.IsMovingParam, AnimationParameterType.Bool, isMoving)
-                );
-            }
-        }
     }
 }

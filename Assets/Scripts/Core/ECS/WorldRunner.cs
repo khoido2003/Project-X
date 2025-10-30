@@ -76,7 +76,11 @@ public class WorldRunner : MonoBehaviour
             Debug.LogError("No EntityViewRegistry found!");
             return;
         }
-        World.Services.Register<EntityViewRegistry>(entityViewRegistry);
+        World.Services.Register(entityViewRegistry);
+
+        // Object pool
+        var poolService = new ObjectPoolService();
+        World.Services.Register(poolService);
     }
 
     private void InitSystems()
@@ -87,7 +91,6 @@ public class WorldRunner : MonoBehaviour
         World.Systems.AddSystem(new TransformSyncSystem(), World);
 
         World.Systems.AddSystem(new MovementSystem(), World);
-        World.Systems.AddSystem(new AnimationSyncSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);
         World.Systems.AddSystem(new SkillSystem(), World);
