@@ -49,6 +49,11 @@ public class EntityViewRegistry : MonoBehaviour
         }
     }
 
+    public void Unregister(EntityId entity)
+    {
+        _views.Remove(entity);
+    }
+
     /// <summary>
     /// Try to get the first EntityView for an entity.
     /// </summary>

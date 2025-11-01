@@ -90,6 +90,7 @@ public class WorldRunner : MonoBehaviour
         World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
         World.Systems.AddSystem(new TransformSyncSystem(), World);
 
+        World.Systems.AddSystem(new HealthSystem(), World);
         World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);

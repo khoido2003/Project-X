@@ -62,6 +62,16 @@ public class EnemyAttackStateAI : IEnemyState
             }
             PerformAttack(world, entity);
         }
+
+        // Take cover when player get close
+        if (Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
+        {
+            if (dist < enemy.AttackRange * 0.7f)
+            {
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.TakeCover);
+                return;
+            }
+        }
     }
 
     private void PerformAttack(World world, EntityId entity)

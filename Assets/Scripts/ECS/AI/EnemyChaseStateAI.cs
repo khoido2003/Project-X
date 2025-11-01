@@ -54,6 +54,16 @@ public class EnemyChaseStateAI : IEnemyState
                 return;
             }
         }
+
+        if (Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
+        {
+            if (distance < enemy.AttackRange * 0.7f)
+            {
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.TakeCover);
+                return;
+            }
+        }
+
         if (Time.time - enemy.LastRequestTime > enemy.RequestCooldown)
         {
             RequestPathToTarget(world, entity);

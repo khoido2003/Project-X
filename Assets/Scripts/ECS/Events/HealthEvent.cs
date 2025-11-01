@@ -17,11 +17,9 @@ public struct HealthChangedEvent
 public struct EntityDeathEvent
 {
     public EntityId Entity;
-    public EntityId Killer;
 
-    public EntityDeathEvent(EntityId entity, EntityId killer)
+    public EntityDeathEvent(EntityId entity)
     {
         Entity = entity;
-        Killer = killer;
     }
 }

@@ -44,10 +44,3 @@ public struct EnemyPathCalculatedEvent
 
     public EnemyPathCalculatedEvent(EntityId entity) => Entity = entity;
 }
-
-public struct EnemyDiedEvent
-{
-    public EntityId Entity;
-
-    public EnemyDiedEvent(EntityId e) => Entity = e;
-}

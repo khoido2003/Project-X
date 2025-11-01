@@ -35,8 +35,14 @@ public class ProjectileView : MonoBehaviour
         _spawnTime = Time.time;
         _prefabRef = prefabRef;
 
-        transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
+        // Always reset position/rotation explicitly before moving
+        transform.SetPositionAndRotation(transform.position, Quaternion.LookRotation(_direction, Vector3.up));
+
+        // Optional: slight forward nudge *only from spawnTransform*, not from previous state
         transform.position += _direction * 0.1f;
+
+        // Reset any internal movement history
+        _spawnTime = Time.time;
 
         try
         {

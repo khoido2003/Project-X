@@ -30,14 +30,16 @@ public class ObjectPoolService : IObjectPoolService
         if (pool.Count > 0)
         {
             instance = pool.Dequeue();
+
+            instance.transform.SetPositionAndRotation(position, rotation);
+
             instance.SetActive(true);
         }
         else
         {
-            instance = Object.Instantiate(prefab, _rootParent);
+            instance = Object.Instantiate(prefab, position, rotation, _rootParent);
         }
 
-        instance.transform.SetPositionAndRotation(position, rotation);
         return instance;
     }
 
