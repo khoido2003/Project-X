@@ -38,14 +38,6 @@ public class DamageSystem : ISystem
         _world.Components.Add(@event.Target, health);
 
         _world.Events.Publish(new HealthChangedEvent(@event.Target, health.CurrentHealth, health.MaxHealth));
-
-        if (health.CurrentHealth <= 0 && !health.IsDead)
-        {
-            health.IsDead = true;
-            _world.Components.Add(@event.Target, health);
-
-            _world.Events.Publish(new EntityDeathEvent(@event.Target, @event.Attacker));
-        }
     }
 
     public void Shutdown()

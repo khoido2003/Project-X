@@ -1,15 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum EnemyState
-{
-    Idle,
-    Patrol,
-    Chase,
-    Attack,
-    Dead,
-}
-
 [CreateAssetMenu(menuName = "AI/Enemy Definition")]
 public class EnemyDefinitionSO : ScriptableObject
 {
@@ -31,6 +22,7 @@ public class EnemyDefinitionSO : ScriptableObject
     public string moveYParam = "moveY";
     public int totalAttackAnimations = 1;
     public string attackAnimationTrigger = "attack";
+    public string takeCoverParam = "takeCover";
 
     [Header("Vision")]
     public float detectionRange = 10f;

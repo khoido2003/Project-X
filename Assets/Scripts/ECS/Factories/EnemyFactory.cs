@@ -45,6 +45,7 @@ public class EnemyFactory
                 MoveYParam = data.moveYParam,
                 AttackTrigger = data.attackAnimationTrigger,
                 IsRunningParam = data.isRunningParam,
+                TakeCoverParam = data.takeCoverParam,
             }
         );
 

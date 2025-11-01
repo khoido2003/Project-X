@@ -253,6 +253,11 @@ public class EnemyMovementSystem : ISystem
 
     private void RequestRepath(EntityId entity, EnemyComponent enemy)
     {
+        if (enemy.CurrentState != EnemyState.Chase && enemy.CurrentState != EnemyState.Patrol)
+        {
+            return;
+        }
+
         _world.Events.Publish(new EnemyPathRequestEvent(entity, enemy.LastRequestedTarget, enemy.StoppingDistance));
         enemy.LastRequestTime = Time.time;
     }
