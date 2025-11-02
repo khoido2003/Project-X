@@ -22,7 +22,9 @@ public class ProjectileView : MonoBehaviour
         float lifetime,
         Vector3 direction,
         ParticleSystem impactEffect,
-        GameObject prefabRef
+        GameObject prefabRef,
+        Vector3 spawnPos,
+        Quaternion spawnRotation
     )
     {
         _world = world;
@@ -30,16 +32,13 @@ public class ProjectileView : MonoBehaviour
         _damage = damage;
         _speed = speed;
         _lifetime = Mathf.Max(0.01f, lifetime);
-        _direction = (direction.sqrMagnitude <= 0.0001f) ? transform.forward : direction.normalized;
+        _direction = direction.normalized;
         _impactEffect = impactEffect;
         _spawnTime = Time.time;
         _prefabRef = prefabRef;
 
         // Always reset position/rotation explicitly before moving
-        transform.SetPositionAndRotation(transform.position, Quaternion.LookRotation(_direction, Vector3.up));
-
-        // Optional: slight forward nudge *only from spawnTransform*, not from previous state
-        transform.position += _direction * 0.1f;
+        transform.SetPositionAndRotation(spawnPos, spawnRotation);
 
         // Reset any internal movement history
         _spawnTime = Time.time;
@@ -57,6 +56,7 @@ public class ProjectileView : MonoBehaviour
 
     private void Update()
     {
+        Debug.DrawRay(transform.position, _direction * 2f, Color.yellow, 0.1f);
         transform.position += _direction * _speed * Time.deltaTime;
 
         if (Time.time - _spawnTime >= _lifetime)
@@ -87,7 +87,6 @@ public class ProjectileView : MonoBehaviour
             if (_pool != null && _impactEffect.gameObject != null)
             {
                 var impactGo = _pool.Get(_impactEffect.gameObject, transform.position, Quaternion.identity);
-                // If you use pooled particles, consider adding a timed-return behaviour to them
             }
             else
             {

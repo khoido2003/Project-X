@@ -24,7 +24,7 @@ public class AttackDefinition
     public GameObject projectilePrefab;
     public float projectileSpeed = 15f;
     public float projectileLifetime = 5f;
-    public Vector3 projectileSpawnOffset = new(0, 1.2f, 0.5f);
+    public Vector3 projectileSpawnOffset = new(0, 0, 0f);
 
     [Header("Area (Optional)")]
     public float areaRadius = 2f;
