@@ -77,6 +77,7 @@
     <Compile Include="Assets\Scripts\Core\ECS\World.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\DoorController.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyAI.cs" />
+    <Compile Include="Assets\_Scripts_qd\SettingWindow.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\LookAtMouseView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyPathfindingSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AnimationDataComponent.cs" />
@@ -156,6 +157,7 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolState.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\HomerunSwingExecutorView.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
+    <Compile Include="Assets\_Scripts_qd\LobbyData.cs" />
     <Compile Include="Assets\Scripts\Utils\SpawnPoint.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\CharacterData.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SkillSystem.cs" />
@@ -172,6 +174,7 @@
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAIHelpers.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillInstance.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\ProjectileView.cs" />
+    <Compile Include="Assets\_Scripts_qd\JoinGameManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\InputService.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\StatusEffectComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SpawnSystem.cs" />
@@ -186,6 +189,7 @@
     <Compile Include="Assets\Scripts\SO\Skills\DashStrikeSkillSO.cs" />
     <Compile Include="Assets\Scripts\Utils\EnemyPatrolPointGizmo.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\Skills\SkillData.cs" />
+    <Compile Include="Assets\_Scripts_qd\LobbyItemUI.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\CombatStateSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\WeaponSpawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\MovementSystem.cs" />
