@@ -72,12 +72,10 @@ public class ProjectileView : MonoBehaviour
             return;
         }
 
-        if (!_world.Components.TryGet(_attacker, out PlayerTagComponent _))
-        {
-            return;
-        }
-
-        if (targetView.EntityInstance.Equals(_attacker))
+        if (
+            targetView.EntityInstance.Equals(_attacker)
+            || !_world.Components.TryGet(targetView.EntityInstance, out PlayerTagComponent _)
+        )
         {
             return;
         }

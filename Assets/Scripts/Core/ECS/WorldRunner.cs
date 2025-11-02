@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[DefaultExecutionOrder(-90)]
 public class WorldRunner : MonoBehaviour
 {
     [Header("Game Config")]
