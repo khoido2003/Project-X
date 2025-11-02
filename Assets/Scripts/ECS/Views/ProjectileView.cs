@@ -68,9 +68,19 @@ public class ProjectileView : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (!other.TryGetComponent(out EntityView targetView))
+        {
             return;
+        }
+
+        if (!_world.Components.TryGet(_attacker, out PlayerTagComponent _))
+        {
+            return;
+        }
+
         if (targetView.EntityInstance.Equals(_attacker))
+        {
             return;
+        }
 
         _world.Events.Publish(
             new DamageEvent

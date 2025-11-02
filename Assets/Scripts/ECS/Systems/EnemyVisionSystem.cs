@@ -99,6 +99,7 @@ public class EnemyVisionSystem : ISystem
 
     private void ReactToPlayerDetection(World world, EntityId enemyEntity, EntityId playerEntity)
     {
+        var weapon = world.Components.Get<WeaponDataComponent>(enemyEntity);
         var enemy = world.Components.Get<EnemyComponent>(enemyEntity);
         var enemyTf = world.Components.Get<TransformComponent>(enemyEntity);
         var playerTf = world.Components.Get<TransformComponent>(playerEntity);
@@ -106,12 +107,12 @@ public class EnemyVisionSystem : ISystem
         float distance = Vector3.Distance(enemyTf.Position, playerTf.Position);
 
         // Player extremely close -> take cover
-        if (distance < enemy.AttackRange * 0.7f && Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
+        if (distance < weapon.BaseRange * 0.7f && Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
         {
             EnemyAIHelpers.ChangeState(world, enemyEntity, EnemyState.TakeCover);
         }
         // Player within attack range -> attack immediately
-        else if (distance <= enemy.AttackRange)
+        else if (distance <= weapon.BaseRange)
         {
             EnemyAIHelpers.ChangeState(world, enemyEntity, EnemyState.Attack);
         }
