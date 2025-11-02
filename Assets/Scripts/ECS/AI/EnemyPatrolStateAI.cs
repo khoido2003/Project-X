@@ -34,6 +34,7 @@ public class EnemyPatrolStateAI : IEnemyState
     public void OnUpdate(World world, EntityId entity, float dt)
     {
         EnemyComponent enemy = world.Components.Get<EnemyComponent>(entity);
+        WeaponDataComponent weapon = world.Components.Get<WeaponDataComponent>(entity);
 
         enemy.StateTime += dt;
 
@@ -49,7 +50,7 @@ public class EnemyPatrolStateAI : IEnemyState
 
             float distance = Vector3.Distance(targetTf.Position, enemyTf.Position);
 
-            if (distance < enemy.AttackRange)
+            if (distance < weapon.BaseRange)
             {
                 EnemyAIHelpers.ChangeState(world, entity, EnemyState.Attack);
                 return;

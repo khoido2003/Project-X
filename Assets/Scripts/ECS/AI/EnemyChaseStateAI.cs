@@ -18,6 +18,7 @@ public class EnemyChaseStateAI : IEnemyState
     public void OnUpdate(World world, EntityId entity, float dt)
     {
         var enemy = world.Components.Get<EnemyComponent>(entity);
+        var weapon = world.Components.Get<WeaponDataComponent>(entity);
         enemy.StateTime += dt;
 
         if (enemy.TargetEntity.Equals(default))
@@ -40,7 +41,7 @@ public class EnemyChaseStateAI : IEnemyState
         // Switch to attack if near player
         if (enemy.IsRanged)
         {
-            if (distance <= enemy.AttackRange)
+            if (distance <= weapon.BaseRange)
             {
                 EnemyAIHelpers.ChangeState(world, entity, EnemyState.Attack);
                 return;
@@ -48,7 +49,7 @@ public class EnemyChaseStateAI : IEnemyState
         }
         else
         {
-            if (distance <= enemy.AttackRange)
+            if (distance <= weapon.BaseRange)
             {
                 EnemyAIHelpers.ChangeState(world, entity, EnemyState.Attack);
                 return;
@@ -57,7 +58,7 @@ public class EnemyChaseStateAI : IEnemyState
 
         if (Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
         {
-            if (distance < enemy.AttackRange * 0.7f)
+            if (distance < weapon.BaseRange * 0.7f)
             {
                 EnemyAIHelpers.ChangeState(world, entity, EnemyState.TakeCover);
                 return;

@@ -93,6 +93,8 @@ public class EnemyMovementSystem : ISystem
 
     private void MoveTowardsWaypoint(EntityId entity, EnemyComponent enemy, TransformComponent trans, float dt)
     {
+        var movement = _world.Components.Get<MovementDataComponent>(entity);
+
         if (enemy.Path == null || enemy.Path.Count == 0)
         {
             return;
@@ -175,13 +177,13 @@ public class EnemyMovementSystem : ISystem
 
             if (separation.sqrMagnitude > 0.0001f)
             {
-                Vector3 sepMove = separation.normalized * enemy.MoveSpeed / 2 * dt;
+                Vector3 sepMove = separation.normalized * movement.MoveSpeed / 2 * dt;
 
                 trans.Position += sepMove;
             }
         }
 
-        Vector3 newPos = Vector3.MoveTowards(trans.Position, targetPos, enemy.MoveSpeed * dt);
+        Vector3 newPos = Vector3.MoveTowards(trans.Position, targetPos, movement.MoveSpeed * dt);
 
         trans.Position = newPos;
 

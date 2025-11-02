@@ -17,14 +17,6 @@ public class EnemyComponent
     public EnemyState CurrentState;
     public float StateTime;
     public EntityId TargetEntity;
-
-    // --- Stats ---
-    public float MaxHealth;
-    public float CurrentHealth;
-    public float MoveSpeed;
-    public float AttackRange;
-    public float AttackCooldown;
-    public float Damage;
     public bool IsRanged;
 
     // --- Vision / Detection ---
