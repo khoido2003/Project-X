@@ -183,8 +183,8 @@
     <Compile Include="Assets\Scripts\ECS\Views\AnimationView.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIState.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\ObjectPoolService.cs" />
-    <Compile Include="Assets\Scripts\[LEGACY]\Characters\PathfindingComponent.cs" />
     <Compile Include="Assets\Scripts\Utils\RagdollReference.cs" />
+    <Compile Include="Assets\Scripts\[LEGACY]\Characters\PathfindingComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\SkillEvent.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\DashStrikeSkillSO.cs" />
     <Compile Include="Assets\Scripts\Utils\EnemyPatrolPointGizmo.cs" />

@@ -125,6 +125,7 @@ public class EnemyFactory
                     TotalAttackAnimations = attack.totalAnimations,
                     AttackSound = attack.attackSound,
                     ProjectilePrefab = attack.projectilePrefab,
+                    ProjectileSpawnOffset = attack.projectileSpawnOffset,
                 }
             );
         }

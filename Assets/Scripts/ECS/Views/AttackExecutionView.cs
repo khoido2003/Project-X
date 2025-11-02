@@ -10,7 +10,6 @@ public class AttackExecutionView : EntityView
     private EntityViewRegistry _registry;
     private bool _isInitialized;
 
-    // Tracks which entities have already been damaged in the *current swing* per attacker
     private readonly Dictionary<EntityId, HashSet<EntityId>> _attackHitCache = new();
 
     public override void Bind(World world, EntityId entity)
@@ -42,7 +41,6 @@ public class AttackExecutionView : EntityView
         {
             return;
         }
-
         Transform attackerTf = attackerView.transform;
 
         switch (@event.Type)
@@ -124,7 +122,13 @@ public class AttackExecutionView : EntityView
             return;
         }
 
-        Vector3 spawnPos = spawnTransform.position + attackerTf.TransformDirection(@event.SpawnOffset);
+        Vector3 spawnPos =
+            transform.position + new Vector3(0f, 1.3f, 0f) + attackerTf.TransformDirection(@event.SpawnOffset);
+
+        Quaternion spawnRot = Quaternion.LookRotation(
+            (@event.Direction.sqrMagnitude < 0.0001f) ? attackerTf.forward : @event.Direction.normalized,
+            Vector3.up
+        );
 
         var pool = _world.Services.Resolve<ObjectPoolService>();
 
@@ -145,7 +149,9 @@ public class AttackExecutionView : EntityView
             @event.ProjectileLifetime,
             forwardDir,
             @event.ImpactEffect,
-            @event.ProjectilePrefab
+            @event.ProjectilePrefab,
+            spawnPos,
+            spawnRot
         );
     }
 

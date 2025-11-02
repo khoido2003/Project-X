@@ -49,8 +49,15 @@ public class ObjectPoolService : IObjectPoolService
         {
             return;
         }
+        instance.transform.SetParent(_rootParent, worldPositionStays: true);
 
+        // ensure any active effects are stopped; deactivate last
+        var ps = instance.GetComponentInChildren<ParticleSystem>();
+        ps?.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         instance.SetActive(false);
+
+        var tr = instance.GetComponentInChildren<TrailRenderer>();
+        tr?.gameObject.SetActive(false);
 
         if (!_pools.ContainsKey(prefab))
         {
