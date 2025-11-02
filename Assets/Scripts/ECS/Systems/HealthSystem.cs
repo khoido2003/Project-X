@@ -7,6 +7,11 @@ public class HealthSystem : ISystem
     public void Initialize(World world)
     {
         _world = world;
+
+        foreach (var (entity, health) in _world.Components.Query<HealthDataComponent>())
+        {
+            world.Events.Publish(new HealthChangedEvent(entity, health.CurrentHealth, health.MaxHealth));
+        }
     }
 
     public void Update(float dt)

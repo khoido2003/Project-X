@@ -15,6 +15,7 @@ MonoBehaviour:
   skillName: Plasma Shileld
   category: 2
   isInstant: 1
+  keyTrigger: E
   damage: 0
   castRange: 0
   cooldown: 1
