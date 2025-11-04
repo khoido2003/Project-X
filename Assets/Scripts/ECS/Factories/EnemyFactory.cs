@@ -29,6 +29,9 @@ public class EnemyFactory
         // Transform
         _world.Components.Add(entity, new TransformComponent(spawnPos, instance.transform.rotation));
 
+        // Movement
+        _world.Components.Add(entity, new MovementDataComponent { MoveSpeed = data.moveSpeed });
+
         // --- Health ---
         _world.Components.Add(
             entity,
@@ -45,6 +48,7 @@ public class EnemyFactory
                 MoveYParam = data.moveYParam,
                 AttackTrigger = data.attackAnimationTrigger,
                 IsRunningParam = data.isRunningParam,
+                TakeCoverParam = data.takeCoverParam,
             }
         );
 
@@ -56,13 +60,6 @@ public class EnemyFactory
 
         EnemyComponent enemy = new EnemyComponent
         {
-            // Stats
-            MaxHealth = data.maxHealth,
-            CurrentHealth = data.maxHealth,
-            MoveSpeed = data.moveSpeed,
-            AttackRange = data.attackRange,
-            AttackCooldown = data.attackCooldown,
-            Damage = data.damage,
             IsRanged = data.isRanged,
 
             // Vision & Detection
@@ -124,6 +121,7 @@ public class EnemyFactory
                     TotalAttackAnimations = attack.totalAnimations,
                     AttackSound = attack.attackSound,
                     ProjectilePrefab = attack.projectilePrefab,
+                    ProjectileSpawnOffset = attack.projectileSpawnOffset,
                 }
             );
         }

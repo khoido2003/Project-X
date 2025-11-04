@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinitionSO
   prefab: {fileID: 5191787420164104229, guid: e65286c6ffec9e841a064adfb1fd947c, type: 3}
   enemyName: Enemy
-  maxHealth: 100
+  maxHealth: 10
   moveSpeed: 3
   attackRange: 5
   attackCooldown: 1.5
@@ -26,6 +26,7 @@ MonoBehaviour:
   moveYParam: moveY
   totalAttackAnimations: 1
   attackAnimationTrigger: attack
+  takeCoverParam: takeCover
   detectionRange: 10
   loseTargetRange: 15
   fieldOfView: 120

@@ -22,7 +22,9 @@ public class ProjectileView : MonoBehaviour
         float lifetime,
         Vector3 direction,
         ParticleSystem impactEffect,
-        GameObject prefabRef
+        GameObject prefabRef,
+        Vector3 spawnPos,
+        Quaternion spawnRotation
     )
     {
         _world = world;
@@ -30,13 +32,16 @@ public class ProjectileView : MonoBehaviour
         _damage = damage;
         _speed = speed;
         _lifetime = Mathf.Max(0.01f, lifetime);
-        _direction = (direction.sqrMagnitude <= 0.0001f) ? transform.forward : direction.normalized;
+        _direction = direction.normalized;
         _impactEffect = impactEffect;
         _spawnTime = Time.time;
         _prefabRef = prefabRef;
 
-        transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
-        transform.position += _direction * 0.1f;
+        // Always reset position/rotation explicitly before moving
+        transform.SetPositionAndRotation(spawnPos, spawnRotation);
+
+        // Reset any internal movement history
+        _spawnTime = Time.time;
 
         try
         {
@@ -51,6 +56,7 @@ public class ProjectileView : MonoBehaviour
 
     private void Update()
     {
+        Debug.DrawRay(transform.position, _direction * 2f, Color.yellow, 0.1f);
         transform.position += _direction * _speed * Time.deltaTime;
 
         if (Time.time - _spawnTime >= _lifetime)
@@ -62,9 +68,17 @@ public class ProjectileView : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (!other.TryGetComponent(out EntityView targetView))
+        {
             return;
-        if (targetView.EntityInstance.Equals(_attacker))
+        }
+
+        if (
+            targetView.EntityInstance.Equals(_attacker)
+            || !_world.Components.TryGet(targetView.EntityInstance, out PlayerTagComponent _)
+        )
+        {
             return;
+        }
 
         _world.Events.Publish(
             new DamageEvent
@@ -81,7 +95,6 @@ public class ProjectileView : MonoBehaviour
             if (_pool != null && _impactEffect.gameObject != null)
             {
                 var impactGo = _pool.Get(_impactEffect.gameObject, transform.position, Quaternion.identity);
-                // If you use pooled particles, consider adding a timed-return behaviour to them
             }
             else
             {

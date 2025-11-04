@@ -1,20 +1,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum EnemyState
+{
+    Idle,
+    Patrol,
+    Chase,
+    TakeCover,
+    Attack,
+    Dead,
+}
+
 public class EnemyComponent
 {
     // --- Core State ---
     public EnemyState CurrentState;
     public float StateTime;
     public EntityId TargetEntity;
-
-    // --- Stats ---
-    public float MaxHealth;
-    public float CurrentHealth;
-    public float MoveSpeed;
-    public float AttackRange;
-    public float AttackCooldown;
-    public float Damage;
     public bool IsRanged;
 
     // --- Vision / Detection ---
@@ -31,6 +33,12 @@ public class EnemyComponent
     public float PatrolWaitTime = 1f;
     public float PatrolDuration = 10f;
 
+    // --- Take Cover ---
+    public float LastCoverTime;
+    public float CoverCooldown = 3f;
+    public Vector3 CoverSpot;
+    public bool IsReachCoverSpot;
+
     // --- Pathfinding / Movement ---
     public List<Vector3> Path = new();
     public int WaypointIndex;
@@ -43,6 +51,10 @@ public class EnemyComponent
     public Vector3 LastAgentPosition;
     public float NoProgressTimer;
     public float StuckTimer;
+
+    // Dead
+    public float DeathTimer;
+    public bool RagdollSpawned;
 
     // --- Helpers ---
     public bool HasPath => Path != null && Path.Count > 0;

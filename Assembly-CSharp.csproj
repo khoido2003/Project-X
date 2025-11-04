@@ -85,15 +85,19 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\DashStrikeExecutorView.cs" />
     <Compile Include="Assets\Scripts\SO\AttackDefinition.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\HealthSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\AI\EnemyTakeCoverStateAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AttackDataComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\EnemyComponent.cs" />
     <Compile Include="Assets\Scripts\SO\SkillDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\CharacterVisualComponent.cs" />
+    <Compile Include="Assets\Scripts\Utils\RagdollUtils.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\ActivateObjectAfterDelay.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityView.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleCountdownLabel.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\UpdateCollectibleCount.cs" />
+    <Compile Include="Assets\Scripts\UI\HealthHUD_UI.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\TransformSyncView.cs" />
     <Compile Include="Assets\Scripts\Lobby\LobbyCharacterController.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
@@ -110,6 +114,7 @@
     <Compile Include="Assets\Scripts\Utils\InputManager.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\PlaySoundAtRandomIntervals.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\HealthDataComponent.cs" />
+    <Compile Include="Assets\Scripts\UI\SkillBarUI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\EffectsEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AttackExecutionView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\CameraFollowSystem.cs" />
@@ -119,6 +124,7 @@
     <Compile Include="Assets\Scripts\Core\ECS\EventBus.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\SkillPreviewView.cs" />
     <Compile Include="Assets\Scripts\Lobby\VacuumController.cs" />
+    <Compile Include="Assets\Scripts\UI\SkillSlotUI.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyAISystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAttackStateAI.cs" />
@@ -147,6 +153,7 @@
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CheckCodeEntered.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\AttackComponent.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\ThirdPersonController\Scripts\ThirdPersonController.cs" />
+    <Compile Include="Assets\Scripts\UI\UIRoot.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CustomSceneManager.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\StarterSceneStar.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIConfig.cs" />
@@ -162,6 +169,7 @@
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\CharacterData.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SkillSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IInputService.cs" />
+    <Compile Include="Assets\Scripts\UI\SelectedSkill.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\WeaponDataSO.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\ThirdPersonController\Scripts\BasicRigidBodyPush.cs" />
@@ -184,6 +192,7 @@
     <Compile Include="Assets\Scripts\ECS\Views\AnimationView.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIState.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\ObjectPoolService.cs" />
+    <Compile Include="Assets\Scripts\Utils\RagdollReference.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\PathfindingComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\SkillEvent.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\DashStrikeSkillSO.cs" />

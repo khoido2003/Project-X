@@ -30,14 +30,16 @@ public class ObjectPoolService : IObjectPoolService
         if (pool.Count > 0)
         {
             instance = pool.Dequeue();
+
+            instance.transform.SetPositionAndRotation(position, rotation);
+
             instance.SetActive(true);
         }
         else
         {
-            instance = Object.Instantiate(prefab, _rootParent);
+            instance = Object.Instantiate(prefab, position, rotation, _rootParent);
         }
 
-        instance.transform.SetPositionAndRotation(position, rotation);
         return instance;
     }
 
@@ -47,8 +49,15 @@ public class ObjectPoolService : IObjectPoolService
         {
             return;
         }
+        instance.transform.SetParent(_rootParent, worldPositionStays: true);
 
+        // ensure any active effects are stopped; deactivate last
+        var ps = instance.GetComponentInChildren<ParticleSystem>();
+        ps?.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         instance.SetActive(false);
+
+        var tr = instance.GetComponentInChildren<TrailRenderer>();
+        tr?.gameObject.SetActive(false);
 
         if (!_pools.ContainsKey(prefab))
         {

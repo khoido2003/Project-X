@@ -39,6 +39,7 @@ public static class EnemyAIHelpers
         RegisterState(new EnemyChaseStateAI());
         RegisterState(new EnemyAttackStateAI());
         RegisterState(new EnemyDeadStateAI());
+        RegisterState(new EnemyTakeCoverStateAI());
     }
 
     public static void ChangeState(World world, EntityId entity, EnemyState newState)

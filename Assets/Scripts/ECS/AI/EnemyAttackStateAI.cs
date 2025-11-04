@@ -10,13 +10,15 @@ public class EnemyAttackStateAI : IEnemyState
     public void OnEnter(World world, EntityId entity)
     {
         var enemy = world.Components.Get<EnemyComponent>(entity);
-        enemy.StateTime = enemy.AttackCooldown;
+        enemy.StateTime = 0f;
     }
 
     public void OnUpdate(World world, EntityId entity, float dt)
     {
         var enemy = world.Components.Get<EnemyComponent>(entity);
         enemy.StateTime += dt;
+
+        var weapon = world.Components.Get<WeaponDataComponent>(entity);
 
         if (enemy.TargetEntity.Equals(default))
         {
@@ -29,7 +31,7 @@ public class EnemyAttackStateAI : IEnemyState
 
         float dist = Vector3.Distance(targetTransform.Position, enemyTransform.Position);
 
-        if (dist > enemy.AttackRange * 1.2f)
+        if (dist > weapon.BaseRange * 1.2f)
         {
             EnemyAIHelpers.ChangeState(world, entity, EnemyState.Chase);
             return;
@@ -46,7 +48,7 @@ public class EnemyAttackStateAI : IEnemyState
             );
         }
 
-        if (enemy.StateTime >= enemy.AttackCooldown)
+        if (enemy.StateTime >= weapon.BaseCooldown)
         {
             enemy.StateTime = 0f;
 
@@ -61,6 +63,16 @@ public class EnemyAttackStateAI : IEnemyState
                 }
             }
             PerformAttack(world, entity);
+        }
+
+        // Take cover when player get close
+        if (Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
+        {
+            if (dist < weapon.BaseRange * 0.7f)
+            {
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.TakeCover);
+                return;
+            }
         }
     }
 
