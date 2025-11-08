@@ -1,3 +1,4 @@
+using Mirror;
 using UnityEngine;
 
 [DefaultExecutionOrder(-90)]
@@ -24,12 +25,26 @@ public class WorldRunner : MonoBehaviour
 
     private void Awake()
     {
-        World = new World();
-
         Instance = this;
-
+        World = new World();
         InitServices();
-        InitSystems();
+
+        bool forcedOffline = GameFlowService.Instance != null && GameFlowService.Instance.IsOffline;
+
+        if (forcedOffline || (!NetworkServer.active && !NetworkClient.active))
+        {
+            InitOfflineSystems();
+            return;
+        }
+
+        if (NetworkServer.active)
+        {
+            InitOnlineSystems();
+            return;
+        }
+
+        // Client only
+        InitOfflineSystems();
     }
 
     private void Update()
@@ -84,11 +99,35 @@ public class WorldRunner : MonoBehaviour
         World.Services.Register(poolService);
     }
 
-    private void InitSystems()
+    private void InitOnlineSystems()
     {
+        World.Systems.AddSystem(new NetworkSpawnSystem(spawnConfig), World);
+
+        World.Systems.AddSystem(new CameraFollowSystem(), World);
+        World.Systems.AddSystem(new InputSystem(), World);
+        World.Systems.AddSystem(new TransformSyncSystem(), World);
+
+        World.Systems.AddSystem(new HealthSystem(), World);
+        World.Systems.AddSystem(new MovementSystem(), World);
+        World.Systems.AddSystem(new AttackSystem(), World);
+        World.Systems.AddSystem(new DamageSystem(), World);
+        World.Systems.AddSystem(new SkillSystem(), World);
+        World.Systems.AddSystem(new CombatStateSystem(), World);
+
+        World.Systems.AddSystem(new EnemyVisionSystem(), World);
+        World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
+        World.Systems.AddSystem(new EnemyMovementSystem(), World);
+        World.Systems.AddSystem(new EnemyAISystem(), World);
+
+        EnemyAIHelpers.RegisterDefaultStates();
+    }
+
+    private void InitOfflineSystems()
+    {
+        World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
+
         World.Systems.AddSystem(new InputSystem(), World);
         World.Systems.AddSystem(new CameraFollowSystem(), World);
-        World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
         World.Systems.AddSystem(new TransformSyncSystem(), World);
 
         World.Systems.AddSystem(new HealthSystem(), World);
