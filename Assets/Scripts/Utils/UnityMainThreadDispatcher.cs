@@ -1,28 +1,44 @@
+// UnityMainThreadDispatcher.cs
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using UnityEngine;
 
-/// <summary>
-/// Runs actions from other threads on the Unity main thread safely.
-/// </summary>
 public class UnityMainThreadDispatcher : MonoBehaviour
 {
-    private static readonly ConcurrentQueue<Action> queue = new();
+    private static UnityMainThreadDispatcher _instance;
+    private readonly ConcurrentQueue<Action> _queue = new();
 
-    public static void Enqueue(Action action)
+    public static UnityMainThreadDispatcher Instance()
+    {
+        if (_instance == null)
+        {
+            var go = new GameObject("UnityMainThreadDispatcher");
+            DontDestroyOnLoad(go);
+            _instance = go.AddComponent<UnityMainThreadDispatcher>();
+        }
+        return _instance;
+    }
+
+    public void Enqueue(Action action)
     {
         if (action == null)
-        {
             return;
-        }
-        queue.Enqueue(action);
+        _queue.Enqueue(action);
     }
 
     private void Update()
     {
-        while (queue.TryDequeue(out var action))
+        while (_queue.TryDequeue(out var a))
         {
-            action?.Invoke();
+            try
+            {
+                a();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
         }
     }
 }

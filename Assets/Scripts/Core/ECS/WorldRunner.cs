@@ -29,20 +29,6 @@ public class WorldRunner : MonoBehaviour
         World = new World();
         InitServices();
 
-        bool forcedOffline = GameFlowService.Instance != null && GameFlowService.Instance.IsOffline;
-
-        if (forcedOffline || (!NetworkServer.active && !NetworkClient.active))
-        {
-            InitOfflineSystems();
-            return;
-        }
-
-        if (NetworkServer.active)
-        {
-            InitOnlineSystems();
-            return;
-        }
-
         // Client only
         InitOfflineSystems();
     }
@@ -97,29 +83,6 @@ public class WorldRunner : MonoBehaviour
         // Object pool
         var poolService = new ObjectPoolService();
         World.Services.Register(poolService);
-    }
-
-    private void InitOnlineSystems()
-    {
-        World.Systems.AddSystem(new NetworkSpawnSystem(spawnConfig), World);
-
-        World.Systems.AddSystem(new CameraFollowSystem(), World);
-        World.Systems.AddSystem(new InputSystem(), World);
-        World.Systems.AddSystem(new TransformSyncSystem(), World);
-
-        World.Systems.AddSystem(new HealthSystem(), World);
-        World.Systems.AddSystem(new MovementSystem(), World);
-        World.Systems.AddSystem(new AttackSystem(), World);
-        World.Systems.AddSystem(new DamageSystem(), World);
-        World.Systems.AddSystem(new SkillSystem(), World);
-        World.Systems.AddSystem(new CombatStateSystem(), World);
-
-        World.Systems.AddSystem(new EnemyVisionSystem(), World);
-        World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
-        World.Systems.AddSystem(new EnemyMovementSystem(), World);
-        World.Systems.AddSystem(new EnemyAISystem(), World);
-
-        EnemyAIHelpers.RegisterDefaultStates();
     }
 
     private void InitOfflineSystems()

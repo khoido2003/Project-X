@@ -18,12 +18,11 @@ public class RoomListItemUI : MonoBehaviour
     public void Setup(RoomInfo r)
     {
         room = r;
-        roomInfoText.text = $"{room.name}";
-        playerCountText.text = $"({room.players}/{room.maxPlayers})";
+        roomInfoText.text = $"{room.Name}";
+        playerCountText.text = $"({room.Players}/{room.MaxPlayers})";
         joinBtn.onClick.RemoveAllListeners();
         joinBtn.onClick.AddListener(() =>
         {
-            GameFlowService.Instance?.JoinRoom(room);
         });
     }
 }

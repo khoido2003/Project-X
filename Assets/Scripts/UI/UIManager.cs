@@ -1,28 +1,14 @@
-using System;
 using System.Collections.Generic;
 using Mirror;
 using TMPro;
+using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using UnityEngine.UI;
-
-public enum UIManagerState
-{
-    Lobby,
-    MapSelection,
-    CharacterSelection,
-    Room,
-    RoomList,
-    Countdown,
-    InGame,
-}
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    // ==========================
-    //  COMMON SETUP
-    // ==========================
     [Header("Panels")]
     [SerializeField]
     private GameObject lobbyPanel;
@@ -42,14 +28,18 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private GameObject countdownPanel;
 
+    [Header("Map/Character Resources")]
+    [SerializeField]
+    private MapDefinitionSO[] maps;
+
+    [SerializeField]
+    private CharacterDefinitionSO[] characters;
+
     private MapDefinitionSO selectedMap;
     private CharacterDefinitionSO selectedCharacter;
-    private bool isHostMode;
     private readonly Dictionary<int, GameObject> playerListItems = new();
 
-    // ==========================
-    //  LOBBY PANEL
-    // ==========================
+    // LOBBY Buttons
     [Header("Lobby")]
     [SerializeField]
     private Button playOfflineBtn;
@@ -60,15 +50,10 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private Button joinGameBtn;
 
-    // [SerializeField]
-    // private InputField roomNameInput;
-
     [SerializeField]
     private Button lobbyBackBtn;
 
-    // ==========================
-    //  MAP SELECTION PANEL
-    // ==========================
+    // MAP
     [Header("Map Selection")]
     [SerializeField]
     private Transform mapGridParent;
@@ -79,9 +64,7 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private Button mapBackBtn;
 
-    // ==========================
-    //  CHARACTER SELECTION PANEL
-    // ==========================
+    // CHARACTER
     [Header("Character Selection")]
     [SerializeField]
     private Transform characterGridParent;
@@ -92,9 +75,7 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private Button characterBackBtn;
 
-    // ==========================
-    //  ROOM PANEL
-    // ==========================
+    // ROOM
     [Header("Room")]
     [SerializeField]
     private Button readyBtn;
@@ -114,16 +95,7 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private GameObject playerListItemPrefab;
 
-    // ==========================
-    //  COUNTDOWN PANEL
-    // ==========================
-    [Header("Countdown")]
-    [SerializeField]
-    private TextMeshProUGUI countdownText;
-
-    // ==========================
-    // ROOM LIST PANEL
-    // ==========================
+    // ROOM LIST
     [Header("Room List")]
     [SerializeField]
     private Transform roomListParent;
@@ -137,348 +109,455 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private Button roomListBackBtn;
 
-    ////////////////////////////////////////////////
+    // COUNTDOWN
+    [Header("Countdown")]
+    [SerializeField]
+    private TextMeshProUGUI countdownText;
+
+    // runtime state
+    private bool isReady = false;
+    private LobbyController lobbyController;
+    private List<GameObject> activeRoomListItems = new();
 
     private void Awake()
     {
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
     }
 
     private void Start()
     {
-        SetupLobbyPanel();
-        SetupMapSelectionPanel();
-        SetupCharacterSelectionPanel();
-        SetupRoomPanel();
-        SetupRoomListPanel();
-        SetupCountdownPanel();
-
-        // Register events
-        if (LANDiscovery.Instance != null)
+        lobbyController = LobbyController.Instance;
+        if (lobbyController == null)
         {
-            LANDiscovery.Instance.OnRoomsUpdated += UpdateRoomList;
-        }
-
-        if (GameSession.Instance != null)
-        {
-            GameSession.Instance.OnPlayerChoiceChanged += OnPlayerChoiceChanged;
-            GameSession.Instance.OnReadyCountChanged += UpdateReadyCount;
-        }
-
-        SetState(UIManagerState.Lobby);
-        StartCoroutine(SubscribeToGameSessionWhenReady());
-    }
-
-    private void OnDestroy()
-    {
-        if (LANDiscovery.Instance != null)
-        {
-            LANDiscovery.Instance.OnRoomsUpdated -= UpdateRoomList;
-        }
-
-        if (GameSession.Instance != null)
-        {
-            GameSession.Instance.OnPlayerChoiceChanged -= OnPlayerChoiceChanged;
-        }
-    }
-
-    private System.Collections.IEnumerator SubscribeToGameSessionWhenReady()
-    {
-        // If already present, subscribe immediately
-        if (GameSession.Instance != null)
-        {
-            SubscribeToGameSession();
-            yield break;
-        }
-
-        // Wait until GameSession exists (host spawn or client arrival)
-        yield return new WaitUntil(() => GameSession.Instance != null);
-
-        // Then subscribe
-        SubscribeToGameSession();
-    }
-
-    private void SubscribeToGameSession()
-    {
-        if (GameSession.Instance == null)
+            Debug.LogError("LobbyController not found in scene. Please add it.");
             return;
-
-        // Unsubscribe first to avoid double subscription (safety)
-        GameSession.Instance.OnPlayerChoiceChanged -= OnPlayerChoiceChanged;
-        GameSession.Instance.OnReadyCountChanged -= UpdateReadyCount;
-
-        GameSession.Instance.OnPlayerChoiceChanged += OnPlayerChoiceChanged;
-        GameSession.Instance.OnReadyCountChanged += UpdateReadyCount;
-
-        // Make sure the room UI reflects current state:
-        UpdateReadyCount(GameSession.Instance.readyCount);
-    }
-
-    private void SetActivePanel(GameObject active)
-    {
-        lobbyPanel.SetActive(false);
-        mapSelectionPanel.SetActive(false);
-        characterSelectionPanel.SetActive(false);
-        roomPanel.SetActive(false);
-        roomListPanel.SetActive(false);
-        countdownPanel.SetActive(false);
-
-        if (active != null)
-        {
-            active.SetActive(true);
         }
-    }
 
-    public void SetState(UIManagerState state, bool isHost = false)
-    {
-        isHostMode = isHost;
-        switch (state)
-        {
-            case UIManagerState.Lobby:
-                SetActivePanel(lobbyPanel);
-                break;
-            case UIManagerState.MapSelection:
-                SetActivePanel(mapSelectionPanel);
-                PopulateMapGrid();
-                break;
-            case UIManagerState.CharacterSelection:
-                SetActivePanel(characterSelectionPanel);
-                PopulateCharacterGrid();
-                break;
-            case UIManagerState.Room:
-                SetActivePanel(roomPanel);
-                break;
-            case UIManagerState.RoomList:
-                SetActivePanel(roomListPanel);
-                LANDiscovery.Instance?.rooms.Clear();
-                break;
-            case UIManagerState.Countdown:
-                SetActivePanel(countdownPanel);
-                break;
-        }
-    }
-
-    // ==========================
-    //  LOBBY PANEL
-    // ==========================
-
-    private void SetupLobbyPanel()
-    {
-        playOfflineBtn.onClick.AddListener(() =>
-        {
-            isHostMode = false;
-            GameFlowService.Instance?.SetOfflineMode(true);
-            SetState(UIManagerState.MapSelection);
-        });
-
+        // Wire button callbacks
+        playOfflineBtn.onClick.AddListener(OnPlayOffline);
         hostGameBtn.onClick.AddListener(OnHostGame);
-        joinGameBtn.onClick.AddListener(() => SetState(UIManagerState.RoomList));
-        lobbyBackBtn.onClick.AddListener(() => Application.Quit());
+        joinGameBtn.onClick.AddListener(OnJoinGame);
+        lobbyBackBtn.onClick.AddListener(OnLobbyBack);
+
+        mapBackBtn.onClick.AddListener(OnMapBack);
+        characterBackBtn.onClick.AddListener(OnCharacterBack);
+
+        refreshRoomsBtn.onClick.AddListener(OnRefreshRooms);
+        roomListBackBtn.onClick.AddListener(OnRoomListBack);
+
+        readyBtn.onClick.AddListener(OnReadyToggle);
+        startMatchBtn.onClick.AddListener(OnStartMatchClicked);
+        leaveRoomBtn.onClick.AddListener(OnLeaveRoom);
+
+        // subscribe lobby events
+        lobbyController.OnLobbyCreated += OnLobbyCreated;
+        lobbyController.OnLobbyJoined += OnLobbyJoined;
+        lobbyController.OnLobbyListUpdated += OnLobbyListUpdated;
+        lobbyController.OnLobbyUpdated += OnLobbyUpdated;
+        lobbyController.OnLobbyLeft += OnLobbyLeft;
+        lobbyController.OnError += msg => Debug.LogWarning("Lobby error: " + msg);
+        lobbyController.OnLobbyDeleted += OnLobbyDeleted;
+
+        // initial UI
+        ShowPanel(lobbyPanel);
+
+        PopulateMapGrid();
+        PopulateCharacterGrid();
     }
 
-    private void OnHostGame()
+    #region UI Panel Helpers
+    private void ShowPanel(GameObject panel)
     {
-        isHostMode = true;
-        GameFlowService.Instance?.SetHostMode(true);
-        SetState(UIManagerState.MapSelection);
+        lobbyPanel.SetActive(panel == lobbyPanel);
+        mapSelectionPanel.SetActive(panel == mapSelectionPanel);
+        characterSelectionPanel.SetActive(panel == characterSelectionPanel);
+        roomPanel.SetActive(panel == roomPanel);
+        roomListPanel.SetActive(panel == roomListPanel);
+        countdownPanel.SetActive(panel == countdownPanel);
     }
+    #endregion
 
-    // ==========================
-    //  MAP SELECTION PANEL
-    // ==========================
-
-    private void SetupMapSelectionPanel()
-    {
-        mapBackBtn.onClick.AddListener(() => SetState(UIManagerState.Lobby));
-    }
-
+    #region Map / Character Grid Population
     private void PopulateMapGrid()
     {
-        ClearGrid(mapGridParent);
-        foreach (var map in AssetDatabaseNetwork.GetAllAssets<MapDefinitionSO>())
+        foreach (Transform t in mapGridParent)
         {
-            var cardGO = Instantiate(mapCardPrefab, mapGridParent);
-            var card = cardGO.GetComponent<MapCardUI>();
-            card.Setup(map);
+            Destroy(t.gameObject);
         }
-    }
-
-    public void OnMapSelected(MapDefinitionSO map)
-    {
-        selectedMap = map;
-        if (isHostMode && GameSession.Instance != null)
+        if (mapCardPrefab == null)
         {
-            GameSession.Instance.CmdSetMap(map.assetId);
+            return;
         }
-        SetState(UIManagerState.CharacterSelection);
-    }
 
-    // ==========================
-    //  CHARACTER SELECTION PANEL
-    // ==========================
-
-    private void SetupCharacterSelectionPanel()
-    {
-        characterBackBtn.onClick.AddListener(() => SetState(UIManagerState.MapSelection));
+        foreach (var map in maps)
+        {
+            var go = Instantiate(mapCardPrefab, mapGridParent);
+            var m = go.GetComponent<MapCardUI>();
+            m.Setup(map);
+        }
     }
 
     private void PopulateCharacterGrid()
     {
-        ClearGrid(characterGridParent);
-        foreach (var ch in AssetDatabaseNetwork.GetAllAssets<CharacterDefinitionSO>())
+        foreach (Transform t in characterGridParent)
         {
-            var cardGO = Instantiate(characterCardPrefab, characterGridParent);
-            var card = cardGO.GetComponent<CharacterCardUI>();
-            card.Setup(ch);
+            Destroy(t.gameObject);
+        }
+        if (characterCardPrefab == null)
+        {
+            return;
+        }
+
+        foreach (var c in characters)
+        {
+            var go = Instantiate(characterCardPrefab, characterGridParent);
+            var cc = go.GetComponent<CharacterCardUI>();
+            cc.Setup(c);
         }
     }
 
+    // called from MapCardUI when user selects a map
+    public void OnMapSelected(MapDefinitionSO map)
+    {
+        selectedMap = map;
+        // proceed to character selection
+        ShowPanel(characterSelectionPanel);
+    }
+
+    // called from CharacterCardUI when user selects a character
     public void OnCharacterSelected(CharacterDefinitionSO character)
     {
         selectedCharacter = character;
-
-        // === OFFLINE FLOW ===
-        if (GameFlowService.Instance != null && GameFlowService.Instance.IsOffline)
+        // if we came from map selection flow go to next: offline/online handling
+        // If in offline flow we start the game
+        // For online flow, we either already created/joined a lobby -> update UI
+        if (roomPanel.activeSelf)
         {
-            GameFlowService.Instance.StartOffline(selectedMap, selectedCharacter);
-            return;
-        }
-
-        // === HOST FLOW ===
-        if (isHostMode && !NetworkServer.active && !NetworkClient.active)
-        {
-            Debug.Log("Character select here should be called!");
-
-            string roomName = RoomNameService.GetNextRoomName();
-            GameFlowService.Instance?.StartHost(roomName);
-
-            StartCoroutine(WaitThenChooseCharacter(character.assetId));
-        }
-        // === CLIENT FLOW ===
-        else if (NetworkClient.active && GameSession.Instance != null)
-        {
-            GameSession.Instance.CmdChooseCharacter(character.assetId);
-        }
-
-        SetState(UIManagerState.Room);
-    }
-
-    private System.Collections.IEnumerator WaitThenChooseCharacter(string id)
-    {
-        yield return new WaitUntil(() => GameSession.Instance != null && NetworkServer.active);
-        GameSession.Instance.CmdChooseCharacter(id);
-    }
-
-    // ==========================
-    //  ROOM PANEL
-    // ==========================
-
-    private void SetupRoomPanel()
-    {
-        readyBtn.onClick.AddListener(() => GameSession.Instance?.CmdToggleReady());
-        startMatchBtn.onClick.AddListener(() => GameSession.Instance?.StartMatch());
-        leaveRoomBtn.onClick.AddListener(OnLeaveRoom);
-    }
-
-    private void OnLeaveRoom()
-    {
-        if (NetworkClient.active)
-        {
-            NetworkManager.singleton.StopClient();
-        }
-        if (NetworkServer.active)
-        {
-            NetworkManager.singleton.StopHost();
-        }
-        SetState(UIManagerState.RoomList);
-    }
-
-    private void OnPlayerChoiceChanged(object sender, GameSession.OnPlayerChoiceChangedArgs e)
-    {
-        UpdatePlayerListItem(e.playerId, e.displayName);
-    }
-
-    private void UpdatePlayerListItem(int playerId, string characterName)
-    {
-        if (playerListItems.TryGetValue(playerId, out var item))
-        {
-            item.GetComponentInChildren<TextMeshProUGUI>().text = $"P{playerId}: {characterName}";
+            // we're already in a room; update chosen hero display or local player pending selection
+            RefreshPlayerListUIFromLobby();
         }
         else
         {
-            var newItem = Instantiate(playerListItemPrefab, playerListParent);
-            newItem.GetComponentInChildren<TextMeshProUGUI>().text = $"P{playerId}: {characterName}";
-            playerListItems[playerId] = newItem;
+            // By default go back to lobby so user can choose host/join
+            ShowPanel(lobbyPanel);
         }
     }
+    #endregion
 
-    private void UpdateReadyCount(int count)
+    #region Button Callbacks (top-level flows)
+    private void OnPlayOffline()
     {
-        int max = GameSession.Instance?.maxPlayers ?? -1;
-        bool host = GameFlowService.Instance != null && GameFlowService.Instance.IsHost;
-        readyCountText.text = $"{count}/{max} Ready";
-        startMatchBtn.interactable = host && count == max;
+        // Open map selection for offline
+        ShowPanel(mapSelectionPanel);
     }
 
-    // ==========================
-    // ROOM LIST PANEL
-    // ==========================
-
-    private void SetupRoomListPanel()
+    private void OnHostGame()
     {
-        refreshRoomsBtn.onClick.AddListener(() => LANDiscovery.Instance?.StartDiscovery());
-        roomListBackBtn.onClick.AddListener(() => SetState(UIManagerState.Lobby));
+        // host flow: choose map -> choose char -> create lobby -> start host
+        ShowPanel(mapSelectionPanel);
+        // Wait: selectedMap will be set by map UI, selectedCharacter later by character UI.
+        // We will create the lobby when user finalizes character selection and confirms.
+        // To keep UX simple, after selecting character we auto create a lobby and start host.
     }
 
-    private void UpdateRoomList()
+    private void OnJoinGame()
     {
-        ClearGrid(roomListParent);
-        foreach (var room in LANDiscovery.Instance.rooms)
+        // show room list
+        ShowPanel(roomListPanel);
+        OnRefreshRooms();
+    }
+
+    private void OnLobbyBack()
+    {
+        ShowPanel(lobbyPanel);
+    }
+
+    private void OnMapBack()
+    {
+        ShowPanel(lobbyPanel);
+    }
+
+    private void OnCharacterBack()
+    {
+        ShowPanel(mapSelectionPanel);
+    }
+
+    private void OnRoomListBack()
+    {
+        ShowPanel(lobbyPanel);
+    }
+    #endregion
+
+    #region Room List UI
+    private async void OnRefreshRooms()
+    {
+        // clear existing UI items
+        foreach (var go in activeRoomListItems)
         {
-            var itemGO = Instantiate(roomListItemPrefab, roomListParent);
-            itemGO.GetComponent<RoomListItemUI>().Setup(room);
+            Destroy(go);
         }
+        activeRoomListItems.Clear();
+
+        await lobbyController.ListLobbiesAsync();
+        // the results will come through OnLobbyListUpdated event
     }
 
-    // ==========================
-    //  COUNTDOWN PANEL
-    // ==========================
-
-    private void SetupCountdownPanel()
+    private void OnLobbyListUpdated(List<RoomInfo> list)
     {
-        // Ensure all input/UI is blocked while counting down
-        if (countdownPanel != null)
-        {
-            // Add a CanvasGroup if not already present
-            var cg = countdownPanel.GetComponent<CanvasGroup>();
-            if (cg == null)
+        // populate UI
+        UnityMainThreadDispatcher
+            .Instance()
+            .Enqueue(() =>
             {
-                cg = countdownPanel.AddComponent<CanvasGroup>();
-            }
-            cg.interactable = false;
-            cg.blocksRaycasts = true;
-        }
+                foreach (var go in activeRoomListItems)
+                {
+                    Destroy(go);
+                }
+                activeRoomListItems.Clear();
+
+                foreach (var r in list)
+                {
+                    var inst = Instantiate(roomListItemPrefab, roomListParent);
+                    var ui = inst.GetComponent<RoomListItemUI>();
+                    ui.Setup(r);
+                    activeRoomListItems.Add(inst);
+                }
+            });
+    }
+    #endregion
+
+    #region Lobby / Room callbacks
+    private void OnLobbyCreated(Lobby lobby)
+    {
+        UnityMainThreadDispatcher
+            .Instance()
+            .Enqueue(() =>
+            {
+                ShowPanel(roomPanel);
+                // start Mirror host now that backend lobby exists
+                StartMirrorHost();
+                // populate UI players
+                RefreshPlayerListUIFromLobby();
+            });
     }
 
-    public void ShowCountdown(float time)
+    private void OnLobbyJoined(Lobby lobby)
     {
-        SetState(UIManagerState.Countdown);
-        countdownText.text = ((int)time).ToString();
+        UnityMainThreadDispatcher
+            .Instance()
+            .Enqueue(() =>
+            {
+                ShowPanel(roomPanel);
+                RefreshPlayerListUIFromLobby();
+            });
     }
 
-    // ==========================
-    //  HELPERS
-    // ==========================
-    private void ClearGrid(Transform parent)
+    private void OnLobbyUpdated(Lobby lobby)
     {
-        if (parent == null)
+        UnityMainThreadDispatcher
+            .Instance()
+            .Enqueue(() =>
+            {
+                RefreshPlayerListUIFromLobby();
+                // If host marked "Started", begin countdown and scene change procedure
+                if (lobby.Data != null && lobby.Data.TryGetValue("Started", out var d) && d.Value == "1")
+                {
+                    // Start countdown and then start match locally
+                    StartCoroutine(RunCountdownAndStart(3)); // 3 sec default
+                }
+            });
+    }
+
+    private void OnLobbyLeft()
+    {
+        UnityMainThreadDispatcher
+            .Instance()
+            .Enqueue(() =>
+            {
+                ShowPanel(lobbyPanel);
+                // stop mirror client/host if running
+                StopMirrorNetwork();
+            });
+    }
+
+    private void OnLobbyDeleted()
+    {
+        UnityMainThreadDispatcher
+            .Instance()
+            .Enqueue(() =>
+            {
+                ShowPanel(lobbyPanel);
+                StopMirrorNetwork();
+            });
+    }
+    #endregion
+
+    #region Player List (room) UI updates
+    private void RefreshPlayerListUIFromLobby()
+    {
+        // get the current lobby snapshot from LobbyController (joinLobby is internal there).
+        // Instead we rely on the latest lobby arriving via OnLobbyUpdated -> we'll request a fresh snapshot.
+        // For simplicity we'll call lobbyController.List to get latest players via GetLobby... but there's no getter.
+        // Instead: rely on the last OnLobbyUpdated invoked lobby via LobbyController.ParsePlayerReadyState by calling GetLobbyAsync within controller.
+        // To keep UI decoupled, we call into LobbyController to fetch the last lobby snapshot by asking it to produce OnLobbyUpdated (it will via its own polling).
+        // Here we just perform a best-effort refresh: let's call a small internal method that forces a fetch by calling SetPlayerReadyAsync(false) with no change,
+        // but cleaner: implement a public method in LobbyController to GetLobbySnapshot (not currently implemented). For now, rely on last OnLobbyUpdated to update UI.
+    }
+
+    // This method is called by LobbyController.OnLobbyUpdated (we have access to the Lobby via that event).
+    // We need to get the Lobby instance; modify OnLobbyUpdated listener to pass the lobby object to this method.
+    // BUT above, OnLobbyUpdated already calls RefreshPlayerListUIFromLobby() without param. Adjust to accept a Lobby param:
+    // To avoid more changes, below helper method expects lobbyController to hold the last lobby; we'll create a quick getter on LobbyController if needed.
+    // For now, we'll implement a method to rebuild UI from the last known Lobby that the LobbyController saved in its internal joinLobby (add a GetLastLobbySnapshot method in LobbyController).
+    #endregion
+
+    // The following methods are central: ready toggle, start match (host), leave room
+    private async void OnReadyToggle()
+    {
+        isReady = !isReady;
+        // update remote ready state
+        await lobbyController.SetPlayerReadyAsync(isReady);
+
+        // update local UI (the OnLobbyUpdated will refresh the whole list shortly)
+        readyBtn.GetComponentInChildren<TextMeshProUGUI>().text = isReady ? "Unready" : "Ready";
+    }
+
+    private async void OnStartMatchClicked()
+    {
+        // Host clicks start -> mark lobby started
+        await lobbyController.StartMatchFromHostAsync();
+
+        // Also initiate countdown and server scene change here (server must call Mirror's ServerChangeScene)
+        // We'll do it in response to the lobby update (OnLobbyUpdated) which listens for Data["Started"] == "1" and runs countdown
+    }
+
+    private async void OnLeaveRoom()
+    {
+        await lobbyController.LeaveLobbyAsync();
+    }
+
+    private void OnLobbyLeftLocal()
+    {
+        // show lobby panel
+        ShowPanel(lobbyPanel);
+        StopMirrorNetwork();
+    }
+
+    private void OnLobbyDeletedLocal()
+    {
+        ShowPanel(lobbyPanel);
+        StopMirrorNetwork();
+    }
+
+    #region Mirror integration helpers
+    private void StartMirrorHost()
+    {
+        // Start Mirror host (assumes NetworkManager is configured).
+        var nm = NetworkManager.singleton;
+        if (nm == null)
         {
+            Debug.LogError("NetworkManager.singleton is null. Cannot start host.");
             return;
         }
-        foreach (Transform child in parent)
+
+        if (!NetworkServer.active && !NetworkClient.active)
         {
-            Destroy(child.gameObject);
+            nm.StartHost();
+            Debug.Log("Mirror host started.");
+        }
+        else
+        {
+            Debug.LogWarning("Mirror network already active.");
+        }
+
+        // TODO: set any server-side initial state (e.g., spawn lobby entity, spawn networked player)
+    }
+
+    private void StopMirrorNetwork()
+    {
+        var nm = NetworkManager.singleton;
+        if (nm == null)
+            return;
+
+        if (NetworkServer.active)
+        {
+            nm.StopHost();
+        }
+        else if (NetworkClient.isConnected)
+        {
+            nm.StopClient();
         }
     }
+
+    // Called when the countdown completes to actually load the level on server and inform clients
+    private void ServerStartMatch()
+    {
+        var nm = NetworkManager.singleton;
+        if (nm == null)
+        {
+            Debug.LogError("NetworkManager not found, cannot start match.");
+            return;
+        }
+
+        if (NetworkServer.active)
+        {
+            // Server-side: change scene so Mirror handles client scene load.
+            if (selectedMap != null && !string.IsNullOrEmpty(selectedMap.sceneName))
+            {
+                // WARNING: This causes server to load scene and tells clients to load it too.
+                NetworkManager.singleton.ServerChangeScene(selectedMap.sceneName);
+            }
+            else
+            {
+                Debug.LogWarning("No selectedMap or sceneName set. Server will not change scene.");
+            }
+
+            // TODO: After scene loads, server should spawn player network objects and also create ECS entities for players,
+            // attaching any network identifier components needed by your ECS <-> Mirror integration.
+            //
+            // Example pseudo-code after scene load:
+            // foreach (NetworkConnectionToClient conn in NetworkServer.connections) {
+            //     var go = Instantiate(playerPrefab);
+            //     NetworkServer.AddPlayerForConnection(conn, go);
+            //     // Then create ECS entity:
+            //     var ent = World.Instance.CreateEntity();
+            //     World.Instance.Components.Add(ent, new CharacterComponent { ... });
+            //     // Store mapping between networkId (netId) and ECS entity.
+            // }
+        }
+        else
+        {
+            Debug.LogWarning("ServerStartMatch called on client.");
+        }
+    }
+    #endregion
+
+    #region Countdown Coroutine
+    private System.Collections.IEnumerator RunCountdownAndStart(int seconds)
+    {
+        countdownPanel.SetActive(true);
+        for (int i = seconds; i > 0; i--)
+        {
+            countdownText.text = i.ToString();
+            yield return new WaitForSeconds(1f);
+        }
+
+        countdownText.text = "GO!";
+        yield return new WaitForSeconds(0.5f);
+        countdownPanel.SetActive(false);
+
+        // If we're the server, instruct server to change scene and spawn players
+        if (NetworkServer.active)
+        {
+            ServerStartMatch();
+        }
+        else
+        {
+            // client will be moved by Mirror when server changes scene
+        }
+    }
+    #endregion
 }

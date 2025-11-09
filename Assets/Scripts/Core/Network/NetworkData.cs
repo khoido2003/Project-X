@@ -1,29 +1,22 @@
 using System;
 using Mirror;
 
-[Serializable]
 public class RoomInfo
 {
-    public string name,
-        ip;
-    public int players,
-        maxPlayers;
-}
+    public string Id;
+    public string Name;
+    public int Players;
+    public int MaxPlayers;
+    public string LobbyCode;
 
-[System.Serializable]
-public struct NetworkCharacterChoice
-{
-    public string assetId;
-    public string displayName;
+    public RoomInfo() { }
 
-    public CharacterDefinitionSO GetCharacter() => AssetDatabaseNetwork.GetAsset<CharacterDefinitionSO>(assetId);
-}
-
-[System.Serializable]
-public struct NetworkMapChoice
-{
-    public string assetId;
-    public string sceneName;
-
-    public MapDefinitionSO GetMap() => AssetDatabaseNetwork.GetAsset<MapDefinitionSO>(assetId);
+    public RoomInfo(string id, string name, int players, int maxPlayers, string lobbyCode)
+    {
+        Id = id;
+        Name = name;
+        Players = players;
+        MaxPlayers = maxPlayers;
+        LobbyCode = lobbyCode;
+    }
 }
