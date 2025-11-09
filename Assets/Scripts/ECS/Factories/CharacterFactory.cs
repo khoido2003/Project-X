@@ -74,86 +74,31 @@ public class CharacterFactory
         _world.Components.Add(entity, new CombatStateComponent());
 
         // --- Attack + Weapon ---
-        if (data.hasWeapon && data.weaponData != null)
+
+        if (data.attacks != null && data.attacks.Count > 0)
         {
+            var attack = data.attacks[0]; // Primary attack, or loop for multiple later
+
             _world.Components.Add(entity, new AttackDataComponent { IsPlayerControlled = data.isPlayer });
 
             _world.Components.Add(
                 entity,
                 new WeaponDataComponent
                 {
-                    WeaponName = data.weaponData.weaponName,
-                    ExecutionType = data.weaponData.ExecutionType,
-                    BaseDamage = data.weaponData.attackDamage,
-                    BaseCooldown = data.weaponData.attackCooldown,
-                    BaseRange = data.weaponData.attackRange,
-                    HitImpactParticlePrefab = data.weaponData.hitImpactParticlePrefab,
-                    AttackAnimationTrigger = data.weaponData.attackAnimationTrigger,
-                    TotalAttackAnimations = data.weaponData.totalAttackAnimations,
-                    AttackSound = data.weaponData.attackSound,
+                    WeaponName = attack.attackName,
+                    ExecutionType = attack.executionType,
+                    BaseDamage = attack.damage,
+                    BaseCooldown = attack.cooldown,
+                    BaseRange = attack.range,
+                    HitImpactParticlePrefab = attack.hitImpactVFX,
+                    AttackAnimationTrigger = attack.animationTrigger,
+                    TotalAttackAnimations = attack.totalAnimations,
+                    AttackSound = attack.attackSound,
                 }
             );
         }
 
         instance.name = $"{data.characterName}_Entity{entity.Id}";
-        return instance;
-    }
-
-    // ============================
-    // ENEMY CREATION
-    // ============================
-    public GameObject CreateEnemy(CharacterDefinitionSO data, Vector3 spawnPos)
-    {
-        GameObject instance = Object.Instantiate(data.prefab, spawnPos, Quaternion.identity);
-
-        EntityId entity = _world.CreateEntity();
-
-        foreach (EntityView view in instance.GetComponentsInChildren<EntityView>(includeInactive: true))
-        {
-            view.Bind(_world, entity);
-            var registry = _world.Services.Resolve<EntityViewRegistry>();
-            registry.Register(view);
-        }
-
-        // --- Health ---
-        _world.Components.Add(
-            entity,
-            new HealthDataComponent { MaxHealth = data.maxHealth, CurrentHealth = data.maxHealth }
-        );
-        // --- Animation ---
-        _world.Components.Add(
-            entity,
-            new AnimationDataComponent
-            {
-                IsMovingParam = data.isMovingParam,
-                MoveXParam = data.moveXParam,
-                MoveYParam = data.moveYParam,
-            }
-        );
-        // --- Attack + Weapon ---
-        if (data.hasWeapon && data.weaponData != null)
-        {
-            _world.Components.Add(entity, new AttackDataComponent { IsPlayerControlled = false });
-
-            _world.Components.Add(entity, new TransformComponent(instance.transform.position, Quaternion.identity));
-
-            _world.Components.Add(
-                entity,
-                new WeaponDataComponent
-                {
-                    WeaponName = data.weaponData.weaponName,
-                    ExecutionType = data.weaponData.ExecutionType,
-                    BaseDamage = data.weaponData.attackDamage,
-                    BaseCooldown = data.weaponData.attackCooldown,
-                    BaseRange = data.weaponData.attackRange,
-                    HitImpactParticlePrefab = data.weaponData.hitImpactParticlePrefab,
-                    AttackAnimationTrigger = data.weaponData.attackAnimationTrigger,
-                    TotalAttackAnimations = data.weaponData.totalAttackAnimations,
-                }
-            );
-        }
-
-        instance.name = $"{data.characterName}_Enemy_{entity.Id}";
         return instance;
     }
 }

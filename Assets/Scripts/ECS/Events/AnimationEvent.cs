@@ -31,6 +31,7 @@ public enum AnimationEventRelayType
     ATTACK_HIT,
     SKILL_HIT,
     ATTACK_END,
+    SKILL_END,
 }
 
 public struct AnimationEventRelayEvent

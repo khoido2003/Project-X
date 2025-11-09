@@ -7,8 +7,6 @@ public class PlasmaShieldExecutorView : SkillExecutorView
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
-        base.ExecuteSkill(@event);
-
         if (!(@event.Skill is PlasmaShieldSkillSO skill))
         {
             return;
@@ -30,5 +28,9 @@ public class PlasmaShieldExecutorView : SkillExecutorView
 
             Destroy(shield.gameObject, skill.boostDuration);
         }
+
+        base.ExecuteSkill(@event);
+
+        FinishSkill(skill);
     }
 }

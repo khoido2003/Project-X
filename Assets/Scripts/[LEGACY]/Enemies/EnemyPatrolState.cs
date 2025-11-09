@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class EnemyPatrolState : AIState, IAnimationTrigger
+public class EnemyPatrolStateOld : AIState, IAnimationTrigger
 {
     private AIStateMachine machine;
 

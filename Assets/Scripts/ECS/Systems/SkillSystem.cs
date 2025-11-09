@@ -14,6 +14,8 @@ public class SkillSystem : ISystem
         _registry = world.Services.Resolve<EntityViewRegistry>();
 
         _world.Events.Subscribe<SkillPressedInputEvent>(OnSkillPressedInput);
+        _world.Events.Subscribe<AnimationEventRelayEvent>(OnAnimationRelayEvent);
+        _world.Events.Subscribe<SkillExecutionFinishedEvent>(OnSkillExecutionFinishedEvent);
     }
 
     public void Update(float dt) { }
@@ -83,15 +85,26 @@ public class SkillSystem : ISystem
 
     private void ExecuteSkill(EntityId caster, SkillDefinitionSO skill)
     {
-        if (!_world.Components.TryGet(caster, out CombatStateComponent state))
-        {
-            return;
-        }
-
-        state.CurrentState = CombatState.CastingSkill;
-        state.LastActionTime = Time.time;
+        _world.Events.Publish(new EnterCombatStateEvent { Entity = caster, TargetState = CombatState.CastingSkill });
 
         _world.Events.Publish(new SkillConfirmExecutionEvent(caster, skill, Vector3.zero, Vector3.forward));
+    }
+
+    private void OnAnimationRelayEvent(AnimationEventRelayEvent @event)
+    {
+        if (@event.EventType == AnimationEventRelayType.SKILL_END)
+        {
+            _world.Events.Publish(
+                new ExitCombatStateEvent { Entity = @event.Entity, TargetState = CombatState.CastingSkill }
+            );
+        }
+    }
+
+    private void OnSkillExecutionFinishedEvent(SkillExecutionFinishedEvent @event)
+    {
+        _world.Events.Publish(
+            new ExitCombatStateEvent { Entity = @event.Caster, TargetState = CombatState.CastingSkill }
+        );
     }
 
     public void Shutdown() { }

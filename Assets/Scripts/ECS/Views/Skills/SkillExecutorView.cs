@@ -12,6 +12,7 @@ public abstract class SkillExecutorView : EntityView
         WorldInstance.Events.Subscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
     }
 
+    // CREATE SKILL EFFECT/VFX/PREFAB
     private void OnSkillEffectTriggerEvent(SkillEffectTriggerEvent @event)
     {
         if (@event.Skill == null || @event.Skill.category != Category)
@@ -49,10 +50,14 @@ public abstract class SkillExecutorView : EntityView
 
     protected virtual void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
-        if (WorldInstance.Components.TryGet(@event.Caster, out CombatStateComponent state))
-        {
-            state.CurrentState = CombatState.Idle;
-        }
+        WorldInstance.Events.Publish(
+            new ExitCombatStateEvent { Entity = @event.Caster, TargetState = CombatState.CastingSkill }
+        );
+    }
+
+    protected void FinishSkill(SkillDefinitionSO skill)
+    {
+        WorldInstance.Events.Publish(new SkillExecutionFinishedEvent { Caster = EntityInstance, Skill = skill });
     }
 
     protected virtual void OnDestroy()
