@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "CharacterDefinition", menuName = "Game/Character Defintion")]
-public class CharacterDefinitionSO : ScriptableObject
+public class CharacterDefinitionSO : NetworkSO
 {
     [Header("General Info")]
     public string characterName;

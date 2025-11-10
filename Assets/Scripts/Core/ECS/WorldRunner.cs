@@ -1,3 +1,4 @@
+using Mirror;
 using UnityEngine;
 
 [DefaultExecutionOrder(-90)]
@@ -24,12 +25,12 @@ public class WorldRunner : MonoBehaviour
 
     private void Awake()
     {
-        World = new World();
-
         Instance = this;
-
+        World = new World();
         InitServices();
-        InitSystems();
+
+        // Client only
+        InitOfflineSystems();
     }
 
     private void Update()
@@ -84,11 +85,12 @@ public class WorldRunner : MonoBehaviour
         World.Services.Register(poolService);
     }
 
-    private void InitSystems()
+    private void InitOfflineSystems()
     {
+        World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
+
         World.Systems.AddSystem(new InputSystem(), World);
         World.Systems.AddSystem(new CameraFollowSystem(), World);
-        World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
         World.Systems.AddSystem(new TransformSyncSystem(), World);
 
         World.Systems.AddSystem(new HealthSystem(), World);

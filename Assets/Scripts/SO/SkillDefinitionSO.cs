@@ -7,7 +7,7 @@ public enum SkillCategory
     PlasmaShield,
 }
 
-public abstract class SkillDefinitionSO : ScriptableObject
+public abstract class SkillDefinitionSO : NetworkSO
 {
     public string skillName;
     public SkillCategory category;
