@@ -13,9 +13,9 @@ public class PlayerListItemUI : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI heroChoose;
 
-    public void Setup(int playerId, string characterName, bool isReady)
+    public void Setup(string playerName, string characterName, bool isReady)
     {
-        playerInfoText.text = $"Player {playerId}";
+        playerInfoText.text = $"{playerName}";
         heroChoose.text = $"{characterName}";
         readyIndicator.gameObject.SetActive(true);
         readyIndicator.text = isReady ? "READY" : "NOT READY";

@@ -21,8 +21,16 @@ public class RoomListItemUI : MonoBehaviour
         roomInfoText.text = $"{room.Name}";
         playerCountText.text = $"({room.Players}/{room.MaxPlayers})";
         joinBtn.onClick.RemoveAllListeners();
-        joinBtn.onClick.AddListener(() =>
-        {
-        });
+        joinBtn.onClick.AddListener(OnJoinClicked);
+    }
+
+    private async void OnJoinClicked()
+    {
+        Debug.Log($"Joining room: {room.Name} ({room.LobbyCode})");
+
+        LobbyModeTracker.Clear();
+        LobbyModeTracker.IsPendingJoin = true;
+
+        await LobbyController.Instance.JoinLobbyByIdAsync(room.Id);
     }
 }

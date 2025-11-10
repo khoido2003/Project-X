@@ -1,4 +1,3 @@
-// LobbyController.cs
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,7 +11,6 @@ public class LobbyController : MonoBehaviour
 {
     public static LobbyController Instance { get; private set; }
 
-    // Events
     public event Action<Lobby> OnLobbyCreated;
     public event Action<Lobby> OnLobbyJoined;
     public event Action<List<RoomInfo>> OnLobbyListUpdated;
@@ -22,10 +20,14 @@ public class LobbyController : MonoBehaviour
     public event Action OnLobbyDeleted;
 
     private Lobby hostLobby;
-    private Lobby joinLobby;
+    private Lobby joinedLobby;
 
     private float heartbeatTimer;
-    private float lobbyUpdateTimer;
+
+    private float lobbyUpdateTimer = 10f;
+    private float lobbyUpdateInterval = 10f;
+    private int lobbyErrorBackoffCount = 0;
+    private const int MAX_BACKOFF_EXP = 6;
 
     private string PlayerName => _playerName;
     private string _playerName = "";
@@ -54,7 +56,7 @@ public class LobbyController : MonoBehaviour
             };
 
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
-            _playerName = "Player " + UnityEngine.Random.Range(10, 99);
+            _playerName = "Player " + UnityEngine.Random.Range(1, 9999);
 
             Debug.Log($"LobbyController signed in as {PlayerName}");
         }
@@ -86,28 +88,59 @@ public class LobbyController : MonoBehaviour
 
     private async Task PollForLobbyUpdates()
     {
-        if (joinLobby != null)
+        if (joinedLobby == null)
+            return;
+
+        lobbyUpdateTimer -= Time.deltaTime;
+        if (lobbyUpdateTimer > 0f)
+            return;
+
+        try
         {
-            lobbyUpdateTimer -= Time.deltaTime;
-            if (lobbyUpdateTimer < 0f)
+            int exponent = Mathf.Min(lobbyErrorBackoffCount, MAX_BACKOFF_EXP);
+            int multiplier = 1;
+            for (int i = 0; i < exponent; i++)
             {
-                lobbyUpdateTimer = 5f;
-                try
-                {
-                    Lobby lobby = await LobbyService.Instance.GetLobbyAsync(joinLobby.Id);
-                    joinLobby = lobby;
-                    OnLobbyUpdated?.Invoke(joinLobby);
-                }
-                catch (LobbyServiceException e)
-                {
-                    Debug.LogWarning($"Lobby update failed: {e}");
-                    OnError?.Invoke(e.Message);
-                }
+                multiplier *= 2;
             }
+            lobbyUpdateTimer = lobbyUpdateInterval * multiplier;
+
+            Lobby lobby = await LobbyService.Instance.GetLobbyAsync(joinedLobby.Id);
+
+            joinedLobby = lobby;
+            lobbyErrorBackoffCount = 0;
+            MatchSetupData.SyncFromLobby(joinedLobby);
+
+            OnLobbyUpdated?.Invoke(joinedLobby);
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning($"Lobby update failed: {e}. Backoff attempt={lobbyErrorBackoffCount}");
+
+            lobbyErrorBackoffCount++;
+            OnError?.Invoke(e.Message);
+
+            // if rate limited (429) we can set a larger timer
+            if (e.Message != null && e.Message.Contains("Too Many Requests", StringComparison.OrdinalIgnoreCase))
+            {
+                lobbyUpdateTimer += 10f;
+            }
+
+            // clamp timer, don't retry too often
+            lobbyUpdateTimer = Mathf.Clamp(lobbyUpdateTimer, 5f, 300f);
         }
     }
 
-    public async Task CreateLobbyAsync(string lobbyName, int maxPlayers, string gameMode = "Default")
+    public Lobby GetCurrentLobby() => joinedLobby;
+
+    public bool IsHost => hostLobby != null && joinedLobby != null && hostLobby.Id == joinedLobby.Id;
+
+    public async Task CreateLobbyAsync(
+        string lobbyName,
+        int maxPlayers,
+        string gameMode = "Default",
+        string selectedMap = null
+    )
     {
         try
         {
@@ -118,16 +151,21 @@ public class LobbyController : MonoBehaviour
                 Data = new Dictionary<string, DataObject>
                 {
                     { "GameMode", new DataObject(DataObject.VisibilityOptions.Public, gameMode) },
+                    // Host can optionally set the map on create
+                    { "SelectedMap", new DataObject(DataObject.VisibilityOptions.Public, selectedMap ?? "") },
                 },
             };
 
             Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
 
             hostLobby = lobby;
-            joinLobby = hostLobby;
+            joinedLobby = hostLobby;
 
             OnLobbyCreated?.Invoke(lobby);
             OnLobbyJoined?.Invoke(lobby);
+
+            // Sync data
+            MatchSetupData.SyncFromLobby(joinedLobby);
 
             Debug.Log($"Created lobby {lobby.Name} id={lobby.Id} code={lobby.LobbyCode}");
         }
@@ -172,6 +210,40 @@ public class LobbyController : MonoBehaviour
         }
     }
 
+    public async Task JoinLobbyByIdAsync(string id)
+    {
+        try
+        {
+            var options = new JoinLobbyByIdOptions { Player = GetPlayer() };
+            Lobby lobby = await Lobbies.Instance.JoinLobbyByIdAsync(id, options);
+            joinedLobby = lobby;
+
+            OnLobbyJoined?.Invoke(lobby);
+
+            // Sync data
+            MatchSetupData.SyncFromLobby(joinedLobby);
+
+            // if you're not the host, start client
+            if (!IsHost)
+            {
+                try
+                {
+                    NetworkSessionController.Instance?.StartClient();
+                }
+                catch
+                { /* tolerant if controller missing in test scenes */
+                }
+            }
+
+            Debug.Log($"Joined lobby {lobby.Name}");
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e);
+            OnError?.Invoke(e.Message);
+        }
+    }
+
     public async Task JoinLobbyByCodeAsync(string code)
     {
         try
@@ -180,9 +252,25 @@ public class LobbyController : MonoBehaviour
 
             Lobby lobby = await Lobbies.Instance.JoinLobbyByCodeAsync(code, options);
 
-            joinLobby = lobby;
+            joinedLobby = lobby;
 
             OnLobbyJoined?.Invoke(lobby);
+
+            // Sync data
+            MatchSetupData.SyncFromLobby(joinedLobby);
+
+            // if you're not the host, start client
+            if (!IsHost)
+            {
+                try
+                {
+                    NetworkSessionController.Instance?.StartClient();
+                }
+                catch
+                { /* tolerant if controller missing in test scenes */
+                }
+            }
+
             Debug.Log($"Joined lobby {lobby.Name}");
         }
         catch (LobbyServiceException e)
@@ -197,9 +285,24 @@ public class LobbyController : MonoBehaviour
         try
         {
             Lobby lobby = await Lobbies.Instance.QuickJoinLobbyAsync();
-            joinLobby = lobby;
+            joinedLobby = lobby;
 
             OnLobbyJoined?.Invoke(lobby);
+
+            // Sync data
+            MatchSetupData.SyncFromLobby(joinedLobby);
+
+            // if you're not the host, start client
+            if (!IsHost)
+            {
+                try
+                {
+                    NetworkSessionController.Instance?.StartClient();
+                }
+                catch
+                { /* tolerant if controller missing in test scenes */
+                }
+            }
         }
         catch (LobbyServiceException e)
         {
@@ -212,12 +315,15 @@ public class LobbyController : MonoBehaviour
     {
         try
         {
-            if (joinLobby != null)
+            if (joinedLobby != null)
             {
-                await LobbyService.Instance.RemovePlayerAsync(joinLobby.Id, AuthenticationService.Instance.PlayerId);
+                await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
 
-                joinLobby = null;
+                joinedLobby = null;
                 hostLobby = null;
+
+                // Sync data
+                MatchSetupData.SyncFromLobby(joinedLobby);
 
                 OnLobbyLeft?.Invoke();
             }
@@ -237,7 +343,11 @@ public class LobbyController : MonoBehaviour
             {
                 await LobbyService.Instance.DeleteLobbyAsync(hostLobby.Id);
                 hostLobby = null;
-                joinLobby = null;
+                joinedLobby = null;
+
+                // Sync data
+                MatchSetupData.SyncFromLobby(joinedLobby);
+
                 OnLobbyDeleted?.Invoke();
             }
         }
@@ -253,10 +363,10 @@ public class LobbyController : MonoBehaviour
         try
         {
             _playerName = newName;
-            if (joinLobby != null)
+            if (joinedLobby != null)
             {
                 await LobbyService.Instance.UpdatePlayerAsync(
-                    joinLobby.Id,
+                    joinedLobby.Id,
                     AuthenticationService.Instance.PlayerId,
                     new UpdatePlayerOptions
                     {
@@ -282,11 +392,11 @@ public class LobbyController : MonoBehaviour
     {
         try
         {
-            if (joinLobby == null)
+            if (joinedLobby == null)
                 return;
 
             await LobbyService.Instance.UpdatePlayerAsync(
-                joinLobby.Id,
+                joinedLobby.Id,
                 AuthenticationService.Instance.PlayerId,
                 new UpdatePlayerOptions
                 {
@@ -302,8 +412,21 @@ public class LobbyController : MonoBehaviour
             );
 
             // fetch fresh lobby and invoke update event immediately
-            joinLobby = await LobbyService.Instance.GetLobbyAsync(joinLobby.Id);
-            OnLobbyUpdated?.Invoke(joinLobby);
+            // build new snapshot locally to avoid GetLobbyAsync:
+            if (joinedLobby != null)
+            {
+                var p = joinedLobby.Players.Find(x => x.Id == AuthenticationService.Instance.PlayerId);
+                if (p != null)
+                {
+                    p.Data["IsReady"] = new PlayerDataObject(
+                        PlayerDataObject.VisibilityOptions.Member,
+                        ready ? "1" : "0"
+                    );
+                    p.Data["PlayerName"] = new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, _playerName);
+                }
+
+                OnLobbyUpdated?.Invoke(joinedLobby);
+            }
         }
         catch (LobbyServiceException e)
         {
@@ -312,30 +435,36 @@ public class LobbyController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// When host wants to start, mark lobby data and return. Client/Server must then coordinate scene loads.
-    /// </summary>
-    public async Task StartMatchFromHostAsync()
+    public async Task StartMatchFromHostAsync(string selectedMapScene = "")
     {
         try
         {
+            var startTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 3;
+
             if (hostLobby == null)
+            {
                 return;
+            }
 
-            // Mark the lobby as started
-            hostLobby = await Lobbies.Instance.UpdateLobbyAsync(
-                hostLobby.Id,
-                new UpdateLobbyOptions
+            var update = new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject>
                 {
-                    Data = new Dictionary<string, DataObject>
-                    {
-                        { "Started", new DataObject(DataObject.VisibilityOptions.Public, "1") },
-                    },
-                }
-            );
+                    { "Started", new DataObject(DataObject.VisibilityOptions.Public, "1") },
+                    { "CountdownStartTime", new DataObject(DataObject.VisibilityOptions.Public, startTime.ToString()) },
+                },
+            };
 
-            // notify clients by updating joinLobby (poll will detect)
-            joinLobby = hostLobby;
+            //  set the selected map into lobby data so clients can show which map is loading
+            if (!string.IsNullOrEmpty(selectedMapScene))
+            {
+                update.Data["SelectedMap"] = new DataObject(DataObject.VisibilityOptions.Public, selectedMapScene);
+            }
+
+            hostLobby = await Lobbies.Instance.UpdateLobbyAsync(hostLobby.Id, update);
+
+            // notify clients by updating joinLobby
+            joinedLobby = hostLobby;
             OnLobbyUpdated?.Invoke(hostLobby);
         }
         catch (LobbyServiceException e)
@@ -345,9 +474,6 @@ public class LobbyController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Utility: read player ready state from a Lobby object. Returns dictionary playerId -> (playerName, isReady)
-    /// </summary>
     public static Dictionary<string, (string playerName, bool isReady)> ParsePlayerReadyState(Lobby lobby)
     {
         var dict = new Dictionary<string, (string, bool)>();
@@ -375,7 +501,74 @@ public class LobbyController : MonoBehaviour
             {
                 { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, PlayerName) },
                 { "IsReady", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "0") },
+                { "Character", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "") },
             },
         };
+    }
+
+    public async Task SetSelectedCharacterAsync(string characterAssetId)
+    {
+        try
+        {
+            if (joinedLobby == null)
+            {
+                return;
+            }
+
+            await LobbyService.Instance.UpdatePlayerAsync(
+                joinedLobby.Id,
+                AuthenticationService.Instance.PlayerId,
+                new UpdatePlayerOptions
+                {
+                    Data = new Dictionary<string, PlayerDataObject>
+                    {
+                        {
+                            "Character",
+                            new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, characterAssetId)
+                        },
+                        { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, PlayerName) },
+                    },
+                }
+            );
+
+            joinedLobby = await LobbyService.Instance.GetLobbyAsync(joinedLobby.Id);
+
+            OnLobbyUpdated?.Invoke(joinedLobby);
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e);
+            OnError?.Invoke(e.Message);
+        }
+    }
+
+    public async Task SetSelectedMapAsync(string mapAssetId)
+    {
+        try
+        {
+            if (hostLobby == null)
+            {
+                return;
+            }
+
+            hostLobby = await Lobbies.Instance.UpdateLobbyAsync(
+                hostLobby.Id,
+                new UpdateLobbyOptions
+                {
+                    Data = new Dictionary<string, DataObject>
+                    {
+                        { "SelectedMap", new DataObject(DataObject.VisibilityOptions.Public, mapAssetId) },
+                    },
+                }
+            );
+
+            joinedLobby = hostLobby;
+            OnLobbyUpdated?.Invoke(joinedLobby);
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogException(e);
+            OnError?.Invoke(e.Message);
+        }
     }
 }

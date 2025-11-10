@@ -1,16 +1,22 @@
-using System;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
-public class NetworkSO : ScriptableObject
+public abstract class NetworkSO : ScriptableObject
 {
-    [HideInInspector]
+    [SerializeField]
     public string assetId;
 
-    protected virtual void OnValidate()
+#if UNITY_EDITOR
+    private void OnValidate()
     {
         if (string.IsNullOrEmpty(assetId))
         {
-            assetId = Guid.NewGuid().ToString();
+            string path = AssetDatabase.GetAssetPath(this);
+            assetId = AssetDatabase.AssetPathToGUID(path);
+            EditorUtility.SetDirty(this);
         }
     }
+#endif
 }

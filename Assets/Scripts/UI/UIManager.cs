@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mirror;
 using TMPro;
 using Unity.Services.Lobbies.Models;
@@ -122,21 +124,25 @@ public class UIManager : MonoBehaviour
     private void Awake()
     {
         if (Instance == null)
+        {
             Instance = this;
+        }
         else
+        {
             Destroy(gameObject);
+        }
     }
 
     private void Start()
     {
         lobbyController = LobbyController.Instance;
+
         if (lobbyController == null)
         {
             Debug.LogError("LobbyController not found in scene. Please add it.");
             return;
         }
 
-        // Wire button callbacks
         playOfflineBtn.onClick.AddListener(OnPlayOffline);
         hostGameBtn.onClick.AddListener(OnHostGame);
         joinGameBtn.onClick.AddListener(OnJoinGame);
@@ -158,8 +164,8 @@ public class UIManager : MonoBehaviour
         lobbyController.OnLobbyListUpdated += OnLobbyListUpdated;
         lobbyController.OnLobbyUpdated += OnLobbyUpdated;
         lobbyController.OnLobbyLeft += OnLobbyLeft;
-        lobbyController.OnError += msg => Debug.LogWarning("Lobby error: " + msg);
         lobbyController.OnLobbyDeleted += OnLobbyDeleted;
+        lobbyController.OnError += msg => Debug.LogWarning("Lobby error: " + msg);
 
         // initial UI
         ShowPanel(lobbyPanel);
@@ -219,82 +225,122 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // called from MapCardUI when user selects a map
     public void OnMapSelected(MapDefinitionSO map)
     {
         selectedMap = map;
-        // proceed to character selection
         ShowPanel(characterSelectionPanel);
     }
 
-    // called from CharacterCardUI when user selects a character
-    public void OnCharacterSelected(CharacterDefinitionSO character)
+    public async void OnCharacterSelected(CharacterDefinitionSO character)
     {
         selectedCharacter = character;
-        // if we came from map selection flow go to next: offline/online handling
-        // If in offline flow we start the game
-        // For online flow, we either already created/joined a lobby -> update UI
+
+        //  inside a room (joined/hosted) => update player data
         if (roomPanel.activeSelf)
         {
-            // we're already in a room; update chosen hero display or local player pending selection
-            RefreshPlayerListUIFromLobby();
+            await lobbyController.SetSelectedCharacterAsync(character.assetId);
+            RefreshPlayerListUIFromLobby(lobbyController.GetCurrentLobby());
+            return;
         }
-        else
+
+        //  host room: create lobby and start host
+        if (string.IsNullOrEmpty(selectedMap?.sceneName))
         {
-            // By default go back to lobby so user can choose host/join
-            ShowPanel(lobbyPanel);
+            Debug.LogError($"selected Map does not have sceneName");
         }
+
+        if (lobbyController.GetCurrentLobby() == null && LobbyModeTracker.IsPendingHost)
+        {
+            string lobbyName = $"Lobby_{PlayerLocalId()}";
+
+            int maxPlayers = selectedMap != null ? Mathf.Clamp(selectedMap.maxPlayers, 2, 8) : 4;
+
+            await lobbyController.CreateLobbyAsync(lobbyName, maxPlayers, "Default", selectedMap?.assetId);
+
+            await lobbyController.SetSelectedCharacterAsync(selectedCharacter.assetId);
+
+            // start Mirror host
+            NetworkSessionController.Instance.StartHost();
+
+            LobbyModeTracker.IsPendingHost = false;
+            return;
+        }
+
+        // Join room
+        if (lobbyController.GetCurrentLobby() != null)
+        {
+            await lobbyController.SetSelectedCharacterAsync(selectedCharacter.assetId);
+
+            RefreshPlayerListUIFromLobby(lobbyController.GetCurrentLobby());
+
+            ShowPanel(roomPanel);
+            return;
+        }
+
+        // Handle offline mode: load game scene directly
+        if (LobbyModeTracker.IsOffline)
+        {
+            if (!string.IsNullOrEmpty(selectedMap?.sceneName))
+            {
+                Debug.Log($"[Offline] Loading scene {selectedMap.sceneName}");
+
+                LoadingSceneController.LoadScene(selectedMap.sceneName);
+                return;
+            }
+        }
+
+        // default: go back to lobby UI
+        ShowPanel(lobbyPanel);
     }
     #endregion
 
-    #region Button Callbacks (top-level flows)
+    #region Button Callbacks
+
     private void OnPlayOffline()
     {
-        // Open map selection for offline
+        LobbyModeTracker.Clear();
+        LobbyModeTracker.IsOffline = true;
         ShowPanel(mapSelectionPanel);
     }
 
     private void OnHostGame()
     {
-        // host flow: choose map -> choose char -> create lobby -> start host
+        LobbyModeTracker.Clear();
+        LobbyModeTracker.IsPendingHost = true;
         ShowPanel(mapSelectionPanel);
-        // Wait: selectedMap will be set by map UI, selectedCharacter later by character UI.
-        // We will create the lobby when user finalizes character selection and confirms.
-        // To keep UX simple, after selecting character we auto create a lobby and start host.
     }
 
     private void OnJoinGame()
     {
-        // show room list
+        LobbyModeTracker.Clear();
+        LobbyModeTracker.IsPendingJoin = true;
         ShowPanel(roomListPanel);
         OnRefreshRooms();
     }
 
-    private void OnLobbyBack()
-    {
-        ShowPanel(lobbyPanel);
-    }
+    private void OnLobbyBack() => ShowPanel(lobbyPanel);
 
-    private void OnMapBack()
-    {
-        ShowPanel(lobbyPanel);
-    }
+    private void OnMapBack() => ShowPanel(lobbyPanel);
 
     private void OnCharacterBack()
     {
-        ShowPanel(mapSelectionPanel);
+        if (LobbyModeTracker.IsPendingHost || LobbyModeTracker.IsPendingJoin)
+        {
+            ShowPanel(mapSelectionPanel);
+        }
+        else
+        {
+            ShowPanel(lobbyPanel);
+        }
     }
 
-    private void OnRoomListBack()
-    {
-        ShowPanel(lobbyPanel);
-    }
+    private void OnRoomListBack() => ShowPanel(lobbyPanel);
     #endregion
 
     #region Room List UI
+
     private async void OnRefreshRooms()
     {
-        // clear existing UI items
         foreach (var go in activeRoomListItems)
         {
             Destroy(go);
@@ -302,12 +348,10 @@ public class UIManager : MonoBehaviour
         activeRoomListItems.Clear();
 
         await lobbyController.ListLobbiesAsync();
-        // the results will come through OnLobbyListUpdated event
     }
 
     private void OnLobbyListUpdated(List<RoomInfo> list)
     {
-        // populate UI
         UnityMainThreadDispatcher
             .Instance()
             .Enqueue(() =>
@@ -330,6 +374,7 @@ public class UIManager : MonoBehaviour
     #endregion
 
     #region Lobby / Room callbacks
+
     private void OnLobbyCreated(Lobby lobby)
     {
         UnityMainThreadDispatcher
@@ -337,10 +382,10 @@ public class UIManager : MonoBehaviour
             .Enqueue(() =>
             {
                 ShowPanel(roomPanel);
-                // start Mirror host now that backend lobby exists
-                StartMirrorHost();
-                // populate UI players
-                RefreshPlayerListUIFromLobby();
+
+                NetworkSessionController.Instance.StartHost();
+
+                RefreshPlayerListUIFromLobby(lobby);
             });
     }
 
@@ -350,8 +395,7 @@ public class UIManager : MonoBehaviour
             .Instance()
             .Enqueue(() =>
             {
-                ShowPanel(roomPanel);
-                RefreshPlayerListUIFromLobby();
+                ShowPanel(characterSelectionPanel);
             });
     }
 
@@ -361,12 +405,19 @@ public class UIManager : MonoBehaviour
             .Instance()
             .Enqueue(() =>
             {
-                RefreshPlayerListUIFromLobby();
-                // If host marked "Started", begin countdown and scene change procedure
-                if (lobby.Data != null && lobby.Data.TryGetValue("Started", out var d) && d.Value == "1")
+                RefreshPlayerListUIFromLobby(lobby);
+
+                if (lobby.Data != null && lobby.Data.TryGetValue("Started", out var started) && started.Value == "1")
                 {
-                    // Start countdown and then start match locally
-                    StartCoroutine(RunCountdownAndStart(3)); // 3 sec default
+                    long countdownStart = 0;
+                    if (lobby.Data.TryGetValue("CountdownStartTime", out var cst))
+                        long.TryParse(cst.Value, out countdownStart);
+
+                    int remaining = (int)(countdownStart - DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                    if (remaining < 0)
+                        remaining = 0;
+
+                    StartCoroutine(RunCountdownAndStart(remaining));
                 }
             });
     }
@@ -378,8 +429,9 @@ public class UIManager : MonoBehaviour
             .Enqueue(() =>
             {
                 ShowPanel(lobbyPanel);
+
                 // stop mirror client/host if running
-                StopMirrorNetwork();
+                NetworkSessionController.Instance.StopNetwork();
             });
     }
 
@@ -390,48 +442,112 @@ public class UIManager : MonoBehaviour
             .Enqueue(() =>
             {
                 ShowPanel(lobbyPanel);
-                StopMirrorNetwork();
+
+                NetworkSessionController.Instance.StopNetwork();
             });
     }
     #endregion
 
     #region Player List (room) UI updates
-    private void RefreshPlayerListUIFromLobby()
-    {
-        // get the current lobby snapshot from LobbyController (joinLobby is internal there).
-        // Instead we rely on the latest lobby arriving via OnLobbyUpdated -> we'll request a fresh snapshot.
-        // For simplicity we'll call lobbyController.List to get latest players via GetLobby... but there's no getter.
-        // Instead: rely on the last OnLobbyUpdated invoked lobby via LobbyController.ParsePlayerReadyState by calling GetLobbyAsync within controller.
-        // To keep UI decoupled, we call into LobbyController to fetch the last lobby snapshot by asking it to produce OnLobbyUpdated (it will via its own polling).
-        // Here we just perform a best-effort refresh: let's call a small internal method that forces a fetch by calling SetPlayerReadyAsync(false) with no change,
-        // but cleaner: implement a public method in LobbyController to GetLobbySnapshot (not currently implemented). For now, rely on last OnLobbyUpdated to update UI.
-    }
 
-    // This method is called by LobbyController.OnLobbyUpdated (we have access to the Lobby via that event).
-    // We need to get the Lobby instance; modify OnLobbyUpdated listener to pass the lobby object to this method.
-    // BUT above, OnLobbyUpdated already calls RefreshPlayerListUIFromLobby() without param. Adjust to accept a Lobby param:
-    // To avoid more changes, below helper method expects lobbyController to hold the last lobby; we'll create a quick getter on LobbyController if needed.
-    // For now, we'll implement a method to rebuild UI from the last known Lobby that the LobbyController saved in its internal joinLobby (add a GetLastLobbySnapshot method in LobbyController).
+    private void RefreshPlayerListUIFromLobby(Lobby lobby)
+    {
+        UnityMainThreadDispatcher
+            .Instance()
+            .Enqueue(() =>
+            {
+                // clear existing items
+                foreach (Transform t in playerListParent)
+                {
+                    Destroy(t.gameObject);
+                }
+
+                playerListItems.Clear();
+
+                if (lobby == null || lobby.Players == null)
+                {
+                    return;
+                }
+
+                int readyCount = 0;
+                foreach (var p in lobby.Players)
+                {
+                    var inst = Instantiate(playerListItemPrefab, playerListParent);
+                    var ui = inst.GetComponent<PlayerListItemUI>();
+
+                    string playerId = p.Id;
+
+                    string playerName =
+                        p.Data != null && p.Data.TryGetValue("PlayerName", out var nameData)
+                            ? nameData.Value
+                            : playerId;
+
+                    string charName = "";
+                    if (
+                        p.Data != null
+                        && p.Data.TryGetValue("Character", out var charData)
+                        && !string.IsNullOrEmpty(charData.Value)
+                    )
+                    {
+                        CharacterDefinitionSO so = AssetDatabaseNetwork.GetAsset<CharacterDefinitionSO>(charData.Value);
+
+                        charName = so != null ? so.characterName : "Unknown";
+                    }
+
+                    bool isReady = p.Data != null && p.Data.TryGetValue("IsReady", out var rpd) && rpd.Value == "1";
+
+                    ui.Setup(playerName, charName, isReady);
+
+                    playerListItems[playerId.GetHashCode()] = inst;
+
+                    if (isReady)
+                    {
+                        readyCount++;
+                    }
+                }
+                readyCountText.text = $"{readyCount}/{lobby.MaxPlayers} ready";
+
+                // enable start button only for host
+                startMatchBtn.gameObject.SetActive(lobbyController.IsHost);
+            });
+    }
     #endregion
 
-    // The following methods are central: ready toggle, start match (host), leave room
+    #region Ready / Start / Leave
     private async void OnReadyToggle()
     {
         isReady = !isReady;
-        // update remote ready state
-        await lobbyController.SetPlayerReadyAsync(isReady);
 
-        // update local UI (the OnLobbyUpdated will refresh the whole list shortly)
+        await lobbyController.SetPlayerReadyAsync(isReady);
         readyBtn.GetComponentInChildren<TextMeshProUGUI>().text = isReady ? "Unready" : "Ready";
     }
 
     private async void OnStartMatchClicked()
     {
-        // Host clicks start -> mark lobby started
-        await lobbyController.StartMatchFromHostAsync();
+        var lobby = lobbyController.GetCurrentLobby();
+        if (lobby == null)
+            return;
 
-        // Also initiate countdown and server scene change here (server must call Mirror's ServerChangeScene)
-        // We'll do it in response to the lobby update (OnLobbyUpdated) which listens for Data["Started"] == "1" and runs countdown
+        //  Check if all players ready
+        bool allReady = lobby.Players.All(p =>
+            p.Data != null && p.Data.TryGetValue("IsReady", out var rpd) && rpd.Value == "1"
+        );
+
+        if (!allReady)
+        {
+            Debug.LogWarning("Not all players are ready — cannot start match!");
+            return;
+        }
+
+        //  Host only allowed to start
+        if (!lobbyController.IsHost)
+        {
+            Debug.LogWarning("Only host can start the match!");
+            return;
+        }
+
+        string sceneToLoad = selectedMap != null ? selectedMap.sceneName : "";
+        await lobbyController.StartMatchFromHostAsync(sceneToLoad);
     }
 
     private async void OnLeaveRoom()
@@ -439,103 +555,10 @@ public class UIManager : MonoBehaviour
         await lobbyController.LeaveLobbyAsync();
     }
 
-    private void OnLobbyLeftLocal()
-    {
-        // show lobby panel
-        ShowPanel(lobbyPanel);
-        StopMirrorNetwork();
-    }
-
-    private void OnLobbyDeletedLocal()
-    {
-        ShowPanel(lobbyPanel);
-        StopMirrorNetwork();
-    }
-
-    #region Mirror integration helpers
-    private void StartMirrorHost()
-    {
-        // Start Mirror host (assumes NetworkManager is configured).
-        var nm = NetworkManager.singleton;
-        if (nm == null)
-        {
-            Debug.LogError("NetworkManager.singleton is null. Cannot start host.");
-            return;
-        }
-
-        if (!NetworkServer.active && !NetworkClient.active)
-        {
-            nm.StartHost();
-            Debug.Log("Mirror host started.");
-        }
-        else
-        {
-            Debug.LogWarning("Mirror network already active.");
-        }
-
-        // TODO: set any server-side initial state (e.g., spawn lobby entity, spawn networked player)
-    }
-
-    private void StopMirrorNetwork()
-    {
-        var nm = NetworkManager.singleton;
-        if (nm == null)
-            return;
-
-        if (NetworkServer.active)
-        {
-            nm.StopHost();
-        }
-        else if (NetworkClient.isConnected)
-        {
-            nm.StopClient();
-        }
-    }
-
-    // Called when the countdown completes to actually load the level on server and inform clients
-    private void ServerStartMatch()
-    {
-        var nm = NetworkManager.singleton;
-        if (nm == null)
-        {
-            Debug.LogError("NetworkManager not found, cannot start match.");
-            return;
-        }
-
-        if (NetworkServer.active)
-        {
-            // Server-side: change scene so Mirror handles client scene load.
-            if (selectedMap != null && !string.IsNullOrEmpty(selectedMap.sceneName))
-            {
-                // WARNING: This causes server to load scene and tells clients to load it too.
-                NetworkManager.singleton.ServerChangeScene(selectedMap.sceneName);
-            }
-            else
-            {
-                Debug.LogWarning("No selectedMap or sceneName set. Server will not change scene.");
-            }
-
-            // TODO: After scene loads, server should spawn player network objects and also create ECS entities for players,
-            // attaching any network identifier components needed by your ECS <-> Mirror integration.
-            //
-            // Example pseudo-code after scene load:
-            // foreach (NetworkConnectionToClient conn in NetworkServer.connections) {
-            //     var go = Instantiate(playerPrefab);
-            //     NetworkServer.AddPlayerForConnection(conn, go);
-            //     // Then create ECS entity:
-            //     var ent = World.Instance.CreateEntity();
-            //     World.Instance.Components.Add(ent, new CharacterComponent { ... });
-            //     // Store mapping between networkId (netId) and ECS entity.
-            // }
-        }
-        else
-        {
-            Debug.LogWarning("ServerStartMatch called on client.");
-        }
-    }
     #endregion
 
     #region Countdown Coroutine
+
     private System.Collections.IEnumerator RunCountdownAndStart(int seconds)
     {
         countdownPanel.SetActive(true);
@@ -549,10 +572,29 @@ public class UIManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         countdownPanel.SetActive(false);
 
-        // If we're the server, instruct server to change scene and spawn players
+        // If the server, instruct server to change scene and spawn players
         if (NetworkServer.active)
         {
-            ServerStartMatch();
+            var lobby = lobbyController.GetCurrentLobby();
+            string sceneName = selectedMap?.sceneName;
+
+            if (
+                lobby != null
+                && lobby.Data != null
+                && lobby.Data.TryGetValue("SelectedMap", out var d)
+                && !string.IsNullOrEmpty(d.Value)
+            )
+            {
+                // try to resolve assetId -> MapDefinitionSO for scene name
+                MapDefinitionSO foundMap = AssetDatabaseNetwork.GetAsset<MapDefinitionSO>(d.Value);
+
+                if (foundMap != null)
+                {
+                    sceneName = foundMap.sceneName;
+                }
+            }
+
+            NetworkSessionController.Instance.StartServerMatch(sceneName);
         }
         else
         {
@@ -560,4 +602,22 @@ public class UIManager : MonoBehaviour
         }
     }
     #endregion
+
+    // small helper to find some unique local id for lobby name
+    private string PlayerLocalId()
+    {
+        return System.Guid.NewGuid().ToString().Substring(0, 6);
+    }
+}
+
+public static class LobbyModeTracker
+{
+    public static bool IsPendingHost = false;
+    public static bool IsPendingJoin = false;
+    public static bool IsOffline = false;
+
+    public static void Clear()
+    {
+        IsPendingHost = IsPendingJoin = IsOffline = false;
+    }
 }

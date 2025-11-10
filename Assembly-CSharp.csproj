@@ -134,6 +134,7 @@
     <Compile Include="Assets\Scripts\Lobby\VacuumController.cs" />
     <Compile Include="Assets\Scripts\UI\SkillSlotUI.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyAISystem.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\NetworkEntityRegistry.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAttackStateAI.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
@@ -173,6 +174,7 @@
     <Compile Include="Assets\Scripts\ECS\Views\Skills\HomerunSwingExecutorView.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\_Scripts_qd\LobbyData.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\LobbyNetworkManager.cs" />
     <Compile Include="Assets\Scripts\Utils\SpawnPoint.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\CharacterData.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SkillSystem.cs" />
@@ -190,6 +192,7 @@
     <Compile Include="Assets\Scripts\ECS\Services\TimeService.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAIHelpers.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillInstance.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\PlayerEntityBridge.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\ProjectileView.cs" />
     <Compile Include="Assets\_Scripts_qd\JoinGameManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\InputService.cs" />
@@ -232,6 +235,7 @@
     <Compile Include="Assets\Scripts\ECS\Factories\EnemyFactory.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\HomerunSwingSkillSO.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityManager.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\NetworkSessionController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />

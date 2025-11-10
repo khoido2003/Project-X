@@ -30,7 +30,9 @@ public static class AssetDatabaseNetwork
         foreach (var asset in allAssets)
         {
             if (asset == null)
+            {
                 continue;
+            }
             if (string.IsNullOrEmpty(asset.assetId))
             {
                 asset.assetId = Guid.NewGuid().ToString();
@@ -52,9 +54,13 @@ public static class AssetDatabaseNetwork
         where T : NetworkSO
     {
         if (string.IsNullOrEmpty(assetId))
+        {
             return null;
+        }
         if (_typeCache.TryGetValue(typeof(T), out var typeDict) && typeDict.TryGetValue(assetId, out var asset))
+        {
             return asset as T;
+        }
         return null;
     }
 
@@ -70,7 +76,9 @@ public static class AssetDatabaseNetwork
         where T : NetworkSO
     {
         if (string.IsNullOrEmpty(name))
+        {
             return null;
+        }
         return GetAllAssets<T>().FirstOrDefault(x => x.name == name);
     }
 }

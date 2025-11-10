@@ -1,6 +1,4 @@
-// UnityMainThreadDispatcher.cs
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using UnityEngine;
 
@@ -23,7 +21,9 @@ public class UnityMainThreadDispatcher : MonoBehaviour
     public void Enqueue(Action action)
     {
         if (action == null)
+        {
             return;
+        }
         _queue.Enqueue(action);
     }
 
