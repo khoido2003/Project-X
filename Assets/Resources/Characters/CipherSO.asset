@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07e7b928afb9556468a6d5c0fbd62b39, type: 3}
   m_Name: CipherSO
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDefinitionSO
-  assetId: bd39d6a186e6ad040b9146b5b0f811c5
+  assetId: 14fd96a3bc0a659488a2b441064ebf86
   characterName: Cipher
   prefab: {fileID: 5191787420164104229, guid: 0e6643263c7117845ab2cca53ecec692, type: 3}
   isPlayer: 1

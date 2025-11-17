@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d21e4e1b5852db44b60ab3dc56fcc44, type: 3}
   m_Name: PlasmaShieldSkill
   m_EditorClassIdentifier: Assembly-CSharp::PlasmaShieldSkillSO
+  assetId: f3a53398fc9123f4b804ec8111e7164e
   skillName: Plasma Shileld
   category: 2
   isInstant: 1
-  keyTrigger: E
+  keyTrigger: Q
   damage: 0
   castRange: 0
   cooldown: 1

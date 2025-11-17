@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a27c0dc08f5685845ab1639f3b7d6be6, type: 3}
   m_Name: DashStrikeSkill
   m_EditorClassIdentifier: Assembly-CSharp::DashStrikeSkillSO
+  assetId: c40e34a1af067074aaa6321e56dfa191
   skillName: Dash Strike
   category: 0
   isInstant: 0
+  keyTrigger: Q
   damage: 20
   castRange: 5
   cooldown: 1

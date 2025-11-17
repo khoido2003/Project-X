@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f6f0d863e9698c48af989129b2f1d3a, type: 3}
   m_Name: HomerunSwingSkill
   m_EditorClassIdentifier: Assembly-CSharp::HomerunSwingSkillSO
+  assetId: 61eb7046a1612ad4687f18c4a482b5ea
   skillName: HomerunSwing
   category: 1
   isInstant: 0
-  keyTrigger: Space
+  keyTrigger: Q
   damage: 30
   castRange: 2
   cooldown: 1
