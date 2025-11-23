@@ -16,6 +16,8 @@ MonoBehaviour:
   characterName: Cipher
   prefab: {fileID: 5191787420164104229, guid: 0e6643263c7117845ab2cca53ecec692, type: 3}
   isPlayer: 1
+  characterSprite: {fileID: 21300000, guid: caef1cc0f6f1d0e41b51312e944c9e22, type: 3}
+  weaponSprite: {fileID: 21300000, guid: ed7b42d3ef2157a41838269516ea1647, type: 3}
   maxHealth: 100
   moveSpeed: 3
   forwardMultiplier: 1
@@ -44,3 +46,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c40e34a1af067074aaa6321e56dfa191, type: 2}
   - {fileID: 11400000, guid: 61eb7046a1612ad4687f18c4a482b5ea, type: 2}
   - {fileID: 11400000, guid: f3a53398fc9123f4b804ec8111e7164e, type: 2}
+  clientId: 0
+  playerId: 0
+  isSelected: 0
+  enemiesDestroyed: 0
+  totalDamages: 0

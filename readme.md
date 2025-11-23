@@ -218,6 +218,33 @@ ComponentStore → MovementData for entity
 EntityView (updates GameObject)
 ```
 
+#### Lobby flow
+```
+┌──────────────────────────┐
+│        UIManager         │  ← Handles buttons and panels
+│  (offline / host / join) │
+└────────────┬─────────────┘
+             │
+┌────────────▼────────────┐
+│   LobbyFlowController   │  ← Orchestrates session flow
+│ (calls LobbyService &   │
+│  NetworkSessionService) │
+└────────────┬────────────┘
+             │
+┌────────────▼────────────┐
+│     LobbyService        │  ← Unity Lobby SDK integration
+└────────────┬────────────┘
+             │
+┌────────────▼────────────┐
+│ NetworkSessionService   │  ← Mirror host/client management
+└────────────┬────────────┘
+             │
+┌────────────▼────────────┐
+│   GameNetworkManager    │  ← Mirror's main network class
+│  (scene load, prefab,   │
+│  spawn logic, ECS init) │
+└─────────────────────────┘
+```
 
 ### Folder Structure
 ```

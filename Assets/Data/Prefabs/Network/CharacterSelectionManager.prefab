@@ -1,0 +1,154 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5017961944373613495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 404434253306115879}
+  - component: {fileID: 6754277432408981345}
+  - component: {fileID: 7126167015968825041}
+  m_Layer: 0
+  m_Name: CharacterSelectionManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &404434253306115879
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5017961944373613495}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6754277432408981345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5017961944373613495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2933615058
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &7126167015968825041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5017961944373613495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7237d5ff00407747bc51dc4b6bb1e4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectionManager
+  ShowTopMostFoldoutHeaderGroup: 1
+  characterData:
+  - {fileID: 11400000, guid: 14fd96a3bc0a659488a2b441064ebf86, type: 2}
+  m_charactersContainer:
+  - imageContainer: {fileID: 0}
+    nameContainer: {fileID: 0}
+    border: {fileID: 0}
+    borderClient: {fileID: 0}
+    borderReady: {fileID: 0}
+    playerIcon: {fileID: 0}
+    waitingText: {fileID: 0}
+    backgroundWeapon: {fileID: 0}
+    backgroundWeaponImage: {fileID: 0}
+    backgroundWeaponReady: {fileID: 0}
+    backgroundWeaponReadyImage: {fileID: 0}
+    backgroundClientWeaponReady: {fileID: 0}
+    backgroundClientWeaponReadyImage: {fileID: 0}
+  - imageContainer: {fileID: 0}
+    nameContainer: {fileID: 0}
+    border: {fileID: 0}
+    borderClient: {fileID: 0}
+    borderReady: {fileID: 0}
+    playerIcon: {fileID: 0}
+    waitingText: {fileID: 0}
+    backgroundWeapon: {fileID: 0}
+    backgroundWeaponImage: {fileID: 0}
+    backgroundWeaponReady: {fileID: 0}
+    backgroundWeaponReadyImage: {fileID: 0}
+    backgroundClientWeaponReady: {fileID: 0}
+    backgroundClientWeaponReadyImage: {fileID: 0}
+  - imageContainer: {fileID: 0}
+    nameContainer: {fileID: 0}
+    border: {fileID: 0}
+    borderClient: {fileID: 0}
+    borderReady: {fileID: 0}
+    playerIcon: {fileID: 0}
+    waitingText: {fileID: 0}
+    backgroundWeapon: {fileID: 0}
+    backgroundWeaponImage: {fileID: 0}
+    backgroundWeaponReady: {fileID: 0}
+    backgroundWeaponReadyImage: {fileID: 0}
+    backgroundClientWeaponReady: {fileID: 0}
+    backgroundClientWeaponReadyImage: {fileID: 0}
+  - imageContainer: {fileID: 0}
+    nameContainer: {fileID: 0}
+    border: {fileID: 0}
+    borderClient: {fileID: 0}
+    borderReady: {fileID: 0}
+    playerIcon: {fileID: 0}
+    waitingText: {fileID: 0}
+    backgroundWeapon: {fileID: 0}
+    backgroundWeaponImage: {fileID: 0}
+    backgroundWeaponReady: {fileID: 0}
+    backgroundWeaponReadyImage: {fileID: 0}
+    backgroundClientWeaponReady: {fileID: 0}
+    backgroundClientWeaponReadyImage: {fileID: 0}
+  m_readyBtn: {fileID: 0}
+  m_cancelBtn: {fileID: 0}
+  m_timeToStartGame: 3
+  m_nextScene: 4
+  m_clientColor: {r: 0.9888849, g: 1, b: 0, a: 0}
+  m_playerColor: {r: 0.19504452, g: 1, b: 0, a: 0}
+  m_playerStates:
+  - clientId: 0
+    playerName: 
+    playerState: 0
+    playerObject: {fileID: 0}
+  - clientId: 0
+    playerName: 
+    playerState: 0
+    playerObject: {fileID: 0}
+  - clientId: 0
+    playerName: 
+    playerState: 0
+    playerObject: {fileID: 0}
+  - clientId: 0
+    playerName: 
+    playerState: 0
+    playerObject: {fileID: 0}
+  m_playerPrefab: {fileID: 2202338233619086835, guid: a7cb76311a4d06346a15c6f687fb3a63, type: 3}
+  m_confirmClip: {fileID: 0}
+  m_cancelClip: {fileID: 0}
