@@ -1,46 +1,48 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class LoadingSceneController : MonoBehaviour
 {
     [SerializeField]
     private TextMeshProUGUI loadingText;
 
-    private static string nextScene;
+    private bool isLoading = false;
+    private float fakeProgress = 0f;
 
-    public static void LoadScene(string sceneName)
+    private void OnEnable()
     {
-        nextScene = sceneName;
-        SceneManager.LoadScene("LoadingScene");
+        LoadingSceneManager.OnLoadingStarted += BeginLoading;
+        LoadingSceneManager.OnLoadingFinished += EndLoading;
     }
 
-    private void Start()
+    private void OnDisable()
     {
-        StartCoroutine(LoadAsync());
+        LoadingSceneManager.OnLoadingStarted -= BeginLoading;
+        LoadingSceneManager.OnLoadingFinished -= EndLoading;
     }
 
-    private IEnumerator LoadAsync()
+    void BeginLoading()
     {
-        // Small delay for fade-in or logo animation
-        yield return new WaitForSeconds(0.3f);
+        isLoading = true;
+        fakeProgress = 0f;
+    }
 
-        AsyncOperation op = SceneManager.LoadSceneAsync(nextScene);
-        op.allowSceneActivation = false;
+    void EndLoading()
+    {
+        isLoading = false;
+        fakeProgress = 1f;
+        loadingText.text = "Loading... 100%";
+        loadingText.gameObject.SetActive(false);
+    }
 
-        while (!op.isDone)
-        {
-            float progress = Mathf.Clamp01(op.progress / 0.9f);
-            loadingText.text = $"Loading... {Mathf.RoundToInt(progress * 100)}%";
+    private void Update()
+    {
+        if (!isLoading)
+            return;
 
-            if (progress >= 1f)
-            {
-                yield return new WaitForSeconds(0.5f);
-                op.allowSceneActivation = true;
-            }
+        // Fake progress curve
+        fakeProgress = Mathf.MoveTowards(fakeProgress, 0.95f, Time.deltaTime * 0.3f);
 
-            yield return null;
-        }
+        loadingText.text = $"Loading... {Mathf.RoundToInt(fakeProgress * 100)}%";
     }
 }

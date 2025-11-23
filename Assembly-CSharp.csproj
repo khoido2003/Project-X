@@ -48,11 +48,11 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.8f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\ECS\Systems\NetworkSpawnSystem.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
-    <Compile Include="Assets\Scripts\UI\LoobyRoomUI\PlayerListItemUI.cs" />
+    <Compile Include="Assets\Scripts\Utils\Singleton.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\DamageSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Factories\CharacterFactory.cs" />
+    <Compile Include="Assets\Scripts\UI\OnButtonPress.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyIdleState.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\Skills\AlexBaseballBoySkills\HomerunSwingSkill.cs" />
@@ -61,16 +61,19 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\WeaponHolder.cs" />
     <Compile Include="Assets\Scripts\Utils\Drawer.cs" />
     <Compile Include="Assets\Scripts\WaitQueue\LobbyItemUI.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\NetworkObjectSpawner.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolPoints.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AnimationEvent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\MouseWorldPosition.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\TransformDataComponent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ActionFlagComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AnimationEventRelayView.cs" />
+    <Compile Include="Assets\Scripts\Utils\LoadingFadeEffect.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\WeaponComponent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityId.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridLayer.cs" />
     <Compile Include="Assets\Scripts\Utils\PoolParticlesAutoReturn.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\Lobby\LobbyData.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\PlayerTagComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AttackEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyChaseStateAI.cs" />
@@ -82,7 +85,6 @@
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\DoorController.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\LookAtMouseView.cs" />
-    <Compile Include="Assets\Scripts\UI\LoobyRoomUI\CharacterCardUI.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyPathfindingSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AnimationDataComponent.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\HealthHUD_UI.cs" />
@@ -98,15 +100,13 @@
     <Compile Include="Assets\Scripts\SO\SkillDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Character.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\CharacterVisualComponent.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\NetworkObjectDespawner.cs" />
     <Compile Include="Assets\Scripts\Utils\RagdollUtils.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\ActivateObjectAfterDelay.cs" />
-    <Compile Include="Assets\Scripts\Core\Network\LobbyController.cs" />
-    <Compile Include="Assets\Scripts\UI\LoobyRoomUI\RoomListItemUI.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityView.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleCountdownLabel.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\UpdateCollectibleCount.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\TransformSyncView.cs" />
-    <Compile Include="Assets\Scripts\UI\LoobyRoomUI\UIManager.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
     <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
@@ -120,6 +120,7 @@
     <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
     <Compile Include="Assets\Scripts\Utils\LoadingSceneController.cs" />
     <Compile Include="Assets\Scripts\SO\NetworkSO.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\Lobby\LobbyService.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\AStarPathfinder.cs" />
     <Compile Include="Assets\Scripts\SO\CharacterDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\Utils\InputManager.cs" />
@@ -135,13 +136,13 @@
     <Compile Include="Assets\Scripts\Core\ECS\EventBus.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\SkillPreviewView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyAISystem.cs" />
-    <Compile Include="Assets\Scripts\Core\Network\NetworkEntityRegistry.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\SystemManager.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAttackStateAI.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ServiceLocator.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IStatusEffect.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\AIStateMachine.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\PlayerCharSelection.cs" />
     <Compile Include="Assets\Scripts\WaitQueue\SettingWindow.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IAnimationTrigger.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\SkillSetComponent.cs" />
@@ -150,6 +151,7 @@
     <Compile Include="Assets\Scripts\Core\ECS\EntityViewRegistry.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\HealthComponent.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\AnimatorActionData.cs" />
+    <Compile Include="Assets\Scripts\Core\Managers\CharacterSelectionManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IObjectPoolService.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\PlasmaShieldSkillSO.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\HealthBarUI.cs" />
@@ -177,26 +179,26 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolState.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\HomerunSwingExecutorView.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
-    <Compile Include="Assets\Scripts\Core\Network\LobbyNetworkManager.cs" />
     <Compile Include="Assets\Scripts\Utils\SpawnPoint.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\CharacterData.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SkillSystem.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\SelectedSkill.cs" />
     <Compile Include="Assets\Scripts\Utils\UnityMainThreadDispatcher.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IInputService.cs" />
+    <Compile Include="Assets\Scripts\Core\Managers\MenuManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
+    <Compile Include="Assets\Scripts\Utils\GoToMenu.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\WeaponDataSO.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\ThirdPersonController\Scripts\BasicRigidBodyPush.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\PlasmaShieldExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\CombatStateComponent.cs" />
-    <Compile Include="Assets\Scripts\UI\LoobyRoomUI\MapCardUI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\InputEvent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\MurderKitten\MurderKittenAttackComponent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\Interfaces\IAnimationRelayReceiver.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\TimeService.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAIHelpers.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\SkillInstance.cs" />
-    <Compile Include="Assets\Scripts\Core\Network\PlayerEntityBridge.cs" />
+    <Compile Include="Assets\Scripts\Core\Managers\LoadingSceneManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\ProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\InputService.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\StatusEffectComponent.cs" />
@@ -224,12 +226,12 @@
     <Compile Include="Assets\Scripts\ECS\AI\EnemyDeadStateAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\PlayerSpawnEvent.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\AnimationEventRelay.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\ClientConnection.cs" />
     <Compile Include="Assets\Scripts\SO\SpawnConfigSO.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\ScriptableObjects\Skills\AlexBaseballBoySkills\DaskStrikeSkill.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\SimpleCameraController.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ComponentStore.cs" />
-    <Compile Include="Assets\Scripts\Core\Network\NetworkData.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\TransformSyncSystem.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\SkillBarUI.cs" />
     <Compile Include="Assets\Scripts\Utils\SkillVfxEffectSocket.cs" />
@@ -237,42 +239,31 @@
     <Compile Include="Assets\Scripts\ECS\Systems\InputSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Factories\EnemyFactory.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\HomerunSwingSkillSO.cs" />
+    <Compile Include="Assets\Scripts\Utils\Paralax.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityManager.cs" />
-    <Compile Include="Assets\Scripts\Core\Network\NetworkSessionController.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />
     <None Include="Assets\Models\PolygonCyberCity\Shaders\SyntyStudios_Skybox.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
-    <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.Mdb.dll" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile-2-Pass.shader" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Edge Detection.shader" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Grass Sway.shader" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Blur.shader" />
-    <None Include="Assets\ScriptTemplates\52-Mirror__Network Authenticator-NewNetworkAuthenticator.cs.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
     <None Include="Assets\Models\PolygonCyberCity\Shaders\SyntyStudios_PolygonCyberCity_Triplanar_01.shader" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.compute" />
-    <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.Pdb.dll" />
     <None Include="Assets\Models\PolygonSciFiCity\Shaders\Polygon_Triplanar.shader" />
-    <None Include="Assets\Mirror\version.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
-    <None Include="Assets\ScriptTemplates\56-Mirror__Network Discovery-NewNetworkDiscovery.cs.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
-    <None Include="Assets\ScriptTemplates\51-Mirror__Network Manager With Actions-NewNetworkManagerWithActions.cs.txt" />
-    <None Include="Assets\ScriptTemplates\53-Mirror__Network Behaviour With Actions-NewNetworkBehaviourWithActions.cs.txt" />
-    <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.Rocks.dll" />
     <None Include="Assets\Models\PolygonCyberCity\Shaders\SyntyStudios_SkinColourChange.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\Models\PolygonSciFiCity\Scenes\README.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\SDFFunctions.hlsl" />
     <None Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\_Shortcuts-Cheat_Sheet.txt" />
-    <None Include="Assets\Mirror\Readme.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Depth Mask Edge Detection.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader" />
     <None Include="Assets\Models\PolygonSciFiCity\Shaders\Polygon_UVScroll.shader" />
-    <None Include="Assets\ScriptTemplates\57-Mirror__Network Transform-NewNetworkTransform.cs.txt" />
     <None Include="Assets\TextMesh Pro\Sprites\EmojiOne Attribution.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Ocean.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader" />
@@ -281,7 +272,6 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile SSD.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plasma.shader" />
-    <None Include="Assets\ScriptTemplates\52-Mirror__Network Behaviour-NewNetworkBehaviour.cs.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Outline.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
@@ -295,20 +285,14 @@
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Lava3D.shader" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Force Field.shader" />
-    <None Include="Assets\Mirror\Plugins\Mono.Cecil\License.txt" />
-    <None Include="Assets\ScriptTemplates\55-Mirror__Network Room Player-NewNetworkRoomPlayer.cs.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
-    <None Include="Assets\ScriptTemplates\54-Mirror__Custom Interest Management-CustomInterestManagement.cs.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />
-    <None Include="Assets\ScriptTemplates\50-Mirror__Network Manager-NewNetworkManager.cs.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />
-    <None Include="Assets\ScriptTemplates\54-Mirror__Network Room Manager-NewNetworkRoomManager.cs.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Simple Sine Wave.shader" />
     <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
     <None Include="Assets\Models\PolygonCyberCity\Shaders\SyntyStudios_Parallax_RoomOnly.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Sprite.shader" />
-    <None Include="Assets\Mirror\Hosting\Readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -803,32 +787,12 @@
       <HintPath>Library\PackageCache\com.unity.services.wire@2d36cce58c62\Plugins\websocket-sharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Mono.CecilX">
-      <HintPath>Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Mono.CecilX.Mdb">
-      <HintPath>Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.Mdb.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.Collections.LowLevel.ILSupport">
       <HintPath>Library\PackageCache\com.unity.collections@d49facba0036\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>Library\PackageCache\com.unity.ext.nunit@031a54704bff\net40\unity-custom\nunit.framework.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Mirror.BouncyCastle.Cryptography">
-      <HintPath>Assets\Mirror\Transports\Encryption\Plugins\BouncyCastle\Mirror.BouncyCastle.Cryptography.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Mono.CecilX.Pdb">
-      <HintPath>Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.Pdb.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Mono.CecilX.Rocks">
-      <HintPath>Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.Rocks.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System.IO.Hashing">
@@ -1339,6 +1303,14 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.2.8f1\Editor\Data\NetStandard\compat\2.1.0\shims\netfx\System.Xml.Serialization.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.2D.Sprite.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.2D.Sprite.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Netcode.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Netcode.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.dll</HintPath>
       <Private>False</Private>
@@ -1355,6 +1327,10 @@
       <HintPath>Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.Netcode.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.Netcode.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
       <Private>False</Private>
@@ -1365,6 +1341,10 @@
     </Reference>
     <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Networking.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Networking.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Splines.Editor">
@@ -1479,12 +1459,12 @@
       <HintPath>Library\ScriptAssemblies\Unity.Services.Lobbies.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.RenderPipelines.Core.Runtime">
-      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.VisualScripting.Flow">
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro.Editor">
@@ -1493,6 +1473,10 @@
     </Reference>
     <Reference Include="Unity.Services.Authentication.PlayerAccounts">
       <HintPath>Library\ScriptAssemblies\Unity.Services.Authentication.PlayerAccounts.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Netcode.PackageChecker.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Netcode.PackageChecker.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.Flow.Editor">
@@ -1509,6 +1493,10 @@
     </Reference>
     <Reference Include="Unity.InputSystem.ForUI">
       <HintPath>Library\ScriptAssemblies\Unity.InputSystem.ForUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Networking.Transport">
+      <HintPath>Library\ScriptAssemblies\Unity.Networking.Transport.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.RenderPipelines.GPUDriven.Runtime">
@@ -1555,6 +1543,10 @@
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Center.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.Multiplayer.Playmode">
       <HintPath>Library\ScriptAssemblies\Unity.Multiplayer.Playmode.dll</HintPath>
       <Private>False</Private>
@@ -1565,10 +1557,6 @@
     </Reference>
     <Reference Include="Unity.Rendering.LightTransport.Runtime">
       <HintPath>Library\ScriptAssemblies\Unity.Rendering.LightTransport.Runtime.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.State">
@@ -1589,6 +1577,10 @@
     </Reference>
     <Reference Include="Unity.ShaderGraph.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.ShaderGraph.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.2D.Sprite.AIIntegration.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.2D.Sprite.AIIntegration.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
@@ -1613,18 +1605,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Mirror.Components.csproj" />
-    <ProjectReference Include="kcp2k.csproj" />
-    <ProjectReference Include="Edgegap.csproj" />
-    <ProjectReference Include="EncryptionTransportEditor.csproj" />
-    <ProjectReference Include="SimpleWebTransport.csproj" />
-    <ProjectReference Include="Mirror.Transports.csproj" />
-    <ProjectReference Include="Mirror.Editor.csproj" />
-    <ProjectReference Include="Mirror.Authenticators.csproj" />
-    <ProjectReference Include="Mirror.CompilerSymbols.csproj" />
-    <ProjectReference Include="Mirror.Examples.csproj" />
-    <ProjectReference Include="Mirror.csproj" />
-    <ProjectReference Include="Telepathy.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>
