@@ -147,7 +147,14 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
         switch (m_sceneActive)
         {
             case SceneName.CharacterSelection:
-                CharacterSelectionManager.Instance.ServerSceneInit(clientId);
+                if (CharacterSelectionManager.Instance != null)
+                {
+                    CharacterSelectionManager.Instance.ServerSceneInit(clientId);
+                }
+                else
+                {
+                    StartCoroutine(WaitForCharacterSelectionManager(clientId));
+                }
                 break;
 
             case SceneName.Gameplay:
@@ -157,5 +164,13 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
             case SceneName.Defeat:
                 break;
         }
+
+        OnLoadingFinished?.Invoke();
+    }
+
+    private IEnumerator WaitForCharacterSelectionManager(ulong clientId)
+    {
+        yield return new WaitUntil(() => CharacterSelectionManager.Instance != null);
+        CharacterSelectionManager.Instance.ServerSceneInit(clientId);
     }
 }

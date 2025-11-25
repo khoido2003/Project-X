@@ -53,7 +53,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     private Button m_cancelBtn;
 
     [SerializeField]
-    private float m_timeToStartGame = 3;
+    private float m_timeToStartGame = 5;
 
     [SerializeField]
     private SceneName m_nextScene = SceneName.Gameplay;
@@ -70,6 +70,12 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     [SerializeField]
     private GameObject m_playerPrefab;
 
+    [SerializeField]
+    private GameObject m_countdownContainer;
+
+    [SerializeField]
+    private TextMeshProUGUI m_countdownText;
+
     [Header("Audio clip")]
     [SerializeField]
     private AudioClip m_confirmClip;
@@ -84,6 +90,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
     private void Start()
     {
+        m_countdownContainer.gameObject.SetActive(false);
         m_timer = m_timeToStartGame;
     }
 
@@ -101,6 +108,12 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
         m_timer -= Time.deltaTime;
 
+        if (m_timer < 0f)
+        {
+            m_timer = 0f;
+        }
+        m_countdownText.text = Mathf.FloorToInt(m_timer).ToString();
+
         if (m_timer <= 0f)
         {
             m_isTimerOn = false;
@@ -110,6 +123,18 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
     private void OnDisable()
     {
+        if (NetworkManager.Singleton == null)
+        {
+            return;
+        }
+
+        if (NetworkManager.Singleton.ShutdownInProgress)
+        {
+            return;
+        }
+
+        RemoveSelectedStates();
+
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientDisconnectCallback -= PlayerDisconnects;
@@ -135,14 +160,15 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
             return;
         }
 
-        PlayerNotReady(clientId, isDisconnected: true);
-
-        m_playerStates[GetPlayerId(clientId)].playerObject.Despawn();
-
         if (clientId == 0)
         {
+            NetworkManager.Singleton.OnClientDisconnectCallback -= PlayerDisconnects;
             NetworkManager.Singleton.Shutdown();
+            return;
         }
+
+        PlayerNotReady(clientId, isDisconnected: true);
+        m_playerStates[GetPlayerId(clientId)].playerObject.Despawn();
     }
 
     #endregion
@@ -169,6 +195,9 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
         m_timer = m_timeToStartGame;
         m_isTimerOn = true;
+
+        m_countdownContainer.gameObject.SetActive(true);
+        m_countdownText.text = Mathf.FloorToInt(m_timer).ToString();
     }
 
     #endregion
@@ -332,6 +361,31 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
         }
     }
 
+    public void SetPlayableChar(int playerId, int characterSelected, bool isClientOwner)
+    {
+        SetCharacterUI(playerId, characterSelected);
+
+        m_charactersContainer[playerId].playerIcon.gameObject.SetActive(true);
+
+        if (isClientOwner)
+        {
+            m_charactersContainer[playerId].borderClient.SetActive(true);
+            m_charactersContainer[playerId].border.SetActive(false);
+            m_charactersContainer[playerId].borderReady.SetActive(false);
+            m_charactersContainer[playerId].playerIcon.color = m_clientColor;
+        }
+        else
+        {
+            m_charactersContainer[playerId].border.SetActive(true);
+            m_charactersContainer[playerId].borderReady.SetActive(false);
+            m_charactersContainer[playerId].borderClient.SetActive(false);
+            m_charactersContainer[playerId].playerIcon.color = m_playerColor;
+        }
+
+        m_charactersContainer[playerId].backgroundWeapon.SetActive(true);
+        m_charactersContainer[playerId].waitingText.SetActive(false);
+    }
+
     private void SetNonPlayableChar(int playerId)
     {
         m_charactersContainer[playerId].imageContainer.sprite = null;
@@ -379,31 +433,6 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
         m_charactersContainer[playerId].nameContainer.text = characterData[characterSelected].characterName;
 
         SetCharacterColor(playerId, characterSelected);
-    }
-
-    public void SetPlayableChar(int playerId, int characterSelected, bool isClientOwner)
-    {
-        SetCharacterUI(playerId, characterSelected);
-
-        m_charactersContainer[playerId].playerIcon.gameObject.SetActive(true);
-
-        if (isClientOwner)
-        {
-            m_charactersContainer[playerId].borderClient.SetActive(true);
-            m_charactersContainer[playerId].border.SetActive(false);
-            m_charactersContainer[playerId].borderReady.SetActive(false);
-            m_charactersContainer[playerId].playerIcon.color = m_clientColor;
-        }
-        else
-        {
-            m_charactersContainer[playerId].border.SetActive(true);
-            m_charactersContainer[playerId].borderReady.SetActive(false);
-            m_charactersContainer[playerId].borderClient.SetActive(false);
-            m_charactersContainer[playerId].playerIcon.color = m_playerColor;
-        }
-
-        m_charactersContainer[playerId].backgroundWeapon.SetActive(true);
-        m_charactersContainer[playerId].waitingText.SetActive(false);
     }
 
     #endregion

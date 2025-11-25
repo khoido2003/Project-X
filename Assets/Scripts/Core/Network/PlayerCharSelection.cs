@@ -135,12 +135,15 @@ public class PlayerCharSelection : NetworkBehaviour
 
     private void OnPlayerIdSet(int previousValue, int newValue)
     {
-        CharacterSelectionManager.Instance.SetPlayableChar(newValue, newValue, IsOwner);
+        int playerId = newValue;
+        int currentCharacterIndex = 0;
 
         if (IsServer)
         {
-            m_charSelected.Value = newValue;
+            m_charSelected.Value = currentCharacterIndex;
         }
+
+        CharacterSelectionManager.Instance.SetPlayableChar(playerId, currentCharacterIndex, IsOwner);
     }
 
     #endregion
@@ -173,6 +176,7 @@ public class PlayerCharSelection : NetworkBehaviour
         {
             ChangeCharacterSelectionServerRpc(charTemp);
 
+            // Immediately update UI on the client not wait for the server update
             CharacterSelectionManager.Instance.SetPlayableChar(m_playerId.Value, charTemp, IsOwner);
         }
     }
