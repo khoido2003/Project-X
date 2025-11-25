@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class ClientConnection : SingletonNetwork<ClientConnection>
+public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
 {
     [SerializeField]
     private int m_maxConnections;

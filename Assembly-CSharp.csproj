@@ -61,6 +61,7 @@
     <Compile Include="Assets\Scripts\[LEGACY]\Characters\WeaponHolder.cs" />
     <Compile Include="Assets\Scripts\Utils\Drawer.cs" />
     <Compile Include="Assets\Scripts\WaitQueue\LobbyItemUI.cs" />
+    <Compile Include="Assets\Scripts\Utils\TypescriptEffect.cs" />
     <Compile Include="Assets\Scripts\Core\Network\NetworkObjectSpawner.cs" />
     <Compile Include="Assets\Scripts\[LEGACY]\Enemies\EnemyPatrolPoints.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AnimationEvent.cs" />
