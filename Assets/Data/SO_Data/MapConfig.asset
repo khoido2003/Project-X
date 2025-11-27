@@ -10,12 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e5a3749a7b084c64e9e565025aeddc13, type: 3}
-  m_Name: PrototypeMap
-  m_EditorClassIdentifier: Assembly-CSharp::MapDefinitionSO
-  assetId: 366e7304-bfc2-4bca-a2c2-1301256d624c
-  sceneName: PrototypeScene
-  displayName: Prototype
-  thumbnail: {fileID: 0}
-  maxPlayers: 4
-  randomizePlayerSpawns: 1
-  description: Test Map
+  m_Name: MapConfig
+  m_EditorClassIdentifier: Assembly-CSharp::MapConfigSO
+  availableMaps:
+  - mapName: Abandon City
+    sceneName: 4
+    mapPreview: {fileID: 0}
+    description: The city that left behind
+  - mapName: Stunt Zone
+    sceneName: 5
+    mapPreview: {fileID: 0}
+    description: Deadly Area
