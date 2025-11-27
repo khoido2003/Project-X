@@ -10,7 +10,10 @@ public enum SceneName : byte
     Menu,
     CharacterSelection,
     Controls,
-    Gameplay,
+
+    Map_1,
+    Map_2,
+
     Victory,
     Defeat,
     Loading,
@@ -157,7 +160,8 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
                 }
                 break;
 
-            case SceneName.Gameplay:
+            case SceneName.Map_1:
+            case SceneName.Map_2:
                 break;
 
             case SceneName.Victory:

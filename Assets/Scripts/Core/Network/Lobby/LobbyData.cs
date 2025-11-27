@@ -47,6 +47,4 @@ public static class MatchSetupData
             }
         }
     }
-
-    public static MapDefinitionSO GetMapSO() => AssetDatabaseNetwork.GetAsset<MapDefinitionSO>(SelectedMapId);
 }

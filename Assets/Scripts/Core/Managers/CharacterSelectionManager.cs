@@ -56,7 +56,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     private float m_timeToStartGame = 5;
 
     [SerializeField]
-    private SceneName m_nextScene = SceneName.Gameplay;
+    private SceneName m_nextScene = SceneName.Map_1;
 
     [SerializeField]
     private Color m_clientColor;
@@ -179,6 +179,16 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
     private void StartGame()
     {
+        if (MapSelectionManager.Instance != null)
+        {
+            m_nextScene = MapSelectionManager.Instance.SelectedMapScene;
+            Debug.Log($"Loading selected map: {m_nextScene}");
+        }
+        else
+        {
+            Debug.LogWarning("MapSelectionManager not found! Loading  default  scene to map_1");
+        }
+
         StartGameClientRpc();
         LoadingSceneManager.Instance.LoadScene(m_nextScene);
     }
