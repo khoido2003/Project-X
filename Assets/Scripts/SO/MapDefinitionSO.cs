@@ -1,4 +1,3 @@
-using Mirror;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Game/Map Definition", fileName = "NewMap")]

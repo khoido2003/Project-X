@@ -8,6 +8,8 @@ public class CharacterDefinitionSO : NetworkSO
     public string characterName;
     public GameObject prefab;
     public bool isPlayer;
+    public Sprite characterSprite;
+    public Sprite weaponSprite;
 
     [Header("Health Stats")]
     public float maxHealth = 102f;
@@ -28,4 +30,30 @@ public class CharacterDefinitionSO : NetworkSO
 
     [Header("Skills")]
     public List<SkillDefinitionSO> skills = new();
+
+    [Header("Client Info")]
+    public ulong clientId;
+
+    public int playerId;
+
+    public bool isSelected;
+
+    [Header("Score")]
+    public int enemiesDestroyed;
+
+    public long totalDamages;
+
+    private void Enable()
+    {
+        EmptyData();
+    }
+
+    public void EmptyData()
+    {
+        isSelected = false;
+        clientId = 0;
+        playerId = -1;
+        enemiesDestroyed = 0;
+        totalDamages = 0;
+    }
 }
