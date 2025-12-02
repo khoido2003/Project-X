@@ -730,9 +730,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16c7a6ad6fa17b248989627790e2d47e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationEventRelayView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
 --- !u!1 &1248438591509285310
 GameObject:
   m_ObjectHideFlags: 0
@@ -2890,7 +2887,7 @@ GameObject:
   - component: {fileID: 493780323552735550}
   - component: {fileID: 8971600808939855881}
   - component: {fileID: 502299433680423764}
-  - component: {fileID: -226323061171569776}
+  - component: {fileID: 553158297532677550}
   - component: {fileID: 228778587582711661}
   - component: {fileID: 1463290615161989044}
   - component: {fileID: 1124340274477347657}
@@ -2901,6 +2898,7 @@ GameObject:
   - component: {fileID: 7954091672798518682}
   - component: {fileID: 5989060026106367781}
   - component: {fileID: -9065699329825744375}
+  - component: {fileID: 2712550599554552947}
   m_Layer: 8
   m_Name: Cipher
   m_TagString: Untagged
@@ -2974,7 +2972,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.46330643, y: 1.7541575, z: 0.27778053}
   m_Center: {x: -0.038622856, y: 0.9353757, z: -0.02166748}
---- !u!114 &-226323061171569776
+--- !u!114 &553158297532677550
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2983,14 +2981,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 5191787420164104229}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
-  sceneId: 0
-  _assetId: 786957107
-  serverOnly: 0
-  visibility: 0
-  hasSpawned: 0
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2498320048
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &228778587582711661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3003,9 +3009,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19fa5c928c6a91f4983e035851cee389, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntityView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
 --- !u!114 &1463290615161989044
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3018,9 +3021,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de2bbab6e425f8942857ef97a9220afc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseLookView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
 --- !u!114 &1124340274477347657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3033,9 +3033,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55869768e945b1548a8c8f313b56b033, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MovementView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
 --- !u!114 &487505957667454787
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3048,9 +3045,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c85186ab83dab5b42834c76f97077d7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
 --- !u!114 &8980735487427860396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3063,9 +3057,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5497544505ef1264dacd1e7dd67c1553, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackExecutionView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
   spawnTransform: {fileID: 0}
 --- !u!114 &2757686265512648201
 MonoBehaviour:
@@ -3079,9 +3070,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a53894ca41e6b8f4592f5bb2a44f4a4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TransformSyncView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
 --- !u!114 &-4373423676645349117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3094,9 +3082,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55890170a664d2a43a0e9227d2b67ac5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillPreviewView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
   ringSegments: 64
   ringWidth: 0.05
   rangeColor: {r: 0, g: 0, b: 1, a: 1}
@@ -3114,9 +3099,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d128fb633bb3a5d42a71b5b0bb98489f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DashStrikeExecutorView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
 --- !u!114 &5989060026106367781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3129,9 +3111,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a02d2b8d115e9e14a8a6b837aafec66d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomerunSwingExecutorView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
 --- !u!114 &-9065699329825744375
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3144,9 +3123,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd9a1ef323eac7d47903527cca003e4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlasmaShieldExecutorView
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
+--- !u!114 &2712550599554552947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48a10a4775e229f4aa114464ec609065, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkSyncView
+  ShowTopMostFoldoutHeaderGroup: 1
+  positionThreshold: 0.01
+  rotationThreshold: 1
+  syncInterval: 0.05
 --- !u!1 &5366373656294912020
 GameObject:
   m_ObjectHideFlags: 0

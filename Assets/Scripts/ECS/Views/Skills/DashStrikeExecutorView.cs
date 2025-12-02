@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class DashStrikeExecutorView : SkillExecutorView
@@ -8,6 +9,11 @@ public class DashStrikeExecutorView : SkillExecutorView
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         if (@event.Skill is not DashStrikeSkillSO skill)
         {
             return;

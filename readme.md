@@ -252,6 +252,58 @@ EntityView (updates GameObject)
 └─────────────────────────────────────────────────────────────┘
 ````
 
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     LOCAL PLAYER CLIENT                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  1. Input System → Collect Input                             │
+│  2. Predict Locally (Movement, Animation)                    │
+│  3. NetworkSyncView.SendInputToServerRpc()                   │
+│                                                               │
+│  4. ← NetworkSyncView.AcknowledgeInputClientRpc()            │
+│  5. Reconciliation: Check if prediction matches server       │
+│  6. If mismatch > threshold → Snap to server position        │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                          SERVER                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  1. ← Receive Input via SendInputToServerRpc()               │
+│  2. Apply Input to MovementDataComponent                     │
+│  3. MovementSystem → Calculate Movement                      │
+│  4. AttackSystem/SkillSystem → Validate Actions              │
+│  5. DamageSystem → Apply Damage (Authority)                  │
+│  6. HealthSystem → Check Death (Authority)                   │
+│                                                               │
+│  7. NetworkSyncView → Sync State to All Clients              │
+│     - Transform (60Hz)                                        │
+│     - Movement (30Hz)                                         │
+│     - Health (On Change)                                      │
+│     - Combat State (On Change)                                │
+│     - Animations (On Change)                                  │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                     REMOTE PLAYER CLIENT                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  1. ← Receive State Updates via NetworkVariables             │
+│  2. OnNetTransformChanged → Update TransformComponent        │
+│  3. OnNetHealthChanged → Update HealthDataComponent          │
+│  4. OnNetCombatStateChanged → Update CombatStateComponent    │
+│  5. SyncAnimationClientRpc → Play Animations                 │
+│                                                               │
+│  6. Render Remote Player (No Prediction)                     │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+
+```
+
 #### Component sync strategy
 
 |        Component       | Server Authority |  Client Prediction  |           Sync Method           |   Frequency   |
@@ -263,6 +315,25 @@ EntityView (updates GameObject)
 | CombatStateComponent   | ✓                | ✗                   | NetworkVariable                 | On Change     |
 | SkillSetComponent      | ✓                | ✗                   | RPC (Events)                    | On Skill Cast |
 | AnimationDataComponent | ✓                | ✓ (Predict locally) | RPC (Parameters)                | On Change     |
+
+
+
+|        System        |       Server      |     Client (Owner)    | Client (Remote) |      Authority      |
+|:-------------------:|:-----------------:|:---------------------:|:---------------:|:-------------------:|
+| InputSystem         | ❌                 | ✅                     | ❌               | Client              |
+| MovementSystem      | ✅                 | ✅ (Predict)           | ❌               | Server              |
+| AttackSystem        | ✅                 | ✅ (Predict Animation) | ❌               | Server              |
+| DamageSystem        | ✅                 | ❌                     | ❌               | Server Only         |
+| HealthSystem        | ✅                 | ❌                     | ❌               | Server Only         |
+| SkillSystem         | ✅                 | ✅ (Preview)           | ❌               | Server              |
+| CombatStateSystem   | ✅                 | ✅ (Read)              | ✅ (Read)        | Server              |
+| AnimationView       | ✅                 | ✅                     | ✅               | All                 |
+| TransformSyncSystem | ✅                 | ✅                     | ✅               | All                 |
+| AttackExecutionView | ✅                 | ❌                     | ❌               | Server Only         |
+| SkillPreviewView    | ❌                 | ✅                     | ❌               | Client (Owner) Only |
+| ProjectileView      | ✅ (Hit Detection) | ❌                     | ❌               | Server Only         |
+
+
 
 ### Folder Structure
 ```

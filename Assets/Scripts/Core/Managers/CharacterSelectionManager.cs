@@ -56,7 +56,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     private float m_timeToStartGame = 5;
 
     [SerializeField]
-    private SceneName m_nextScene = SceneName.Map_1;
+    private SceneName m_nextScene;
 
     [SerializeField]
     private Color m_clientColor;
@@ -92,6 +92,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     {
         m_countdownContainer.gameObject.SetActive(false);
         m_timer = m_timeToStartGame;
+        RemoveSelectedStates();
     }
 
     private void Update()
@@ -133,7 +134,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
             return;
         }
 
-        RemoveSelectedStates();
+        // RemoveSelectedStates();
 
         if (IsServer)
         {

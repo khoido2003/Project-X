@@ -1,7 +1,9 @@
+using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 [DefaultExecutionOrder(-90)]
-public class WorldRunner : MonoBehaviour
+public class WorldRunner : NetworkBehaviour
 {
     [Header("Game Config")]
     [SerializeField]
@@ -16,20 +18,49 @@ public class WorldRunner : MonoBehaviour
     [SerializeField]
     private CinemachineCameraService cameraService;
 
+    [SerializeField]
+    private CharacterDefinitionSO[] characterData;
+
+    [Header("Spawned Points")]
+    [SerializeField]
+    private Transform[] playerSpawnPoints = new Transform[4];
+
+    private bool[] _spawnPointsUsed = new bool[4];
+
     public World World { get; private set; }
 
     public static WorldRunner Instance { get; private set; }
 
     private SpawnSystem _spawnSystem;
 
+    //////////////////////////////////////////////////////////////////
+
     private void Awake()
     {
-        Instance = this;
-        World = new World();
-        InitServices();
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
 
-        // Client only
-        InitOfflineSystems();
+        Instance = this;
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        World = new World();
+
+        InitServices();
+        InitSystems();
+
+        if (IsServer)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+
+            StartCoroutine(DelayedSpawnExistingPlayers());
+        }
     }
 
     private void Update()
@@ -44,9 +75,163 @@ public class WorldRunner : MonoBehaviour
         World.Systems.FixedUpdateAll(time.FixedDeltaTime);
     }
 
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        if (IsServer)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+        }
+
+        World?.Systems.ShutdownAll();
+    }
+
     private void OnDestroy()
     {
         World.Systems.ShutdownAll();
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
+    private void OnClientConnected(ulong clientId)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        if (HasSpawnedPlayer(clientId))
+        {
+            Debug.Log($"Client {clientId} already has a spawned player, skipping spawn!");
+
+            return;
+        }
+
+        SpawnPlayerForClient(clientId);
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+
+    private System.Collections.IEnumerator DelayedSpawnExistingPlayers()
+    {
+        // Wait one frame to ensure everything is initialized
+        yield return null;
+
+        SpawnExistingPlayers();
+    }
+
+    private void SpawnExistingPlayers()
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        Debug.Log(
+            $"Spawningng existing players. Connected Clients: {NetworkManager.Singleton.ConnectedClientsIds.Count}"
+        );
+
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            SpawnPlayerForClient(clientId);
+        }
+    }
+
+    private void SpawnPlayerForClient(ulong clientId)
+    {
+        CharacterDefinitionSO characterData = GetCharacterForClient(clientId);
+
+        if (characterData == null)
+        {
+            Debug.LogError($"No character data found for client  {clientId}");
+            return;
+        }
+
+        Vector3 spawnPosition = GetAvailableSpawnPoint();
+
+        _spawnSystem.SpawnNetworkPlayer(clientId, characterData, spawnPosition);
+    }
+
+    private bool HasSpawnedPlayer(ulong clientId)
+    {
+        foreach (var (_, owner) in World.Components.Query<NetworkOwnerComponent>())
+        {
+            if (owner.ClientId == clientId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private CharacterDefinitionSO GetCharacterForClient(ulong clientId)
+    {
+        foreach (var character in characterData)
+        {
+            if (character.isSelected && character.clientId == clientId)
+            {
+                Debug.Log(character.name);
+                return character;
+            }
+        }
+
+        Debug.LogError($"No character selected for client {clientId}");
+
+        return null;
+    }
+
+    private Vector3 GetAvailableSpawnPoint()
+    {
+        if (playerSpawnPoints == null || playerSpawnPoints.Length == 0)
+        {
+            Debug.LogWarning("No spawn points assigned! Using default position");
+            return Vector3.zero;
+        }
+
+        var availableIndices = new List<int>();
+
+        for (int i = 0; i < playerSpawnPoints.Length && i < 4; i++)
+        {
+            if (!_spawnPointsUsed[i] && playerSpawnPoints[i] != null)
+            {
+                availableIndices.Add(i);
+            }
+        }
+
+        if (availableIndices.Count == 0)
+        {
+            Debug.LogWarning("All spawn points used! Reusing a random one");
+
+            for (int i = 0; i < 4; i++)
+            {
+                _spawnPointsUsed[i] = false;
+            }
+
+            availableIndices.Add(UnityEngine.Random.Range(0, Mathf.Min(playerSpawnPoints.Length, 4)));
+        }
+
+        int randomIndex = availableIndices[UnityEngine.Random.Range(0, availableIndices.Count)];
+
+        _spawnPointsUsed[randomIndex] = true;
+
+        return playerSpawnPoints[randomIndex].position;
+    }
+
+    public void FreeSpawnPoint(Vector3 position)
+    {
+        for (int i = 0; i < playerSpawnPoints.Length && i < 4; i++)
+        {
+            if (playerSpawnPoints[i] != null && Vector3.Distance(playerSpawnPoints[i].position, position) < 0.1f)
+            {
+                _spawnPointsUsed[i] = false;
+                break;
+            }
+        }
     }
 
     private void InitServices()
@@ -84,9 +269,10 @@ public class WorldRunner : MonoBehaviour
         World.Services.Register(poolService);
     }
 
-    private void InitOfflineSystems()
+    private void InitSystems()
     {
-        World.Systems.AddSystem(new SpawnSystem(spawnConfig), World);
+        _spawnSystem = new SpawnSystem(spawnConfig);
+        World.Systems.AddSystem(_spawnSystem, World);
 
         World.Systems.AddSystem(new InputSystem(), World);
         World.Systems.AddSystem(new CameraFollowSystem(), World);
@@ -98,6 +284,9 @@ public class WorldRunner : MonoBehaviour
         World.Systems.AddSystem(new DamageSystem(), World);
         World.Systems.AddSystem(new SkillSystem(), World);
         World.Systems.AddSystem(new CombatStateSystem(), World);
+
+        World.Systems.AddSystem(new StunSystem(), World);
+        World.Systems.AddSystem(new KnockbackSystem(), World);
 
         World.Systems.AddSystem(new EnemyVisionSystem(), World);
         World.Systems.AddSystem(new EnemyPathfindingSystem(), World);

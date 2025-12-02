@@ -45,6 +45,12 @@ public class SkillPreviewView : EntityView
 
     private void Update()
     {
+        // Only local player shows preview
+        if (!WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner) || !owner.IsLocalPlayer)
+        {
+            return;
+        }
+
         if (selectedSkillIndex == -1)
         {
             return;
@@ -59,7 +65,10 @@ public class SkillPreviewView : EntityView
         {
             return;
         }
-
+        if (!WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner) || !owner.IsLocalPlayer)
+        {
+            return;
+        }
         if (@event.IsActive)
         {
             ShowPreview(@event.Skill);
@@ -207,15 +216,30 @@ public class SkillPreviewView : EntityView
             new EnterCombatStateEvent { Entity = EntityInstance, TargetState = CombatState.CastingSkill }
         );
 
-        WorldInstance.Events.Publish(
-            new SkillEffectTriggerEvent
-            {
-                Caster = EntityInstance,
-                Skill = skill,
-                TargetPoint = target,
-                Direction = direction,
-            }
-        );
+        // WorldInstance.Events.Publish(
+        //     new SkillEffectTriggerEvent
+        //     {
+        //         Caster = EntityInstance,
+        //         Skill = skill,
+        //         TargetPoint = target,
+        //         Direction = direction,
+        //     }
+        // );
+
+        if (!WorldInstance.Components.TryGet(EntityInstance, out SkillCastBufferComponent buffer))
+        {
+            buffer = new SkillCastBufferComponent();
+            WorldInstance.Components.Add(EntityInstance, buffer);
+        }
+
+        buffer.Skill = skill;
+        buffer.TargetPoint = target;
+        buffer.Direction = direction;
+
+        if (WorldInstance.Components.TryGet(EntityInstance, out NetworkSyncComponent sync))
+        {
+            sync.SyncView.RequestSkillExecutionServerRpc(target, direction);
+        }
 
         HidePreview();
     }

@@ -7,19 +7,30 @@ public class LookAtMouseView : EntityView
     private IInputService _inputService;
     private Transform _transform;
 
+    private bool _isLocalPlayer;
+
     private void Start()
     {
         _transform = transform;
         TryResolveInput();
+        CheckIfLocalPlayer();
     }
 
     private void Update()
     {
+        if (!_isLocalPlayer)
+        {
+            return;
+        }
+
         if (_inputService == null)
         {
             TryResolveInput();
+
             if (_inputService == null)
+            {
                 return;
+            }
         }
 
         Vector3 aimDir = (_inputService.GetMouseWorldPosition() - transform.position).normalized;
@@ -37,6 +48,14 @@ public class LookAtMouseView : EntityView
             targetRotation,
             ROTATION_SPEED * Time.deltaTime
         );
+    }
+
+    private void CheckIfLocalPlayer()
+    {
+        if (WorldInstance != null && WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner))
+        {
+            _isLocalPlayer = owner.IsLocalPlayer;
+        }
     }
 
     private void TryResolveInput()
