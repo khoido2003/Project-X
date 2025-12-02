@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
 public class HomerunSwingExecutorView : SkillExecutorView
@@ -7,6 +8,11 @@ public class HomerunSwingExecutorView : SkillExecutorView
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         if (@event.Skill is not HomerunSwingSkillSO skill)
         {
             return;

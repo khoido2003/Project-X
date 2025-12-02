@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "CharacterDefinition", menuName = "Game/Character Defintion")]
@@ -43,7 +44,7 @@ public class CharacterDefinitionSO : NetworkSO
 
     public long totalDamages;
 
-    private void Enable()
+    private void OnEnable()
     {
         EmptyData();
     }
@@ -55,5 +56,23 @@ public class CharacterDefinitionSO : NetworkSO
         playerId = -1;
         enemiesDestroyed = 0;
         totalDamages = 0;
+    }
+
+    private void OnValidate()
+    {
+        if (prefab != null)
+        {
+            var netObj = prefab.GetComponent<NetworkObject>();
+            if (netObj == null)
+            {
+                Debug.LogError($"{characterName}: Prefab must have Network Object component!", this);
+            }
+
+            var entityView = prefab.GetComponent<EntityView>();
+            if (entityView == null)
+            {
+                Debug.LogError($"{characterName}: Prefab must have EntityView component!", this);
+            }
+        }
     }
 }

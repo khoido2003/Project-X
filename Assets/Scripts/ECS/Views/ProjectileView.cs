@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class ProjectileView : MonoBehaviour
+public class ProjectileView : NetworkBehaviour
 {
     private World _world;
     private EntityId _attacker;
@@ -67,15 +68,22 @@ public class ProjectileView : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         if (!other.TryGetComponent(out EntityView targetView))
         {
             return;
         }
 
-        if (
-            targetView.EntityInstance.Equals(_attacker)
-            || !_world.Components.TryGet(targetView.EntityInstance, out PlayerTagComponent _)
-        )
+        if (targetView.EntityInstance.Equals(_attacker))
+        {
+            return;
+        }
+
+        if (!_world.Components.Has<HealthDataComponent>(targetView.EntityInstance))
         {
             return;
         }

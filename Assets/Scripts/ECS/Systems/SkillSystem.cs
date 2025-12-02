@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class SkillSystem : ISystem
@@ -16,6 +17,7 @@ public class SkillSystem : ISystem
         _world.Events.Subscribe<SkillPressedInputEvent>(OnSkillPressedInput);
         _world.Events.Subscribe<AnimationEventRelayEvent>(OnAnimationRelayEvent);
         _world.Events.Subscribe<SkillExecutionFinishedEvent>(OnSkillExecutionFinishedEvent);
+        _world.Events.Subscribe<SkillEffectTriggerEvent>(OnSkillEffectTrigger);
     }
 
     public void Update(float dt) { }
@@ -35,7 +37,7 @@ public class SkillSystem : ISystem
             return;
         }
 
-        if (Time.time < skillSet.CooldownUntil[index])
+        if (NetworkManager.Singleton.IsServer && Time.time < skillSet.CooldownUntil[index])
         {
             return;
         }
@@ -85,6 +87,11 @@ public class SkillSystem : ISystem
 
     private void ExecuteSkill(EntityId caster, SkillDefinitionSO skill)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         _world.Events.Publish(new EnterCombatStateEvent { Entity = caster, TargetState = CombatState.CastingSkill });
 
         _world.Events.Publish(new SkillConfirmExecutionEvent(caster, skill, Vector3.zero, Vector3.forward));
@@ -105,6 +112,41 @@ public class SkillSystem : ISystem
         _world.Events.Publish(
             new ExitCombatStateEvent { Entity = @event.Caster, TargetState = CombatState.CastingSkill }
         );
+    }
+
+    private void OnSkillEffectTrigger(SkillEffectTriggerEvent @event)
+    {
+        // Server applies cooldown
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
+        if (_world.Components.TryGet(@event.Caster, out SkillSetComponent skillSet))
+        {
+            for (int i = 0; i < skillSet.Skills.Count; i++)
+            {
+                if (skillSet.Skills[i] == @event.Skill)
+                {
+                    skillSet.CooldownUntil[i] = Time.time + @event.Skill.cooldown;
+                    Debug.Log(
+                        $"[SkillSystem] Skill {@event.Skill.skillName} on cooldown until {skillSet.CooldownUntil[i]}"
+                    );
+
+                    // Broadcast skill effect to all clients
+                    if (_world.Components.TryGet(@event.Caster, out NetworkSyncComponent sync))
+                    {
+                        sync.SyncView.BroadcastSkillEffectClientRpc(
+                            @event.Skill.category,
+                            @event.TargetPoint,
+                            @event.Direction
+                        );
+                    }
+
+                    break;
+                }
+            }
+        }
     }
 
     public void Shutdown() { }

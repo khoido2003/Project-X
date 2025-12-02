@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class AttackExecutionView : EntityView
@@ -27,6 +28,12 @@ public class AttackExecutionView : EntityView
 
     private void OnExecuteAttack(AttackExecutionRequestEvent @event)
     {
+        // Only server executes attack hit detection
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         if (!_isInitialized || _registry == null)
         {
             return;

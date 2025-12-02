@@ -62,6 +62,8 @@ public class MapSelectionManager : SingletonNetwork<MapSelectionManager>
 
         m_selectedMapIndex.Value = mapIndex;
         SelectedMapScene = randomMap.sceneName;
+
+        Debug.Log($"[Server] Selected random map: {randomMap.mapName} (Scene: {SelectedMapScene})");
     }
 
     /// <summary>
@@ -85,7 +87,15 @@ public class MapSelectionManager : SingletonNetwork<MapSelectionManager>
         SelectedMapScene = mapConfig.availableMaps[index].sceneName;
     }
 
-    private void OnMapIndexChanged(int previousValue, int newValue) { }
+    private void OnMapIndexChanged(int previousValue, int newValue)
+    {
+        if (newValue < 0)
+        {
+            return;
+        }
+
+        ApplyMapSelection(newValue);
+    }
 
     private void ApplyMapSelection(int mapIndex)
     {
@@ -100,6 +110,8 @@ public class MapSelectionManager : SingletonNetwork<MapSelectionManager>
         SelectedMapScene = selectedMap.sceneName;
 
         Debug.Log($"Client {NetworkManager.Singleton.LocalClientId}: Map selected {selectedMap.mapName}");
+
+        NotifyMapSelectionClientRpc(selectedMap.mapName);
     }
 
     [ClientRpc]

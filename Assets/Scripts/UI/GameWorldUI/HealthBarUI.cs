@@ -40,10 +40,10 @@ public class HealthBarUI : MonoBehaviour
     }
 
     // LEGACY
-    public void Bind(HealthComponent healthComponent)
-    {
-        healthComponent.OnHealthChanged += UpdateHealthBar;
-    }
+    // public void Bind(HealthComponent healthComponent)
+    // {
+    //     healthComponent.OnHealthChanged += UpdateHealthBar;
+    // }
 
     private void OnHealthChanged(HealthChangedEvent @event)
     {

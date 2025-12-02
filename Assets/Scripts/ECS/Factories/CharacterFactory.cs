@@ -16,7 +16,7 @@ public class CharacterFactory
     {
         GameObject instance = Object.Instantiate(data.prefab, spawnPos, Quaternion.identity);
 
-        WeaponHolder weaponHolder = instance.GetComponentInChildren<WeaponHolder>();
+        // WeaponHolder weaponHolder = instance.GetComponentInChildren<WeaponHolder>();
 
         EntityId entity = _world.CreateEntity();
 

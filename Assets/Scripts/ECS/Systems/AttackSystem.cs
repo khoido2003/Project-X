@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class AttackSystem : ISystem
@@ -15,6 +16,13 @@ public class AttackSystem : ISystem
 
     private void OnAttackRequest(AttackPressedInputEvent @event)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            // Client: Only play animation for prediction
+            // Actual attack processing happens on server
+            return;
+        }
+
         if (
             _world.Components.TryGet(@event.Entity, out ActionFlagComponent flags) && flags.Get(ActionFlag.SkillPreview)
         )
@@ -57,11 +65,11 @@ public class AttackSystem : ISystem
         attack.LastAttackTime = Time.time;
         attack.AttackDirection = Vector3.forward;
 
-        int randomIndex = Random.Range(0, weapon.TotalAttackAnimations);
-
         ////////////////////////////////////////////////////////
 
         // ANIMATION
+        int randomIndex = Random.Range(0, weapon.TotalAttackAnimations);
+
         _world.Events.Publish(
             new AnimationParameterEvent(@event.Entity, "attackIndex", AnimationParameterType.Float, randomIndex)
         );

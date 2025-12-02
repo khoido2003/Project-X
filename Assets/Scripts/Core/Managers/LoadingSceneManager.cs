@@ -162,6 +162,8 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
 
             case SceneName.Map_1:
             case SceneName.Map_2:
+
+                Debug.Log($"Client {clientId} loaded into gameplay scene: {sceneName}");
                 break;
 
             case SceneName.Victory:
