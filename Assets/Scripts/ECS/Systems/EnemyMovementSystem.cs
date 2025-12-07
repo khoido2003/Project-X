@@ -114,6 +114,10 @@ public class EnemyMovementSystem : ISystem
 
         Vector3 targetPos = enemy.Path[enemy.WaypointIndex];
 
+        Debug.Log(
+            $"Enemy {entity.Id}: Moving from {trans.Position} to waypoint {enemy.WaypointIndex}/{enemy.Path.Count} at {targetPos}"
+        );
+
         //  --- Check Obstackle ahead ----
         Vector3 forward = targetPos - trans.Position;
 
@@ -192,8 +196,14 @@ public class EnemyMovementSystem : ISystem
         Vector3 newPos = Vector3.MoveTowards(trans.Position, targetPos, movement.MoveSpeed * dt);
 
         trans.Position = newPos;
-
         Vector3 dir = targetPos - newPos;
+
+        if (_world.Components.TryGet(entity, out movement))
+        {
+            movement.IsMoving = dir.sqrMagnitude > 0.0001f;
+            movement.MoveDirection = dir.normalized;
+        }
+
         if (dir.sqrMagnitude > 0.0001f)
         {
             trans.Rotation = Quaternion.Slerp(

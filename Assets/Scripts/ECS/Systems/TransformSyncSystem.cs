@@ -10,6 +10,11 @@ public class TransformSyncSystem : ISystem
     {
         foreach (var (entity, trans) in _world.Components.Query<TransformComponent>())
         {
+            if (_world.Components.Has<EnemyComponent>(entity))
+            {
+                continue;
+            }
+
             var registry = _world.Services.Resolve<EntityViewRegistry>();
             if (registry.TryGet(entity, out EntityView view))
             {

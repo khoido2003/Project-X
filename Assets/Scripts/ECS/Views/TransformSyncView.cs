@@ -27,7 +27,10 @@ public class TransformSyncView : EntityView
         {
             return;
         }
-
+        if (_world.Components.Has<EnemyComponent>(_entity))
+        {
+            return; // Skip enemies entirely
+        }
         if (_world.Components.TryGet(_entity, out NetworkOwnerComponent owner) && owner.IsLocalPlayer)
         {
             // Sync Unity → ECS

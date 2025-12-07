@@ -82,6 +82,13 @@ public class EnemyFactory
 
         _world.Components.Add(entity, new TransformComponent(spawnPosition, enemyObj.transform.rotation));
 
+        foreach (EntityView view in enemyObj.GetComponentsInChildren<EntityView>(includeInactive: true))
+        {
+            view.Bind(_world, entity);
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+            registry.Register(view);
+        }
+
         _world.Components.Add(
             entity,
             new AnimationDataComponent
