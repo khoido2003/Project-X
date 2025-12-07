@@ -54,9 +54,13 @@ public class HealthSystem : ISystem
             EnemyAIHelpers.ChangeState(_world, entity, EnemyState.Dead);
 
             // Broadcast death to clients
-            if (_world.Components.TryGet(entity, out NetworkSyncComponent sync))
+            if (_world.Components.TryGet(entity, out NetworkObjectComponent netObj))
             {
-                sync.SyncView.BroadcastDeathClientRpc();
+                var enemySync = netObj.NetworkObject.GetComponent<EnemyNetworkSyncView>();
+                if (enemySync != null)
+                {
+                    enemySync.BroadcastDeathClientRpc();
+                }
             }
         }
         else if (_world.Components.Has<PlayerTagComponent>(entity))

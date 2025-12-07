@@ -129,13 +129,15 @@ public class AttackExecutionView : EntityView
             return;
         }
 
+        // Spawn position
         Vector3 spawnPos =
-            transform.position + new Vector3(0f, 1.3f, 0f) + attackerTf.TransformDirection(@event.SpawnOffset);
+            attackerTf.position + new Vector3(0f, 1.3f, 0f) + attackerTf.TransformDirection(@event.SpawnOffset);
 
-        Quaternion spawnRot = Quaternion.LookRotation(
-            (@event.Direction.sqrMagnitude < 0.0001f) ? attackerTf.forward : @event.Direction.normalized,
-            Vector3.up
-        );
+        // Direction
+        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
+
+        // Spawn rotation
+        Quaternion spawnRot = Quaternion.LookRotation(forwardDir, Vector3.up);
 
         var pool = _world.Services.Resolve<ObjectPoolService>();
 
@@ -145,8 +147,6 @@ public class AttackExecutionView : EntityView
         {
             projectile = projectileGO.AddComponent<ProjectileView>();
         }
-
-        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
 
         projectile.Initialize(
             _world,

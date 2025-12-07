@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class EnemyFactory
@@ -10,8 +11,169 @@ public class EnemyFactory
         _world = world;
     }
 
+    public GameObject CreateNetworkEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPosition)
+    {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogError("[EnemyFactory]: Only server can spawn enemies");
+
+            return null;
+        }
+
+        if (enemyData.prefab == null)
+        {
+            Debug.LogError($"[EnemyFactory] Enemy prefab is null for {enemyData.enemyName}");
+
+            return null;
+        }
+
+        if (enemyData.prefab.GetComponent<NetworkObject>() == null)
+        {
+            Debug.LogError($"[EnemyFactory] Prefab {enemyData.prefab.name} does not have NetworkObject component!");
+
+            return null;
+        }
+
+        GameObject enemyObj = NetworkObjectSpawner.SpawnNewNetworkObject(enemyData.prefab, spawnPosition, true);
+
+        NetworkObject netObj = enemyObj.GetComponent<NetworkObject>();
+
+        EntityId entity = _world.CreateEntity();
+
+        foreach (EntityView view in enemyObj.GetComponentsInChildren<EntityView>(includeInactive: true))
+        {
+            view.Bind(_world, entity);
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+
+            registry.Register(view);
+        }
+
+        var networkSync = enemyObj.GetComponent<EnemyNetworkSyncView>();
+
+        if (networkSync == null)
+        {
+            networkSync = enemyObj.AddComponent<EnemyNetworkSyncView>();
+        }
+
+        networkSync.Initialize(_world, entity);
+
+        _world.Components.Add(entity, new NetworkSyncComponent { SyncView = null });
+        _world.Components.Add(entity, new NetworkObjectComponent { NetworkObject = netObj });
+
+        _world.Components.Add(
+            entity,
+            new EnemyNetworkComponent { SpawnerId = netObj.NetworkObjectId, IsNetworked = true }
+        );
+
+        _world.Components.Add(
+            entity,
+            new HealthDataComponent { MaxHealth = enemyData.maxHealth, CurrentHealth = enemyData.maxHealth }
+        );
+
+        _world.Components.Add(
+            entity,
+            new MovementDataComponent
+            {
+                MoveSpeed = enemyData.moveSpeed,
+                ForwardMultiplier = 1f,
+                IsPlayerControlled = false,
+            }
+        );
+
+        _world.Components.Add(entity, new TransformComponent(spawnPosition, enemyObj.transform.rotation));
+
+        _world.Components.Add(
+            entity,
+            new AnimationDataComponent
+            {
+                IsMovingParam = enemyData.isMovingParam,
+                IsRunningParam = enemyData.isRunningParam,
+                MoveXParam = enemyData.moveXParam,
+                MoveYParam = enemyData.moveYParam,
+                AttackTrigger = enemyData.attackAnimationTrigger,
+                TakeCoverParam = enemyData.takeCoverParam,
+            }
+        );
+
+        EnemyComponent enemy = new EnemyComponent
+        {
+            IsRanged = enemyData.isRanged,
+
+            // Vision & Detection
+            DetectionRange = enemyData.detectionRange,
+            LoseTargetRange = enemyData.loseTargetRange,
+            FieldOfView = enemyData.fieldOfView,
+            CheckInterval = enemyData.checkInterval,
+            TimeSinceLastCheck = 0f,
+            DetectionMask = enemyData.detectionMask,
+
+            // AI FSM
+            CurrentState = EnemyState.Idle,
+            StateTime = 0f,
+            TargetEntity = default,
+
+            // Pathfinding
+            Path = new List<Vector3>(),
+            WaypointIndex = 0,
+            LastRequestedTarget = Vector3.positiveInfinity,
+            LastRequestTime = 0f,
+            RequestCooldown = 0.5f,
+            StoppingDistance = 0.5f,
+            LastAgentPosition = spawnPosition,
+            NoProgressTimer = 0f,
+            StuckTimer = 0f,
+
+            // Patrol
+            PatrolIndex = 0,
+            PatrolWaypoints = new List<Vector3>(),
+        };
+
+        // --- Generate patrol points if needed ---
+        if (enemyData.generatePatrolPoints)
+        {
+            enemy.PatrolWaypoints.AddRange(
+                GeneratePatrolPointsAround(spawnPosition, enemyData.patrolPointCount, enemyData.patrolRadius)
+            );
+        }
+        _world.Components.Add(entity, enemy);
+
+        // Attack & Weapon
+        if (enemyData.attacks != null && enemyData.attacks.Count > 0)
+        {
+            var attack = enemyData.attacks[0];
+
+            _world.Components.Add(entity, new AttackDataComponent { IsPlayerControlled = false });
+
+            _world.Components.Add(
+                entity,
+                new WeaponDataComponent
+                {
+                    WeaponName = attack.attackName,
+                    ExecutionType = attack.executionType,
+                    BaseDamage = attack.damage,
+                    BaseCooldown = attack.cooldown,
+                    BaseRange = attack.range,
+                    HitImpactParticlePrefab = attack.hitImpactVFX,
+                    AttackAnimationTrigger = attack.animationTrigger,
+                    TotalAttackAnimations = attack.totalAnimations,
+                    AttackSound = attack.attackSound,
+                    ProjectilePrefab = attack.projectilePrefab,
+                    ProjectileSpeed = attack.projectileSpeed,
+                    ProjectileLifetime = attack.projectileLifetime,
+                    ProjectileSpawnOffset = attack.projectileSpawnOffset,
+                }
+            );
+        }
+
+        enemyObj.name = $"{enemyData.enemyName}_Entity{entity.Id}";
+
+        Debug.Log($"[EnemyFactory] Spawned network enemy {enemyData.enemyName} at {spawnPosition}");
+
+        return enemyObj;
+    }
+
     // ============================
-    // ENEMY CREATION
+    // ENEMY CREATION TEST MODE
     // ============================
     public GameObject CreateEnemy(EnemyDefinitionSO data, Vector3 spawnPos)
     {

@@ -14,6 +14,7 @@ public class ProjectileView : NetworkBehaviour
     private GameObject _prefabRef;
     private ObjectPoolService _pool;
     private bool _usePooling;
+    private bool _hasHit;
 
     public void Initialize(
         World world,
@@ -37,6 +38,7 @@ public class ProjectileView : NetworkBehaviour
         _impactEffect = impactEffect;
         _spawnTime = Time.time;
         _prefabRef = prefabRef;
+        _hasHit = false;
 
         // Always reset position/rotation explicitly before moving
         transform.SetPositionAndRotation(spawnPos, spawnRotation);
@@ -44,19 +46,25 @@ public class ProjectileView : NetworkBehaviour
         // Reset any internal movement history
         _spawnTime = Time.time;
 
-        try
-        {
-            _pool = _world.Services.Resolve<ObjectPoolService>();
-        }
-        catch
-        {
-            _pool = null;
-        }
+        // Pool setup
+        _pool = world?.Services.Resolve<ObjectPoolService>();
         _usePooling = _pool != null && _prefabRef != null;
+
+        // Enable collider
+        var col = GetComponent<Collider>();
+        if (col != null)
+        {
+            col.enabled = true;
+        }
     }
 
     private void Update()
     {
+        if (_hasHit)
+        {
+            return;
+        }
+
         Debug.DrawRay(transform.position, _direction * 2f, Color.yellow, 0.1f);
         transform.position += _direction * _speed * Time.deltaTime;
 
@@ -68,6 +76,11 @@ public class ProjectileView : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (_hasHit)
+        {
+            return;
+        }
+
         if (!NetworkManager.Singleton.IsServer)
         {
             return;
@@ -88,6 +101,8 @@ public class ProjectileView : NetworkBehaviour
             return;
         }
 
+        _hasHit = true;
+
         _world.Events.Publish(
             new DamageEvent
             {
@@ -103,10 +118,18 @@ public class ProjectileView : NetworkBehaviour
             if (_pool != null && _impactEffect.gameObject != null)
             {
                 var impactGo = _pool.Get(_impactEffect.gameObject, transform.position, Quaternion.identity);
+
+                if (impactGo.TryGetComponent<ParticleSystem>(out var ps))
+                {
+                    float duration = ps.main.duration + ps.main.startLifetime.constantMax;
+                    Object.Destroy(impactGo, duration);
+                }
             }
             else
             {
-                Instantiate(_impactEffect, transform.position, Quaternion.identity);
+                GameObject impactGo = Instantiate(_impactEffect.gameObject, transform.position, Quaternion.identity);
+
+                Object.Destroy(impactGo, 2f);
             }
         }
 
@@ -115,7 +138,14 @@ public class ProjectileView : NetworkBehaviour
 
     private void ReturnOrDestroy()
     {
-        if (_usePooling)
+        if (_hasHit)
+        {
+            return;
+        }
+
+        _hasHit = true;
+
+        if (_usePooling && _prefabRef != null)
         {
             _pool.Return(_prefabRef, gameObject);
         }
@@ -124,5 +154,12 @@ public class ProjectileView : NetworkBehaviour
             // no pool -> destroy to avoid stale inactive object reuse
             Destroy(gameObject);
         }
+    }
+
+    private void OnDisable()
+    {
+        // Reset state when returned to pool
+        _hasHit = false;
+        _spawnTime = 0f;
     }
 }

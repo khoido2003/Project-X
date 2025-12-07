@@ -13,3 +13,13 @@ public struct PlayerSpawnEvent
         Transform = transform;
     }
 }
+
+public struct PlayerRespawnedEvent
+{
+    public EntityId Entity;
+
+    public PlayerRespawnedEvent(EntityId entity)
+    {
+        Entity = entity;
+    }
+}

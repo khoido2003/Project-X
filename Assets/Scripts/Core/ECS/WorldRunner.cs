@@ -287,6 +287,8 @@ public class WorldRunner : NetworkBehaviour
 
         World.Systems.AddSystem(new StunSystem(), World);
         World.Systems.AddSystem(new KnockbackSystem(), World);
+        World.Systems.AddSystem(new HealthRegenSystem(), World);
+        World.Systems.AddSystem(new PlayerRespawnSystem(), World);
 
         World.Systems.AddSystem(new EnemyVisionSystem(), World);
         World.Systems.AddSystem(new EnemyPathfindingSystem(), World);

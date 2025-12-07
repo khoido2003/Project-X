@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class EnemyAISystem : ISystem
@@ -16,6 +17,11 @@ public class EnemyAISystem : ISystem
 
     public void Update(float dt)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         foreach (var (entity, ai) in _world.Components.Query<EnemyComponent>())
         {
             ai.StateTime += dt;
@@ -40,6 +46,11 @@ public class EnemyAISystem : ISystem
 
     private void OnPlayerDetectedEvent(EnemyPlayerDetectedEvent @event)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         if (!IsValidEntity(@event.Enemy) || !IsValidEntity(@event.Player))
         {
             return;
@@ -56,6 +67,11 @@ public class EnemyAISystem : ISystem
 
     private void OnEnemyPlayerLostEvent(EnemyPlayerLostEvent @event)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         if (!IsValidEntity(@event.Enemy))
         {
             return;
