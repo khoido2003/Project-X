@@ -17,6 +17,8 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     private NetworkVariable<bool> _netHasTarget = new(writePerm: NetworkVariableWritePermission.Server);
 
+    private NetworkVariable<NetworkMovementState> _netMovement = new(writePerm: NetworkVariableWritePermission.Server);
+
     private uint _currentTick;
 
     private Vector3 _previousPosition;
@@ -44,6 +46,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             _netHealth.OnValueChanged += OnNetHealthChanged;
             _netState.OnValueChanged += OnNetStateChanged;
             _netHasTarget.OnValueChanged += OnNetHasTargetChanged;
+            _netMovement.OnValueChanged += OnNetMovementChanged;
         }
     }
 
@@ -79,6 +82,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             _netHealth.OnValueChanged -= OnNetHealthChanged;
             _netState.OnValueChanged -= OnNetStateChanged;
             _netHasTarget.OnValueChanged -= OnNetHasTargetChanged;
+            _netMovement.OnValueChanged -= OnNetMovementChanged;
         }
     }
 
@@ -90,6 +94,9 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     {
         SyncTransform();
         SyncEnemyState();
+        SyncMovement();
+
+        ApplyTransformToUnity();
     }
 
     private void SyncTransform()
@@ -125,6 +132,30 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         }
     }
 
+    private void SyncMovement()
+    {
+        if (_currentTick % 2 == 0)
+        {
+            if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
+            {
+                _netMovement.Value = new NetworkMovementState
+                {
+                    MoveDirection = movement.MoveDirection,
+                    IsMoving = movement.IsMoving,
+                    IsGrounded = movement.IsGrounded,
+                    IsStunned = movement.IsStunned,
+                };
+            }
+        }
+    }
+
+    private void ApplyTransformToUnity()
+    {
+        if (_world.Components.TryGet(_entity, out TransformComponent trans))
+        {
+            transform.SetPositionAndRotation(trans.Position, trans.Rotation);
+        }
+    }
     #endregion
 
 
@@ -182,8 +213,12 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     private void BroadcastAttackExecutionClientRpc(
         AttackExecutionType type,
         Vector3 direction,
+        Vector3 origin,
         float range,
-        float damage
+        float damage,
+        float projectileSpeed,
+        float projectileLifetime,
+        Vector3 spawnOffset
     )
     {
         if (IsServer)
@@ -194,12 +229,36 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         Debug.Log($"[EnemyNetworkSync]: Client received attack for {_entity}");
 
         // Play VFX/Animation
+
+        // Client-side: Execute visual-only attack
+        if (!_world.Components.TryGet(_entity, out WeaponDataComponent weapon))
+        {
+            return;
+        }
+
+        // Publish attack execution event for visual effects ONLY
+        // No damage calculation on client
+        _world.Events.Publish(
+            new AttackExecutionRequestEvent
+            {
+                Attacker = _entity,
+                Type = type,
+                Direction = direction,
+                Range = range,
+                Damage = 0f, // No damage on client
+                ImpactEffect = weapon.HitImpactParticlePrefab,
+                ProjectilePrefab = weapon.ProjectilePrefab,
+                ProjectileSpeed = projectileSpeed,
+                ProjectileLifetime = projectileLifetime,
+                SpawnOffset = spawnOffset,
+            }
+        );
     }
 
     [ClientRpc]
     public void BroadcastDamageVisualClientRpc(float amount, Vector3 hitpoint)
     {
-        if (IsServer)
+        if (IsServer || !IsSpawned)
         {
             return;
         }
@@ -210,7 +269,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     [ClientRpc]
     public void BroadcastDeathClientRpc()
     {
-        if (IsServer)
+        if (IsServer || !IsSpawned)
         {
             return;
         }
@@ -254,6 +313,35 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         }
     }
 
+    private void OnNetMovementChanged(NetworkMovementState prev, NetworkMovementState current)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
+        {
+            movement.MoveDirection = current.MoveDirection;
+            movement.IsMoving = current.IsMoving;
+            movement.IsGrounded = current.IsGrounded;
+            movement.IsStunned = current.IsStunned;
+
+            // Update animations based on movement
+            if (_world.Components.TryGet(_entity, out AnimationDataComponent anim))
+            {
+                _world.Events.Publish(
+                    new AnimationParameterEvent(
+                        _entity,
+                        anim.IsMovingParam,
+                        AnimationParameterType.Bool,
+                        current.IsMoving
+                    )
+                );
+            }
+        }
+    }
+
     private void OnNetHealthChanged(NetworkHealthState prev, NetworkHealthState current)
     {
         if (IsServer)
@@ -277,6 +365,17 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
+        // Initialize on first sync
+        if (_previousRotation == Quaternion.identity && _targetRotation == Quaternion.identity)
+        {
+            _previousRotation = current.Rotation;
+            _targetRotation = current.Rotation;
+            _previousPosition = current.Position;
+            _targetPosition = current.Position;
+
+            transform.SetPositionAndRotation(current.Position, current.Rotation);
+            return;
+        }
         _previousPosition = transform.position;
         _targetPosition = current.Position;
 
@@ -293,7 +392,23 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        BroadcastAttackExecutionClientRpc(@event.Type, @event.Direction, @event.Range, @event.Damage);
+        Vector3 origin = transform.position;
+        if (_world.Components.TryGet(_entity, out TransformComponent trans))
+        {
+            origin = trans.Position;
+        }
+
+        // Broadcast attack to all clients with full details
+        BroadcastAttackExecutionClientRpc(
+            @event.Type,
+            @event.Direction,
+            origin,
+            @event.Range,
+            @event.Damage,
+            @event.ProjectileSpeed,
+            @event.ProjectileLifetime,
+            @event.SpawnOffset
+        );
     }
 
     private void OnAnimationParameter(AnimationParameterEvent @event)

@@ -66,11 +66,16 @@ public class ProjectileView : NetworkBehaviour
         }
 
         Debug.DrawRay(transform.position, _direction * 2f, Color.yellow, 0.1f);
+
         transform.position += _direction * _speed * Time.deltaTime;
 
         if (Time.time - _spawnTime >= _lifetime)
         {
             ReturnOrDestroy();
+        }
+        else
+        {
+            Destroy(gameObject);
         }
     }
 

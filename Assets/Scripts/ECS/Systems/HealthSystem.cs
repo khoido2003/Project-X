@@ -56,10 +56,13 @@ public class HealthSystem : ISystem
             // Broadcast death to clients
             if (_world.Components.TryGet(entity, out NetworkObjectComponent netObj))
             {
-                var enemySync = netObj.NetworkObject.GetComponent<EnemyNetworkSyncView>();
-                if (enemySync != null)
+                if (netObj.NetworkObject != null && netObj.NetworkObject.IsSpawned)
                 {
-                    enemySync.BroadcastDeathClientRpc();
+                    var enemySync = netObj.NetworkObject.GetComponent<EnemyNetworkSyncView>();
+                    if (enemySync != null)
+                    {
+                        enemySync.BroadcastDeathClientRpc();
+                    }
                 }
             }
         }
