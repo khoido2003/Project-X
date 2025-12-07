@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class EnemyMovementSystem : ISystem
@@ -24,6 +25,11 @@ public class EnemyMovementSystem : ISystem
 
     public void Update(float dt)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         foreach (var (entity, enemy, trans) in _world.Components.Query<EnemyComponent, TransformComponent>())
         {
             if (

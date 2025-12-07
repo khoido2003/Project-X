@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class EnemyVisionSystem : ISystem
@@ -12,11 +13,23 @@ public class EnemyVisionSystem : ISystem
 
     public void Update(float dt)
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         foreach (var (entity, enemy, trans) in _world.Components.Query<EnemyComponent, TransformComponent>())
         {
+            if (enemy.CurrentState == EnemyState.Dead)
+            {
+                continue;
+            }
+
             enemy.TimeSinceLastCheck += dt;
             if (enemy.TimeSinceLastCheck < enemy.CheckInterval)
+            {
                 continue;
+            }
 
             enemy.TimeSinceLastCheck = 0f;
 
@@ -36,11 +49,15 @@ public class EnemyVisionSystem : ISystem
             {
                 Collider col = _queryBuffer[i];
                 if (!col.TryGetComponent(out EntityView view))
+                {
                     continue;
+                }
 
                 EntityId candidate = view.EntityInstance;
                 if (!_world.Components.Has<PlayerTagComponent>(candidate))
+                {
                     continue;
+                }
 
                 Vector3 candidatePos = view.transform.position;
                 Vector3 dir = candidatePos - origin;
@@ -49,13 +66,17 @@ public class EnemyVisionSystem : ISystem
 
                 // Out of range
                 if (dsq > enemy.DetectionRange * enemy.DetectionRange)
+                {
                     continue;
+                }
 
                 // FOV check
                 Vector3 forward = trans.Rotation * Vector3.forward;
                 float angle = Vector3.Angle(forward, dirFlat.normalized);
                 if (angle > enemy.FieldOfView * 0.5f)
+                {
                     continue;
+                }
 
                 // LOS check
                 Vector3 rayStart = origin + Vector3.up * 0.5f;
@@ -72,7 +93,9 @@ public class EnemyVisionSystem : ISystem
                         GridSystem.Instance.GetObstacleLayer()
                     )
                 )
+                {
                     continue;
+                }
 
                 if (dsq < bestSqr)
                 {
@@ -83,10 +106,13 @@ public class EnemyVisionSystem : ISystem
 
             if (!closest.Equals(default))
             {
+                bool wasNewDetection = enemy.TargetEntity.Equals(default) || !enemy.TargetEntity.Equals(closest);
+
+                enemy.TargetEntity = closest;
+
                 // New player detected
-                if (enemy.TargetEntity != closest)
+                if (wasNewDetection)
                 {
-                    enemy.TargetEntity = closest;
                     ReactToPlayerDetection(_world, entity, closest);
                 }
             }
@@ -102,17 +128,21 @@ public class EnemyVisionSystem : ISystem
         var weapon = world.Components.Get<WeaponDataComponent>(enemyEntity);
         var enemy = world.Components.Get<EnemyComponent>(enemyEntity);
         var enemyTf = world.Components.Get<TransformComponent>(enemyEntity);
-        var playerTf = world.Components.Get<TransformComponent>(playerEntity);
+
+        if (!world.Components.TryGet(playerEntity, out TransformComponent playerTf))
+        {
+            return;
+        }
 
         float distance = Vector3.Distance(enemyTf.Position, playerTf.Position);
 
         // Player extremely close -> take cover
-        if (distance < weapon.BaseRange * 0.7f && Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
+        if (distance < weapon.BaseRange * 0.6f && Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
         {
             EnemyAIHelpers.ChangeState(world, enemyEntity, EnemyState.TakeCover);
         }
         // Player within attack range -> attack immediately
-        else if (distance <= weapon.BaseRange)
+        else if (distance <= weapon.BaseRange * 0.8f)
         {
             EnemyAIHelpers.ChangeState(world, enemyEntity, EnemyState.Attack);
         }
@@ -132,11 +162,14 @@ public class EnemyVisionSystem : ISystem
                 float sqr = (playerTf.Position - trans.Position).sqrMagnitude;
                 if (sqr > enemy.LoseTargetRange * enemy.LoseTargetRange)
                 {
+                    enemy.TargetEntity = default;
+
                     world.Events.Publish(new EnemyPlayerLostEvent(enemyEntity, enemy.TargetEntity));
                 }
             }
             else
             {
+                enemy.TargetEntity = default;
                 world.Events.Publish(new EnemyPlayerLostEvent(enemyEntity, enemy.TargetEntity));
             }
         }

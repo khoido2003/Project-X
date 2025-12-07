@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +22,8 @@ public class HealthBarUI : MonoBehaviour
     private World _world;
     private EntityView _entityView;
 
+    private bool _isInitialized = false;
+
     private void Awake()
     {
         mainCameraTransform = Camera.main.transform;
@@ -29,9 +32,22 @@ public class HealthBarUI : MonoBehaviour
 
     private void Start()
     {
+        StartCoroutine(InitializeWhenReady());
+    }
+
+    private IEnumerator InitializeWhenReady()
+    {
+        // Wait for WorldRunner and World to be ready
+        while (WorldRunner.Instance == null || WorldRunner.Instance.World == null)
+        {
+            yield return null;
+        }
+
         _world = WorldRunner.Instance.World;
 
         _world.Events.Subscribe<HealthChangedEvent>(OnHealthChanged);
+
+        _isInitialized = true;
     }
 
     private void LateUpdate()

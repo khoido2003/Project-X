@@ -18,6 +18,9 @@ public class EnemyComponent
     public float StateTime;
     public EntityId TargetEntity;
     public bool IsRanged;
+    public bool IsBoss = false;
+    public EntityId LastAttacker = default;
+    public float LastDamageTime;
 
     // --- Vision / Detection ---
     public LayerMask DetectionMask;

@@ -8,6 +8,9 @@ public class NetworkSyncView : NetworkBehaviour
     private World _world;
     private EntityId _entity;
 
+    [SerializeField]
+    private PlayerRespawnUI respawnUI;
+
     private NetworkVariable<NetworkTransformState> _netTransform = new(
         writePerm: NetworkVariableWritePermission.Server
     );
@@ -530,7 +533,7 @@ public class NetworkSyncView : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void BroadcastKnockbackClientRpc(Vector3 direction, float force)
+    public void BroadcastKnockbackClientRpc(Vector3 direction, float force)
     {
         if (IsServer)
         {
@@ -553,7 +556,7 @@ public class NetworkSyncView : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void BroadcastStunClientRpc(float duration)
+    public void BroadcastStunClientRpc(float duration)
     {
         if (IsServer)
         {
@@ -581,8 +584,53 @@ public class NetworkSyncView : NetworkBehaviour
 
     // -----------------------------------------------------------------------
 
+    // RESPAWN
+
     [ClientRpc]
-    private void BroadcastDeathClientRpc()
+    public void BroadcastRespawnTimerClientRpc(float respawnDelay)
+    {
+        Debug.Log($"[Client] Player will respawn in {respawnDelay}");
+
+        if (respawnUI == null)
+        {
+            Debug.LogError("respawnUI is null!");
+
+            return;
+        }
+
+        respawnUI.ShowRespawnTimer(respawnDelay);
+    }
+
+    [ClientRpc]
+    public void BroadcastPlayerRespawnClientRpc(Vector3 spawnPosition)
+    {
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        Debug.Log($"[Client] Player respawned at {spawnPosition}");
+
+        // Hide respawn UI
+        if (respawnUI == null)
+        {
+            Debug.LogError("respawnUI is null!");
+
+            return;
+        }
+
+        respawnUI.HideRespawnTimer();
+
+        // Teleport camera
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(_entity, out EntityView view))
+        {
+            view.transform.position = spawnPosition;
+        }
+    }
+
+    [ClientRpc]
+    public void BroadcastDeathClientRpc()
     {
         if (IsServer)
         {
@@ -592,8 +640,14 @@ public class NetworkSyncView : NetworkBehaviour
         // Trigger death visual/audio on clients
         _world.Events.Publish(new EntityDeathEvent(_entity));
 
-        // TODO: Play death animation, spawn death VFX, play death sound
         Debug.Log($"Client: Entity {_entity} died");
+
+        // Play death effects
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(_entity, out EntityView view))
+        {
+            // TODO: Play death animation, spawn death VFX
+        }
     }
 
     [ClientRpc]

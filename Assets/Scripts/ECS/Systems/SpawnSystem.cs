@@ -74,112 +74,12 @@ public class SpawnSystem : ISystem
             return;
         }
 
-        GameObject playerObj = NetworkObjectSpawner.SpawnNewNetworkObjectChangeOwnershipToClient(
-            characterData.prefab,
+        GameObject playerObj = _characterFactory.CreateNetworkCharacter(
+            characterData,
             spawnPosition,
             clientId,
-            true
+            out EntityId entity
         );
-
-        EntityId entity = _world.CreateEntity();
-
-        foreach (EntityView view in playerObj.GetComponentsInChildren<EntityView>(includeInactive: true))
-        {
-            view.Bind(_world, entity);
-            var registry = _world.Services.Resolve<EntityViewRegistry>();
-            registry.Register(view);
-        }
-
-        var networkSync = playerObj.GetComponent<NetworkSyncView>();
-        if (networkSync == null)
-        {
-            networkSync = playerObj.AddComponent<NetworkSyncView>();
-        }
-
-        networkSync.Initialize(_world, entity);
-
-        // Network component
-        NetworkObject netObj = playerObj.GetComponent<NetworkObject>();
-
-        _world.Components.Add(entity, new NetworkSyncComponent { SyncView = networkSync });
-
-        _world.Components.Add(entity, new NetworkObjectComponent { NetworkObject = netObj });
-
-        _world.Components.Add(
-            entity,
-            new NetworkOwnerComponent
-            {
-                ClientId = clientId,
-                IsLocalPlayer = clientId == NetworkManager.Singleton.LocalClientId,
-            }
-        );
-
-        _world.Components.Add(entity, new CharacterSelectionComponent { CharacterData = characterData });
-
-        // Standard component
-        _world.Components.Add(entity, new ActionFlagComponent());
-
-        _world.Components.Add(entity, new PlayerTagComponent());
-
-        _world.Components.Add(entity, new TransformComponent(spawnPosition, Quaternion.identity));
-
-        // Health
-        _world.Components.Add(
-            entity,
-            new HealthDataComponent { MaxHealth = characterData.maxHealth, CurrentHealth = characterData.maxHealth }
-        );
-
-        // Movement
-        _world.Components.Add(
-            entity,
-            new MovementDataComponent
-            {
-                MoveSpeed = characterData.moveSpeed,
-                ForwardMultiplier = characterData.forwardMultiplier,
-                IsPlayerControlled = true,
-            }
-        );
-
-        // Animation
-        _world.Components.Add(
-            entity,
-            new AnimationDataComponent
-            {
-                IsMovingParam = characterData.isMovingParam,
-                MoveXParam = characterData.moveXParam,
-                MoveYParam = characterData.moveYParam,
-            }
-        );
-
-        // Skills
-        _world.Components.Add(entity, new SkillSetComponent(characterData.skills));
-        _world.Components.Add(entity, new SkillCastBufferComponent());
-
-        // Combat
-        _world.Components.Add(entity, new CombatStateComponent());
-
-        // Attack
-        if (characterData.attacks != null && characterData.attacks.Count > 0)
-        {
-            var attack = characterData.attacks[0];
-
-            _world.Components.Add(entity, new AttackDataComponent { IsPlayerControlled = true });
-            _world.Components.Add(
-                entity,
-                new WeaponDataComponent
-                {
-                    WeaponName = attack.attackName,
-                    ExecutionType = attack.executionType,
-                    BaseDamage = attack.damage,
-                    BaseCooldown = attack.cooldown,
-                    BaseRange = attack.range,
-                    HitImpactParticlePrefab = attack.hitImpactVFX,
-                    AttackAnimationTrigger = attack.animationTrigger,
-                    TotalAttackAnimations = attack.totalAnimations,
-                    AttackSound = attack.attackSound,
-                }
-            );
-        }
 
         playerObj.name = $"{characterData.characterName}_Client{clientId}_Entity{entity.Id}";
 
@@ -187,6 +87,43 @@ public class SpawnSystem : ISystem
         _world.Events.Publish(new PlayerSpawnEvent(entity, playerObj, playerObj.transform));
 
         Debug.Log($"Spawned player for client {clientId} at {spawnPosition}");
+    }
+
+    public void SpawnNetworkEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPosition)
+    {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogError("[SpawnSystem] Only server can spawn enemies");
+            return;
+        }
+
+        if (enemyData == null)
+        {
+            Debug.LogError("[SpawnSystem] EnemyDefinitionSO is null");
+            return;
+        }
+
+        GameObject enemyObj = _enemyFactory.CreateNetworkEnemy(enemyData, spawnPosition);
+
+        if (enemyObj != null)
+        {
+            Debug.Log($"[SpawnSystem] Spawn network enemy {enemyData.enemyName} at {spawnPosition}");
+        }
+    }
+
+    public void SpawnEnemyWave(List<EnemyDefinitionSO> enemies, List<Vector3> spawnPositions)
+    {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
+        int count = Mathf.Min(enemies.Count, spawnPositions.Count);
+
+        for (int i = 0; i < count; i++)
+        {
+            SpawnNetworkEnemy(enemies[i], spawnPositions[i]);
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////////
