@@ -25,6 +25,7 @@ public class PlayerRespawnComponent
     public float RespawnTimer = 0;
     public float RespawnDelay = 5f;
     public Vector3 DeathPosition;
+    public Vector3 OriginalSpawnPosition;
 }
 
 public class PlayerUpgradesComponent

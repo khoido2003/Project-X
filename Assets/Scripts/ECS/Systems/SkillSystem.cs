@@ -147,6 +147,29 @@ public class SkillSystem : ISystem
                 }
             }
         }
+
+        // Ensure we return to idle so the player can attack again after skill
+        // Force reset combat state immediately - this is the primary fix
+        if (_world.Components.TryGet(@event.Caster, out CombatStateComponent combat))
+        {
+            combat.CurrentState = CombatState.Idle;
+            combat.LastActionTime = Time.time;
+            
+            // Publish state change event to notify other systems
+            _world.Events.Publish(
+                new CombatStateChangedEvent
+                {
+                    Entity = @event.Caster,
+                    Previous = CombatState.CastingSkill,
+                    Current = CombatState.Idle,
+                }
+            );
+        }
+        
+        // Also publish exit event for consistency
+        _world.Events.Publish(
+            new ExitCombatStateEvent { Entity = @event.Caster, TargetState = CombatState.CastingSkill }
+        );
     }
 
     public void Shutdown() { }

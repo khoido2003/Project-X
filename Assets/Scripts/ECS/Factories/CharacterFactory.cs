@@ -126,7 +126,7 @@ public class CharacterFactory
 
         // Game State Component
         _world.Components.Add(entity, new PlayerScoreComponent { });
-        _world.Components.Add(entity, new PlayerRespawnComponent { });
+        _world.Components.Add(entity, new PlayerRespawnComponent { OriginalSpawnPosition = spawnPosition });
         _world.Components.Add(entity, new PlayerUpgradesComponent { });
 
         return playerObj;

@@ -9,20 +9,27 @@ public class EnemyAttackStateAI : IEnemyState
     public void OnEnter(World world, EntityId entity)
     {
         var enemy = world.Components.Get<EnemyComponent>(entity);
+        var weapon = world.Components.Get<WeaponDataComponent>(entity);
+        var attack = world.Components.Get<AttackDataComponent>(entity);
+
+        // Defensive reset in case the previous attack never fired an end event (network desync, missing anim event, etc.)
+        attack.IsAttacking = false;
         enemy.StateTime = 0f;
 
         if (!enemy.TargetEntity.Equals(default))
         {
             FaceTarget(world, entity, enemy);
+
+            // Fire immediately on entering the state if we're in range and off cooldown
+            TryAttack(world, entity, enemy, weapon, attack);
         }
     }
 
     public void OnUpdate(World world, EntityId entity, float dt)
     {
         var enemy = world.Components.Get<EnemyComponent>(entity);
-        enemy.StateTime += dt;
-
         var weapon = world.Components.Get<WeaponDataComponent>(entity);
+        var attack = world.Components.Get<AttackDataComponent>(entity);
 
         enemy.StateTime += dt;
 
@@ -51,14 +58,13 @@ public class EnemyAttackStateAI : IEnemyState
 
         FaceTarget(world, entity, enemy);
 
-        // Attack on cooldown
-        if (world.Components.TryGet(entity, out AttackDataComponent attack))
+        // Attack on cooldown ( reset if an animation end event was missed)
+        if (attack.IsAttacking && Time.time - attack.LastAttackTime > weapon.BaseCooldown * 1.25f)
         {
-            if (attack.CanAttack(weapon.BaseCooldown) && !attack.IsAttacking)
-            {
-                PerformAttack(world, entity, targetTransform.Position);
-            }
+            attack.IsAttacking = false;
         }
+
+        TryAttack(world, entity, enemy, weapon, attack);
 
         // Take cover when player gets too close
         if (Time.time - enemy.LastCoverTime > enemy.CoverCooldown)
@@ -68,6 +74,30 @@ public class EnemyAttackStateAI : IEnemyState
                 EnemyAIHelpers.ChangeState(world, entity, EnemyState.TakeCover);
                 return;
             }
+        }
+    }
+
+    private void TryAttack(
+        World world,
+        EntityId entity,
+        EnemyComponent enemy,
+        WeaponDataComponent weapon,
+        AttackDataComponent attack
+    )
+    {
+        if (enemy.TargetEntity.Equals(default))
+        {
+            return;
+        }
+
+        if (!world.Components.TryGet(enemy.TargetEntity, out TransformComponent targetTf))
+        {
+            return;
+        }
+
+        if (attack.CanAttack(weapon.BaseCooldown) && !attack.IsAttacking)
+        {
+            PerformAttack(world, entity, targetTf.Position);
         }
     }
 

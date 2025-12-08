@@ -46,9 +46,22 @@ public class AttackSystem : ISystem
             _world.Components.Add(@event.Entity, state);
         }
 
+        // If stuck in CastingSkill state, force reset to Idle
         if (state.CurrentState == CombatState.CastingSkill)
         {
-            return;
+            // Check if enough time has passed since last action
+            if (Time.time - state.LastActionTime > 2f)
+            {
+                state.CurrentState = CombatState.Idle;
+                state.LastActionTime = Time.time;
+                Debug.LogWarning(
+                    $"[AttackSystem] Force resetting stuck CastingSkill state for entity {@event.Entity.Id}"
+                );
+            }
+            else
+            {
+                return; // Still casting, block attack
+            }
         }
 
         if (!attack.CanAttack(weapon.BaseCooldown) || attack.IsAttacking)

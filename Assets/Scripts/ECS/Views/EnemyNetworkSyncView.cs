@@ -243,8 +243,6 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        Debug.Log($"[EnemyNetworkSync]: Client received attack for {_entity}");
-
         // Play VFX/Animation
 
         // Client-side: Execute visual-only attack

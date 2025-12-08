@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5a3749a7b084c64e9e565025aeddc13, type: 3}
+  m_Name: TestMapConfig
+  m_EditorClassIdentifier: Assembly-CSharp::MapConfigSO
+  availableMaps:
+  - mapName: Future Day
+    sceneName: 6
+    mapPreview: {fileID: 0}
+    description: Everyone love this day

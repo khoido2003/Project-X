@@ -135,7 +135,11 @@ public class UpgradeCardContainerUI : MonoBehaviour
 
         if (NetworkUpgradeSystem.Instance != null)
         {
-            NetworkUpgradeSystem.Instance.SelectUpgradeServerRpc(selectedUpgrade.UpgradeId);
+            NetworkUpgradeSystem.Instance.SelectUpgradeServerRpc(
+                selectedUpgrade.UpgradeId,
+                selectedUpgrade.Value,
+                selectedUpgrade.RarityTier
+            );
         }
         else
         {

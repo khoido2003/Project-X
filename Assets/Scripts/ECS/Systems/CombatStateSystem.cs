@@ -59,7 +59,14 @@ public class CombatStateSystem : ISystem
             return;
         }
 
-        if (state.CurrentState == @event.TargetState)
+        // Always reset to Idle when exiting CastingSkill state
+        // This ensures skills don't permanently block attacks
+        if (@event.TargetState == CombatState.CastingSkill)
+        {
+            SetState(@event.Entity, CombatState.Idle);
+        }
+        // For other states, only reset if we're currently in that state
+        else if (state.CurrentState == @event.TargetState)
         {
             SetState(@event.Entity, CombatState.Idle);
         }

@@ -9,9 +9,9 @@ public class WaveManager : MonoBehaviour
     [Header("Wave Configuration")]
     [Header("Limits")]
     [SerializeField]
-    private int maxConcurrentEnemies = 20;
+    private int maxConcurrentEnemies = 12;
 
-    private int _currentEnemyCount = 0;
+    private bool _deathEventSubscribed = false;
 
     [SerializeField]
     private List<WaveConfiguration> waveConfigs = new();
@@ -59,6 +59,13 @@ public class WaveManager : MonoBehaviour
         if (_spawnSystem == null)
         {
             Debug.LogError("[Wave Manager] Failed to get SpawnSystem");
+        }
+
+        // Subscribe to death events once
+        if (!_deathEventSubscribed && _world != null)
+        {
+            _world.Events.Subscribe<EntityDeathEvent>(OnEnemyDeath);
+            _deathEventSubscribed = true;
         }
 
         // ⭐ FIX: Validate spawn points
@@ -113,6 +120,17 @@ public class WaveManager : MonoBehaviour
     {
         for (int i = 0; i < config.enemyCount; i++)
         {
+            // Check enemy count before spawning
+            int currentCount = GetCurrentEnemyCount();
+            if (currentCount >= maxConcurrentEnemies)
+            {
+                // Wait until enemies die before continuing
+                while (GetCurrentEnemyCount() >= maxConcurrentEnemies)
+                {
+                    yield return new WaitForSeconds(0.5f);
+                }
+            }
+
             Vector3 spawnPos = GetSpawnPosition();
 
             EnemyDefinitionSO enemyData = config.enemyTypes[UnityEngine.Random.Range(0, config.enemyTypes.Count)];
@@ -129,12 +147,21 @@ public class WaveManager : MonoBehaviour
 
         while (true)
         {
-            if (_currentEnemyCount < maxConcurrentEnemies)
+            int currentCount = GetCurrentEnemyCount();
+            if (currentCount < maxConcurrentEnemies)
             {
                 int spawnCount = UnityEngine.Random.Range(1, 4);
+                int remainingSlots = maxConcurrentEnemies - currentCount;
+                spawnCount = Mathf.Min(spawnCount, remainingSlots);
 
-                for (int i = 0; i < spawnCount && _currentEnemyCount < maxConcurrentEnemies; i++)
+                for (int i = 0; i < spawnCount; i++)
                 {
+                    // Double-check before each spawn
+                    if (GetCurrentEnemyCount() >= maxConcurrentEnemies)
+                    {
+                        break;
+                    }
+
                     Vector3 spawnPos = GetSpawnPosition();
                     EnemyDefinitionSO enemyData = config.enemyTypes[
                         UnityEngine.Random.Range(0, config.enemyTypes.Count)
@@ -149,7 +176,8 @@ public class WaveManager : MonoBehaviour
 
     private void SpawnEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPos, WaveConfiguration config)
     {
-        if (_currentEnemyCount >= maxConcurrentEnemies)
+        // Check actual enemy count before spawning
+        if (GetCurrentEnemyCount() >= maxConcurrentEnemies)
         {
             Debug.LogWarning($"[WaveManager] Max concurrent enemies ({maxConcurrentEnemies}) reached, skipping spawn");
             return;
@@ -171,16 +199,32 @@ public class WaveManager : MonoBehaviour
         modifiedEnemy.checkInterval *= 0.5f;
 
         _spawnSystem.SpawnNetworkEnemy(modifiedEnemy, spawnPos);
-        _currentEnemyCount++;
+    }
 
-        _world.Events.Subscribe<EntityDeathEvent>(OnEnemyDeath);
+    private int GetCurrentEnemyCount()
+    {
+        if (_world == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        foreach (var (entity, enemy, health) in _world.Components.Query<EnemyComponent, HealthDataComponent>())
+        {
+            if (!health.IsDead && enemy.CurrentState != EnemyState.Dead && !enemy.IsBoss)
+            {
+                count++;
+            }
+        }
+        return count;
     }
 
     private void OnEnemyDeath(EntityDeathEvent @event)
     {
+        // This is just for logging/debugging - actual count is queried dynamically
         if (_world.Components.Has<EnemyComponent>(@event.Entity))
         {
-            _currentEnemyCount = Mathf.Max(0, _currentEnemyCount - 1);
+            Debug.Log($"[WaveManager] Enemy died. Current count: {GetCurrentEnemyCount()}");
         }
     }
 
@@ -347,6 +391,23 @@ public class WaveManager : MonoBehaviour
         {
             StopCoroutine(_continuousSpawnCoroutine);
             _continuousSpawnCoroutine = null;
+        }
+
+        // Unsubscribe from death events
+        if (_deathEventSubscribed && _world != null)
+        {
+            _world.Events.Unsubscribe<EntityDeathEvent>(OnEnemyDeath);
+            _deathEventSubscribed = false;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Cleanup subscription
+        if (_deathEventSubscribed && _world != null)
+        {
+            _world.Events.Unsubscribe<EntityDeathEvent>(OnEnemyDeath);
+            _deathEventSubscribed = false;
         }
     }
 

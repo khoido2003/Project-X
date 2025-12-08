@@ -39,7 +39,15 @@ public class PlayerRespawnSystem : ISystem
 
     private void RespawnPlayer(EntityId entity, PlayerRespawnComponent respawn, HealthDataComponent health)
     {
-        Vector3 spawnPos = GetRespawnPosition();
+        // Use original spawn position instead of random spawn point
+        Vector3 spawnPos = respawn.OriginalSpawnPosition;
+
+        // Fallback to random spawn if original position is zero
+        if (spawnPos == Vector3.zero)
+        {
+            spawnPos = GetRespawnPosition();
+            respawn.OriginalSpawnPosition = spawnPos;
+        }
 
         health.CurrentHealth = health.MaxHealth;
         health.IsDead = false;
@@ -61,6 +69,8 @@ public class PlayerRespawnSystem : ISystem
             if (registry.TryGet(entity, out EntityView view))
             {
                 view.transform.position = spawnPos;
+                // Make sure the GameObject is visible again
+                view.gameObject.SetActive(true);
             }
         }
 
@@ -68,6 +78,13 @@ public class PlayerRespawnSystem : ISystem
         if (_world.Components.TryGet(entity, out CombatStateComponent combat))
         {
             combat.CurrentState = CombatState.Idle;
+            combat.LastActionTime = Time.time;
+        }
+
+        // Reset attack state
+        if (_world.Components.TryGet(entity, out AttackDataComponent attack))
+        {
+            attack.IsAttacking = false;
         }
 
         Debug.Log($"[PlayerRespawn] Player {entity.Id} respawned at {spawnPos}");
@@ -140,6 +157,13 @@ public class PlayerRespawnSystem : ISystem
         respawn.RespawnTimer = 0f;
         respawn.RespawnDelay = GameConstants.PLAYER_RESPAWN_DELAY;
 
+        // Hide the character GameObject when they die
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(deadPlayer, out EntityView view))
+        {
+            view.gameObject.SetActive(false);
+        }
+
         // Award killer
         if (_world.Components.TryGet(deadPlayer, out PlayerScoreComponent victimScore))
         {
@@ -164,6 +188,18 @@ public class PlayerRespawnSystem : ISystem
         if (_world.Components.TryGet(deadPlayer, out MovementDataComponent movement))
         {
             movement.IsStunned = true;
+        }
+
+        // Reset combat state to prevent any stuck states
+        if (_world.Components.TryGet(deadPlayer, out CombatStateComponent combat))
+        {
+            combat.CurrentState = CombatState.Idle;
+        }
+
+        // Reset attack state
+        if (_world.Components.TryGet(deadPlayer, out AttackDataComponent attack))
+        {
+            attack.IsAttacking = false;
         }
     }
 
