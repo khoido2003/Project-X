@@ -8,7 +8,6 @@ public class NetworkSyncView : NetworkBehaviour
     private World _world;
     private EntityId _entity;
 
-    [SerializeField]
     private PlayerRespawnUI respawnUI;
 
     private NetworkVariable<NetworkTransformState> _netTransform = new(
@@ -52,6 +51,11 @@ public class NetworkSyncView : NetworkBehaviour
             _netCombatState.OnValueChanged += OnNetCombatStateChanged;
             _netMovement.OnValueChanged += OnNetMovementChanged;
         }
+    }
+
+    private void Start()
+    {
+        respawnUI = FindFirstObjectByType<PlayerRespawnUI>();
     }
 
     private void Update()
@@ -311,8 +315,6 @@ public class NetworkSyncView : NetworkBehaviour
         {
             return;
         }
-
-        Debug.LogWarning($"[Attack]: Server rejected attack for {_entity}");
 
         if (_world.Components.TryGet(_entity, out AttackDataComponent attack))
         {
@@ -621,10 +623,11 @@ public class NetworkSyncView : NetworkBehaviour
 
         respawnUI.HideRespawnTimer();
 
-        // Teleport camera
+        // Show the character GameObject and teleport to spawn position
         var registry = _world.Services.Resolve<EntityViewRegistry>();
         if (registry.TryGet(_entity, out EntityView view))
         {
+            view.gameObject.SetActive(true);
             view.transform.position = spawnPosition;
         }
     }
@@ -642,11 +645,12 @@ public class NetworkSyncView : NetworkBehaviour
 
         Debug.Log($"Client: Entity {_entity} died");
 
-        // Play death effects
+        // Hide the character GameObject when they die
         var registry = _world.Services.Resolve<EntityViewRegistry>();
         if (registry.TryGet(_entity, out EntityView view))
         {
-            // TODO: Play death animation, spawn death VFX
+            view.gameObject.SetActive(false);
+            // TODO: Play death animation, spawn death VFX before hiding
         }
     }
 

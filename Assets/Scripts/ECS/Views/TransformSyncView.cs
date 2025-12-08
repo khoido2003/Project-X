@@ -17,8 +17,10 @@ public class TransformSyncView : EntityView
         _transform = transform;
         _entity = entity;
 
-        _transformComponent = new TransformComponent(_transform.position, _transform.rotation);
-        _world.Components.Add(entity, _transformComponent);
+        if (!_world.Components.Has<TransformComponent>(_entity))
+        {
+            _world.Components.Add(entity, new TransformComponent(_transform.position, _transform.rotation));
+        }
     }
 
     private void LateUpdate()
@@ -27,21 +29,21 @@ public class TransformSyncView : EntityView
         {
             return;
         }
-        if (_world.Components.Has<EnemyComponent>(_entity))
+
+        if (!_world.Components.TryGet(_entity, out TransformComponent trans))
         {
-            return; // Skip enemies entirely
+            return;
         }
+
         if (_world.Components.TryGet(_entity, out NetworkOwnerComponent owner) && owner.IsLocalPlayer)
         {
-            // Sync Unity → ECS
-            _transformComponent.Position = _transform.position;
-            _transformComponent.Rotation = _transform.rotation;
+            trans.Position = _transform.position;
+            trans.Rotation = _transform.rotation;
         }
         else
         {
-            //ECS → Unity (network state)
-            _transform.position = _transformComponent.Position;
-            _transform.rotation = _transformComponent.Rotation;
+            _transform.position = trans.Position;
+            _transform.rotation = trans.Rotation;
         }
     }
 }

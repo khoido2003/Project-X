@@ -10,18 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e5a3749a7b084c64e9e565025aeddc13, type: 3}
-  m_Name: MapConfig
+  m_Name: TestMapConfig
   m_EditorClassIdentifier: Assembly-CSharp::MapConfigSO
   availableMaps:
-  - mapName: Abandon City
-    sceneName: 4
-    mapPreview: {fileID: 0}
-    description: The city that left behind
-  - mapName: Stunt Zone
-    sceneName: 5
-    mapPreview: {fileID: 0}
-    description: Deadly Area
   - mapName: Future Day
     sceneName: 6
     mapPreview: {fileID: 0}
-    description: The day everyone proud
+    description: Everyone love this day

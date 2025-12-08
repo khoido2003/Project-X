@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class EnemyMovementView : EntityView
@@ -29,11 +30,18 @@ public class EnemyMovementView : EntityView
         Vector3 targetPos = tf.Position;
         Quaternion targetRotation = tf.Rotation;
 
+        // On server: instant sync, no interpolation
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            _tranform.SetPositionAndRotation(targetPos, targetRotation);
+            return;
+        }
+
+        // On client: smooth interpolation
         if (SmoothPosition)
         {
             Vector3 current = _tranform.position;
             float dist = Vector3.Distance(current, targetPos);
-
             if (dist < SnapThreshold)
             {
                 _tranform.position = targetPos;
@@ -42,7 +50,6 @@ public class EnemyMovementView : EntityView
             {
                 _tranform.position = Vector3.Lerp(current, targetPos, Time.deltaTime * PositionLerpSpeed);
             }
-
             _tranform.rotation = Quaternion.Slerp(
                 _tranform.rotation,
                 targetRotation,

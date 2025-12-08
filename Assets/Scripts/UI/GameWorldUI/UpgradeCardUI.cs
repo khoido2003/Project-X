@@ -26,6 +26,31 @@ public class UpgradeCardUI : MonoBehaviour
     [SerializeField]
     private Color[] rarityColors = new Color[] { Color.white, Color.green, Color.blue, Color.magenta };
 
+    [Header("Upgrade Icons")]
+    [SerializeField]
+    private Sprite maxHealthIcon;
+
+    [SerializeField]
+    private Sprite damageIcon;
+
+    [SerializeField]
+    private Sprite moveSpeedIcon;
+
+    [SerializeField]
+    private Sprite attackSpeedIcon;
+
+    [SerializeField]
+    private Sprite healthRegenIcon;
+
+    [SerializeField]
+    private Sprite critChanceIcon;
+
+    [SerializeField]
+    private Sprite areaDamageIcon;
+
+    [SerializeField]
+    private Sprite lifestealIcon;
+
     private UpgradeOption _upgrade;
     private int _cardIndex;
     private UpgradeCardContainerUI _parentUI;
@@ -56,7 +81,7 @@ public class UpgradeCardUI : MonoBehaviour
 
         if (valueText != null)
         {
-            string valueStr = upgrade.IsPercentage ? $"+{upgrade.Value}" : $"+{upgrade.Value}";
+            string valueStr = upgrade.IsPercentage ? $"+{upgrade.Value}%" : $"+{upgrade.Value}";
             valueText.text = valueStr;
         }
 
@@ -67,7 +92,7 @@ public class UpgradeCardUI : MonoBehaviour
 
         if (cardBackground != null)
         {
-            int rarityIndex = Mathf.Clamp(Mathf.FloorToInt(upgrade.Value / 25f), 0, rarityColors.Length - 1);
+            int rarityIndex = Mathf.Clamp(upgrade.RarityTier, 0, rarityColors.Length - 1);
 
             cardBackground.color = rarityColors[rarityIndex];
         }
@@ -83,6 +108,17 @@ public class UpgradeCardUI : MonoBehaviour
 
     private Sprite GetIconForUpgradeType(UpgradeType type)
     {
-        return null;
+        return type switch
+        {
+            UpgradeType.MaxHealth => maxHealthIcon,
+            UpgradeType.Damage => damageIcon,
+            UpgradeType.MoveSpeed => moveSpeedIcon,
+            UpgradeType.AttackSpeed => attackSpeedIcon,
+            UpgradeType.HealthRegen => healthRegenIcon,
+            UpgradeType.CriticalChange => critChanceIcon,
+            UpgradeType.AreaDamage => areaDamageIcon,
+            UpgradeType.LifeStealth => lifestealIcon,
+            _ => null,
+        };
     }
 }

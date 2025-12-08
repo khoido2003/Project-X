@@ -231,6 +231,23 @@ public class GridSystem : MonoBehaviour
         return obstacleLayer;
     }
 
+    public bool IsWalkable(Vector2Int gridPosition)
+    {
+        if (!IsValidPosition(gridPosition))
+        {
+            return false;
+        }
+
+        GridLayer<bool> walkableLayer = GetLayer<bool>(GridLayerName.WALKABLE);
+        if (walkableLayer == null)
+        {
+            Debug.LogError("[GridSystem] Walkable layer is null!");
+            return false;
+        }
+
+        return walkableLayer.GetValue(gridPosition.x, gridPosition.y);
+    }
+
     #endregion
 
 
@@ -243,11 +260,10 @@ public class GridSystem : MonoBehaviour
         origin.y = Mathf.Clamp(origin.y, 0, gridSize.y - 1);
 
         // If origin is already walkable, return it
-        if (IsValidPosition(origin))
+        if (IsWalkable(origin))
         {
             return origin;
         }
-
         // BFS to find nearest walkable tile
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
         HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
@@ -293,7 +309,7 @@ public class GridSystem : MonoBehaviour
 
                 visited.Add(neighbor);
 
-                if (IsValidPosition(neighbor))
+                if (IsWalkable(neighbor))
                 {
                     return neighbor;
                 }

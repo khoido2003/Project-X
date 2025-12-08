@@ -34,8 +34,9 @@ public struct UpgradeOption : INetworkSerializable
     public UpgradeType Type;
     public string Name;
     public string Description;
-    public float Value;
+    public float Value; // rolled value after rarity multiplier
     public bool IsPercentage;
+    public int RarityTier; // 0=common,1=uncommon,2=rare,3=epic
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer)
         where T : IReaderWriter
@@ -56,6 +57,7 @@ public struct UpgradeOption : INetworkSerializable
         }
         serializer.SerializeValue(ref Value);
         serializer.SerializeValue(ref IsPercentage);
+        serializer.SerializeValue(ref RarityTier);
     }
 }
 
@@ -80,6 +82,10 @@ public class NetworkUpgradeSystem : NetworkBehaviour
     public static NetworkUpgradeSystem Instance { get; private set; }
 
     private bool _isInitialized = false;
+
+    // Rarity tuning
+    private static readonly float[] _rarityWeights = { 0.6f, 0.25f, 0.1f, 0.05f };
+    private static readonly float[] _rarityMultipliers = { 1f, 1.25f, 1.5f, 2f };
 
     private void Awake()
     {
@@ -170,6 +176,9 @@ public class NetworkUpgradeSystem : NetworkBehaviour
             int upgradeId = availableIds[i];
             UpgradeDefinition upgrade = _upgradeDatabase[upgradeId];
 
+            (int rarityTier, float rarityMultiplier) = RollRarity();
+            float rolledValue = upgrade.value * rarityMultiplier;
+
             options.Add(
                 new UpgradeOption
                 {
@@ -177,8 +186,9 @@ public class NetworkUpgradeSystem : NetworkBehaviour
                     Type = upgrade.type,
                     Name = upgrade.upgradeName,
                     Description = upgrade.description,
-                    Value = upgrade.value,
+                    Value = rolledValue,
                     IsPercentage = upgrade.isPercentage,
+                    RarityTier = rarityTier,
                 }
             );
         }
@@ -192,7 +202,24 @@ public class NetworkUpgradeSystem : NetworkBehaviour
 
     #region Upgrade Stats
 
-    private void ApplyUpgrades(EntityId entity, int upgradeId)
+    private (int rarityTier, float multiplier) RollRarity()
+    {
+        float roll = UnityEngine.Random.value;
+        float cumulative = 0f;
+        for (int i = 0; i < _rarityWeights.Length; i++)
+        {
+            cumulative += _rarityWeights[i];
+            if (roll <= cumulative)
+            {
+                float mult = i < _rarityMultipliers.Length ? _rarityMultipliers[i] : 1f;
+                return (i, mult);
+            }
+        }
+
+        return (0, 1f);
+    }
+
+    private void ApplyUpgrades(EntityId entity, int upgradeId, float rolledValue)
     {
         var upgrade = _upgradeDatabase[upgradeId];
 
@@ -210,38 +237,56 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         switch (upgrade.type)
         {
             case UpgradeType.MaxHealth:
-                ApplyMaxHealthUpgrade(entity, upgrade.value, upgrade.isPercentage);
+                ApplyMaxHealthUpgrade(entity, rolledValue, upgrade.isPercentage);
                 break;
 
             case UpgradeType.Damage:
-                playerUpgrades.DamageMultiplier += upgrade.isPercentage ? upgrade.value / 100f : upgrade.value;
-                ApplyDamageUpgrade(entity, playerUpgrades.DamageMultiplier);
+                float prevDamage = playerUpgrades.DamageMultiplier;
+
+                float damageMult = upgrade.isPercentage ? 1f + (rolledValue / 100f) : 1f + rolledValue;
+
+                playerUpgrades.DamageMultiplier *= Mathf.Max(0.01f, damageMult);
+                float damageDelta = playerUpgrades.DamageMultiplier / Mathf.Max(0.01f, prevDamage);
+
+                ApplyDamageUpgrade(entity, damageDelta);
                 break;
 
             case UpgradeType.MoveSpeed:
-                playerUpgrades.MoveSpeedMultiplier += upgrade.isPercentage ? upgrade.value / 100f : upgrade.value;
-                ApplyMoveSpeedUpgrade(entity, playerUpgrades.MoveSpeedMultiplier);
+                float prevMove = playerUpgrades.MoveSpeedMultiplier;
+                float moveMult = upgrade.isPercentage ? 1f + (rolledValue / 100f) : 1f + rolledValue;
+
+                playerUpgrades.MoveSpeedMultiplier *= Mathf.Max(0.01f, moveMult);
+
+                float moveDelta = playerUpgrades.MoveSpeedMultiplier / Mathf.Max(0.01f, prevMove);
+
+                ApplyMoveSpeedUpgrade(entity, moveDelta);
                 break;
 
             case UpgradeType.AttackSpeed:
-                playerUpgrades.AttackSpeedMultiplier += upgrade.isPercentage ? upgrade.value / 100f : upgrade.value;
-                ApplyAttackSpeedUpgrade(entity, playerUpgrades.AttackSpeedMultiplier);
+                float prevAtk = playerUpgrades.AttackSpeedMultiplier;
+                float atkMult = upgrade.isPercentage ? 1f + (rolledValue / 100f) : 1f + rolledValue;
+
+                playerUpgrades.AttackSpeedMultiplier *= Mathf.Max(0.01f, atkMult);
+
+                float atkDelta = playerUpgrades.AttackSpeedMultiplier / Mathf.Max(0.01f, prevAtk);
+
+                ApplyAttackSpeedUpgrade(entity, atkDelta, playerUpgrades.AttackSpeedMultiplier);
                 break;
 
             case UpgradeType.HealthRegen:
-                playerUpgrades.HealthRegenPerSecond += upgrade.value;
+                playerUpgrades.HealthRegenPerSecond += rolledValue;
                 break;
 
             case UpgradeType.CriticalChange:
-                playerUpgrades.CriticalChance += upgrade.value;
+                playerUpgrades.CriticalChance += rolledValue;
                 break;
 
             case UpgradeType.AreaDamage:
-                playerUpgrades.AreaDamageRadius += upgrade.value;
+                playerUpgrades.AreaDamageRadius += rolledValue;
                 break;
 
             case UpgradeType.LifeStealth:
-                playerUpgrades.LifestealPercent += upgrade.value;
+                playerUpgrades.LifestealPercent += rolledValue;
                 break;
         }
         Debug.Log($"[UpgradeSystem] Applied {upgrade.type} upgrade to entity {entity.Id}");
@@ -265,7 +310,7 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         Debug.Log($"[Upgrade] MaxHealth: {oldMax} -> {health.MaxHealth}");
     }
 
-    private void ApplyDamageUpgrade(EntityId entity, float multiplier)
+    private void ApplyDamageUpgrade(EntityId entity, float deltaMultiplier)
     {
         if (!_world.Components.TryGet(entity, out WeaponDataComponent weapon))
         {
@@ -277,33 +322,38 @@ public class NetworkUpgradeSystem : NetworkBehaviour
             return;
         }
 
-        weapon.BaseDamage *= multiplier;
+        weapon.BaseDamage *= deltaMultiplier;
 
-        Debug.Log($"[Upgrade] Damage multiplier: {multiplier}, New Damage: {weapon.BaseDamage}");
+        Debug.Log($"[Upgrade] Damage delta {deltaMultiplier}, New Damage: {weapon.BaseDamage}");
     }
 
-    private void ApplyMoveSpeedUpgrade(EntityId entity, float multiplier)
+    private void ApplyMoveSpeedUpgrade(EntityId entity, float deltaMultiplier)
     {
         if (!_world.Components.TryGet(entity, out MovementDataComponent movement))
         {
             return;
         }
 
-        movement.MoveSpeed *= multiplier;
+        movement.MoveSpeed *= deltaMultiplier;
 
-        Debug.Log($"[Upgrade] MoveSpeed multiplier: {multiplier}, New speed: {movement.MoveSpeed}");
+        Debug.Log($"[Upgrade] MoveSpeed delta {deltaMultiplier}, New speed: {movement.MoveSpeed}");
     }
 
-    private void ApplyAttackSpeedUpgrade(EntityId entity, float multiplier)
+    private void ApplyAttackSpeedUpgrade(EntityId entity, float deltaMultiplier, float totalMultiplier)
     {
         if (!_world.Components.TryGet(entity, out WeaponDataComponent weapon))
         {
             return;
         }
 
-        weapon.BaseCooldown /= multiplier;
+        if (_world.Components.TryGet(entity, out AttackDataComponent attack))
+        {
+            attack.AttackSpeedMultiplier = totalMultiplier;
+        }
 
-        Debug.Log($"[Upgrade] AttackSpeed multiplier: {multiplier}, New cooldown: {weapon.BaseCooldown}");
+        Debug.Log(
+            $"[Upgrade] AttackSpeed delta {deltaMultiplier}, total {totalMultiplier}, Adjusted cooldown: {weapon.BaseCooldown / totalMultiplier}"
+        );
     }
 
     #endregion
@@ -312,9 +362,13 @@ public class NetworkUpgradeSystem : NetworkBehaviour
 
     #region RPCs
 
-
     [ServerRpc(RequireOwnership = false)]
-    public void SelectUpgradeServerRpc(int upgradeId, ServerRpcParams rpcParams = default)
+    public void SelectUpgradeServerRpc(
+        int upgradeId,
+        float rolledValue,
+        int rarityTier,
+        ServerRpcParams rpcParams = default
+    )
     {
         if (!_isInitialized)
         {
@@ -339,7 +393,7 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         }
 
         // Apply upgrade
-        ApplyUpgrades(playerEntity, upgradeId);
+        ApplyUpgrades(playerEntity, upgradeId, rolledValue);
 
         // Confirm to client
         ConfirmUpgradeClientRpc(clientId, upgradeId);

@@ -16,6 +16,9 @@ public class ProjectileView : NetworkBehaviour
     private bool _usePooling;
     private bool _hasHit;
 
+    [SerializeField]
+    private LayerMask hitMask;
+
     public void Initialize(
         World world,
         EntityId attacker,
@@ -82,73 +85,76 @@ public class ProjectileView : NetworkBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (_hasHit)
-        {
             return;
-        }
 
         if (!NetworkManager.Singleton.IsServer)
-        {
             return;
-        }
 
+        // NEW — layer detection (obstacle, player, enemy, etc)
+        if (!IsInHitMask(other.gameObject))
+            return;
+
+        // Check if it is an entity
         if (!other.TryGetComponent(out EntityView targetView))
         {
+            // It's an obstacle or non-entity layer, just explode and return
+            HitAndReturn();
             return;
         }
 
+        // Don't hit the shooter
         if (targetView.EntityInstance.Equals(_attacker))
-        {
             return;
+
+        // Only damage if has health
+        if (_world.Components.Has<HealthDataComponent>(targetView.EntityInstance))
+        {
+            _world.Events.Publish(
+                new DamageEvent
+                {
+                    Attacker = _attacker,
+                    Target = targetView.EntityInstance,
+                    Amount = _damage,
+                }
+            );
         }
 
-        if (!_world.Components.Has<HealthDataComponent>(targetView.EntityInstance))
-        {
-            return;
-        }
+        HitAndReturn();
+    }
 
+    private void HitAndReturn()
+    {
+        if (_hasHit)
+            return;
         _hasHit = true;
 
-        _world.Events.Publish(
-            new DamageEvent
-            {
-                Attacker = _attacker,
-                Target = targetView.EntityInstance,
-                Amount = _damage,
-            }
-        );
-
+        // spawn effect
         if (_impactEffect != null)
         {
-            // spawn impact VFX from pool if possible, else instantiate
-            if (_pool != null && _impactEffect.gameObject != null)
+            if (_pool != null)
             {
                 var impactGo = _pool.Get(_impactEffect.gameObject, transform.position, Quaternion.identity);
 
-                if (impactGo.TryGetComponent<ParticleSystem>(out var ps))
+                if (impactGo.TryGetComponent(out ParticleSystem ps))
                 {
                     float duration = ps.main.duration + ps.main.startLifetime.constantMax;
-                    Object.Destroy(impactGo, duration);
+                    Destroy(impactGo, duration);
                 }
             }
             else
             {
-                GameObject impactGo = Instantiate(_impactEffect.gameObject, transform.position, Quaternion.identity);
-
-                Object.Destroy(impactGo, 2f);
+                var impactGo = Instantiate(_impactEffect.gameObject, transform.position, Quaternion.identity);
+                Destroy(impactGo, 2f);
             }
         }
 
+        // return projectile to pool
         ReturnOrDestroy();
     }
 
     private void ReturnOrDestroy()
     {
-        if (_hasHit)
-        {
-            return;
-        }
-
-        _hasHit = true;
+        _hasHit = false;
 
         if (_usePooling && _prefabRef != null)
         {
@@ -159,6 +165,14 @@ public class ProjectileView : NetworkBehaviour
             // no pool -> destroy to avoid stale inactive object reuse
             Destroy(gameObject);
         }
+    }
+
+    private bool IsInHitMask(GameObject obj)
+    {
+        int objLayer = obj.layer;
+
+        // Convert each included layer of hitMask into readable names
+        return hitMask == (hitMask | (1 << objLayer));
     }
 
     private void OnDisable()

@@ -100,6 +100,11 @@ public class AnimationEventRelayView : EntityView
 
     private void HandleAttackEnd()
     {
+        if (_world.Components.TryGet(_entityView.EntityInstance, out AttackDataComponent attack))
+        {
+            attack.IsAttacking = false;
+        }
+
         _world.Events.Publish(
             new AnimationEventRelayEvent(_entityView.EntityInstance, AnimationEventRelayType.ATTACK_END)
         );

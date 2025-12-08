@@ -27,14 +27,36 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     private Quaternion _targetRotation;
 
     private float _lerpProgress;
+    private bool _isInitialized = false;
+    private bool _firstTransformReceived = false;
 
     public void Initialize(World world, EntityId entity)
     {
         _world = world;
         _entity = entity;
 
+        if (_world.Components.TryGet(_entity, out TransformComponent trans))
+        {
+            _previousPosition = trans.Position;
+            _targetPosition = trans.Position;
+            _previousRotation = trans.Rotation;
+            _targetRotation = trans.Rotation;
+        }
         if (IsServer)
         {
+            if (IsServer)
+            {
+                if (_world.Components.TryGet(_entity, out trans))
+                {
+                    _netTransform.Value = new NetworkTransformState
+                    {
+                        Position = trans.Position,
+                        Rotation = trans.Rotation,
+                        Tick = _currentTick,
+                    };
+                }
+            }
+
             _world.Events.Subscribe<HealthChangedEvent>(OnHealthChanged);
             _world.Events.Subscribe<AnimationParameterEvent>(OnAnimationParameter);
             _world.Events.Subscribe<AttackExecutionRequestEvent>(OnAttackExecutionRequest);
@@ -48,18 +70,25 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             _netHasTarget.OnValueChanged += OnNetHasTargetChanged;
             _netMovement.OnValueChanged += OnNetMovementChanged;
         }
+
+        _isInitialized = true;
     }
 
     private void Update()
     {
+        if (!_isInitialized)
+        {
+            return;
+        }
+
         if (IsServer)
         {
             ServerUpdate();
         }
-        else
-        {
-            ClientInterpolation();
-        }
+        // else
+        // {
+        //     ClientInterpolation();
+        // }
     }
 
     private void FixedUpdate()
@@ -95,28 +124,20 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         SyncTransform();
         SyncEnemyState();
         SyncMovement();
-
-        ApplyTransformToUnity();
     }
 
     private void SyncTransform()
     {
         if (_world.Components.TryGet(_entity, out TransformComponent trans))
         {
-            var newState = new NetworkTransformState
+            transform.SetPositionAndRotation(trans.Position, trans.Rotation);
+
+            _netTransform.Value = new NetworkTransformState
             {
                 Position = trans.Position,
                 Rotation = trans.Rotation,
                 Tick = _currentTick,
             };
-
-            if (
-                Vector3.Distance(_netTransform.Value.Position, newState.Position) > 0.01f
-                || Quaternion.Angle(_netTransform.Value.Rotation, newState.Rotation) > 1f
-            )
-            {
-                _netTransform.Value = newState;
-            }
         }
     }
 
@@ -149,13 +170,6 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         }
     }
 
-    private void ApplyTransformToUnity()
-    {
-        if (_world.Components.TryGet(_entity, out TransformComponent trans))
-        {
-            transform.SetPositionAndRotation(trans.Position, trans.Rotation);
-        }
-    }
     #endregion
 
 
@@ -171,22 +185,25 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        _lerpProgress += Time.deltaTime * 10f;
+        _lerpProgress += Time.deltaTime * 12f;
 
         if (_world.Components.TryGet(_entity, out TransformComponent trans))
         {
+            // Normalize quaternions
+            if (_previousRotation == default)
             {
-                trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, _lerpProgress);
-
-                trans.Rotation = Quaternion.Lerp(_previousRotation, _targetRotation, _lerpProgress);
-
-                var registry = _world.Services.Resolve<EntityViewRegistry>();
-                if (registry.TryGet(_entity, out EntityView view))
-                {
-                    view.transform.position = trans.Position;
-                    view.transform.rotation = trans.Rotation;
-                }
+                _previousRotation = Quaternion.identity;
             }
+            if (_targetRotation == default)
+            {
+                _targetRotation = Quaternion.identity;
+            }
+
+            trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, _lerpProgress);
+            trans.Rotation = Quaternion.Slerp(_previousRotation, _targetRotation, _lerpProgress);
+
+            // Apply to GameObject transform
+            transform.SetPositionAndRotation(trans.Position, trans.Rotation);
         }
     }
 
@@ -225,8 +242,6 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             return;
         }
-
-        Debug.Log($"[EnemyNetworkSync]: Client received attack for {_entity}");
 
         // Play VFX/Animation
 
@@ -360,26 +375,33 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     private void OnNetTransformChanged(NetworkTransformState prev, NetworkTransformState current)
     {
-        if (IsServer)
+        if (IsServer || !_isInitialized)
         {
             return;
         }
 
-        // Initialize on first sync
-        if (_previousRotation == Quaternion.identity && _targetRotation == Quaternion.identity)
+        if (!_firstTransformReceived)
         {
-            _previousRotation = current.Rotation;
-            _targetRotation = current.Rotation;
+            _firstTransformReceived = true;
+
             _previousPosition = current.Position;
             _targetPosition = current.Position;
+            _previousRotation = current.Rotation;
+            _targetRotation = current.Rotation;
+
+            if (_world.Components.TryGet(_entity, out TransformComponent trans))
+            {
+                trans.Position = current.Position;
+                trans.Rotation = current.Rotation;
+            }
 
             transform.SetPositionAndRotation(current.Position, current.Rotation);
             return;
         }
-        _previousPosition = transform.position;
-        _targetPosition = current.Position;
 
-        _previousRotation = transform.rotation;
+        _previousPosition = _targetPosition;
+        _targetPosition = current.Position;
+        _previousRotation = _targetRotation;
         _targetRotation = current.Rotation;
 
         _lerpProgress = 0f;

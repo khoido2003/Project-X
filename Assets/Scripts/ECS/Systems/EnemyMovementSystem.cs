@@ -13,8 +13,11 @@ public class EnemyMovementSystem : ISystem
     private const float DEFAULT_REPATH_INTERVAL = 1f;
     private const float RECALC_DISTANCE_THRESHOLD = 0.5f;
 
-    private readonly float rotateSpeed = 50f;
+    // --- GRAVITY ---
+    private const float GRAVITY = -9.81f;
+    private const float GROUND_CHECK_DISTANCE = 0.2f;
 
+    private readonly float rotateSpeed = 50f;
     private readonly Collider[] _overlapBuffer = new Collider[16];
 
     public void Initialize(World world) => _world = world;
@@ -30,8 +33,17 @@ public class EnemyMovementSystem : ISystem
             return;
         }
 
-        foreach (var (entity, enemy, trans) in _world.Components.Query<EnemyComponent, TransformComponent>())
+        foreach (
+            var (entity, enemy, trans, movement) in _world.Components.Query<
+                EnemyComponent,
+                TransformComponent,
+                MovementDataComponent
+            >()
+        )
         {
+            // Apply gravity first
+            ApplyGravity(entity, trans, movement, dt);
+
             if (
                 enemy.CurrentState == EnemyState.Idle
                 || enemy.CurrentState == EnemyState.Attack
@@ -50,10 +62,61 @@ public class EnemyMovementSystem : ISystem
             if (ReachedFinalDestination(entity, enemy, trans))
                 continue;
 
-            MoveTowardsWaypoint(entity, enemy, trans, dt);
+            MoveTowardsWaypoint(entity, enemy, trans, movement, dt);
             CheckProgress(entity, enemy, trans, dt);
             CheckPeriodicRepath(entity, enemy, trans);
         }
+    }
+
+    private void ApplyGravity(EntityId entity, TransformComponent trans, MovementDataComponent movement, float dt)
+    {
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (!registry.TryGet(entity, out EntityView view))
+        {
+            return;
+        }
+
+        // Ground check using raycast
+        LayerMask groundMask = LayerMask.GetMask("Default", "Ground");
+        bool wasGrounded = movement.IsGrounded;
+
+        movement.IsGrounded = Physics.Raycast(
+            trans.Position + Vector3.up * 0.1f,
+            Vector3.down,
+            GROUND_CHECK_DISTANCE + 0.1f,
+            groundMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (movement.IsGrounded)
+        {
+            // On ground - reset vertical velocity and snap to ground
+            movement.VerticalVelocity = 0f;
+
+            // Raycast to find exact ground position
+            if (
+                Physics.Raycast(
+                    trans.Position + Vector3.up * 0.5f,
+                    Vector3.down,
+                    out RaycastHit hit,
+                    1f,
+                    groundMask,
+                    QueryTriggerInteraction.Ignore
+                )
+            )
+            {
+                trans.Position = new Vector3(trans.Position.x, hit.point.y, trans.Position.z);
+            }
+        }
+        else
+        {
+            // In air - apply gravity
+            movement.VerticalVelocity += GRAVITY * dt;
+            trans.Position += Vector3.up * movement.VerticalVelocity * dt;
+        }
+
+        // Update GameObject transform
+        view.transform.position = trans.Position;
     }
 
     private void ResetProgress(EnemyComponent path, TransformComponent trans)
@@ -97,12 +160,17 @@ public class EnemyMovementSystem : ISystem
         return true;
     }
 
-    private void MoveTowardsWaypoint(EntityId entity, EnemyComponent enemy, TransformComponent trans, float dt)
+    private void MoveTowardsWaypoint(
+        EntityId entity,
+        EnemyComponent enemy,
+        TransformComponent trans,
+        MovementDataComponent movement,
+        float dt
+    )
     {
-        var movement = _world.Components.Get<MovementDataComponent>(entity);
-
         if (enemy.Path == null || enemy.Path.Count == 0)
         {
+            movement.IsMoving = false;
             return;
         }
 
@@ -114,12 +182,9 @@ public class EnemyMovementSystem : ISystem
 
         Vector3 targetPos = enemy.Path[enemy.WaypointIndex];
 
-        Debug.Log(
-            $"Enemy {entity.Id}: Moving from {trans.Position} to waypoint {enemy.WaypointIndex}/{enemy.Path.Count} at {targetPos}"
-        );
-
-        //  --- Check Obstackle ahead ----
+        //  --- Check Obstacle ahead ----
         Vector3 forward = targetPos - trans.Position;
+        forward.y = 0; // Flatten for horizontal movement
 
         float forwardDist = Mathf.Min(1.0f, forward.magnitude);
         Vector3 forwardDir = forward.normalized;
@@ -127,12 +192,11 @@ public class EnemyMovementSystem : ISystem
         if (forwardDist > 0.05f)
         {
             float castRadius = 0.25f;
-
             LayerMask mask = GridSystem.Instance.GetObstacleLayer();
 
             if (
                 Physics.SphereCast(
-                    trans.Position + Vector3.up / 2,
+                    trans.Position + Vector3.up * 0.5f,
                     castRadius,
                     forwardDir,
                     out RaycastHit hit,
@@ -142,17 +206,15 @@ public class EnemyMovementSystem : ISystem
                 )
             )
             {
-                // Find something in front -> fine new path
+                // Found obstacle - nudge away and request new path
                 Vector3 nudge = hit.normal * 0.2f;
                 trans.Position += nudge;
-
                 RequestRepath(entity, enemy);
-
                 return;
             }
         }
 
-        // --- Avoid multiple enemy crowding and stick together ----
+        // --- Avoid multiple enemy crowding ----
         Vector3 separation = Vector3.zero;
         float checkRadius = 0.6f;
 
@@ -176,6 +238,7 @@ public class EnemyMovementSystem : ISystem
             }
 
             Vector3 dirAway = trans.Position - ev.transform.position;
+            dirAway.y = 0;
 
             float sqr = dirAway.sqrMagnitude;
             if (sqr < 0.0001f)
@@ -184,25 +247,27 @@ public class EnemyMovementSystem : ISystem
             }
 
             separation += dirAway.normalized / Mathf.Sqrt(sqr);
-
-            if (separation.sqrMagnitude > 0.0001f)
-            {
-                Vector3 sepMove = separation.normalized * movement.MoveSpeed / 2 * dt;
-
-                trans.Position += sepMove;
-            }
         }
 
-        Vector3 newPos = Vector3.MoveTowards(trans.Position, targetPos, movement.MoveSpeed * dt);
-
-        trans.Position = newPos;
-        Vector3 dir = targetPos - newPos;
-
-        if (_world.Components.TryGet(entity, out movement))
+        if (separation.sqrMagnitude > 0.0001f)
         {
-            movement.IsMoving = dir.sqrMagnitude > 0.0001f;
-            movement.MoveDirection = dir.normalized;
+            Vector3 sepMove = separation.normalized * movement.MoveSpeed * 0.5f * dt;
+            trans.Position += new Vector3(sepMove.x, 0, sepMove.z); // Only horizontal separation
         }
+
+        // Move towards waypoint (horizontal only)
+        Vector3 currentPosFlat = new Vector3(trans.Position.x, targetPos.y, trans.Position.z);
+        Vector3 targetPosFlat = new Vector3(targetPos.x, targetPos.y, targetPos.z);
+
+        Vector3 newPos = Vector3.MoveTowards(currentPosFlat, targetPosFlat, movement.MoveSpeed * dt);
+
+        // Keep Y from gravity system
+        trans.Position = new Vector3(newPos.x, trans.Position.y, newPos.z);
+
+        Vector3 dir = targetPosFlat - currentPosFlat;
+
+        movement.IsMoving = dir.sqrMagnitude > 0.0001f;
+        movement.MoveDirection = dir.normalized;
 
         if (dir.sqrMagnitude > 0.0001f)
         {
@@ -213,7 +278,13 @@ public class EnemyMovementSystem : ISystem
             );
         }
 
-        if (Vector3.Distance(newPos, targetPos) <= WAYPOINT_TOLERANCE)
+        // Check if reached waypoint (horizontal distance only)
+        float distToWaypoint = Vector3.Distance(
+            new Vector3(trans.Position.x, 0, trans.Position.z),
+            new Vector3(targetPos.x, 0, targetPos.z)
+        );
+
+        if (distToWaypoint <= WAYPOINT_TOLERANCE)
         {
             enemy.WaypointIndex++;
             enemy.StuckTimer = 0f;
@@ -271,7 +342,11 @@ public class EnemyMovementSystem : ISystem
 
     private void RequestRepath(EntityId entity, EnemyComponent enemy)
     {
-        if (enemy.CurrentState != EnemyState.Chase && enemy.CurrentState != EnemyState.Patrol)
+        if (
+            enemy.CurrentState != EnemyState.Chase
+            && enemy.CurrentState != EnemyState.Patrol
+            && enemy.CurrentState != EnemyState.TakeCover
+        )
         {
             return;
         }

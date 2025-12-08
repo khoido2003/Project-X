@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using Unity.Services.Lobbies.Models;
 using Unity.VisualScripting;
@@ -8,14 +9,40 @@ using WebSocketSharp;
 public class DamageSystem : ISystem
 {
     private World _world;
+    private readonly Dictionary<EntityId, (float value, float expires)> _defenseBuffs = new();
 
     public void Initialize(World world)
     {
         _world = world;
         _world.Events.Subscribe<DamageEvent>(OnDamage);
+        _world.Events.Subscribe<ApplyBuffEvent>(OnApplyBuff);
     }
 
-    public void Update(float dt) { }
+    public void Update(float dt)
+    {
+        if (_defenseBuffs.Count == 0)
+        {
+            return;
+        }
+
+        List<EntityId> toRemove = null;
+        foreach (var kvp in _defenseBuffs)
+        {
+            if (Time.time >= kvp.Value.expires)
+            {
+                toRemove ??= new List<EntityId>();
+                toRemove.Add(kvp.Key);
+            }
+        }
+
+        if (toRemove != null)
+        {
+            foreach (var id in toRemove)
+            {
+                _defenseBuffs.Remove(id);
+            }
+        }
+    }
 
     public void FixedUpdate(float dt) { }
 
@@ -38,6 +65,28 @@ public class DamageSystem : ISystem
         }
 
         float actualDamage = @event.Amount;
+
+        // Apply defense buffs (shield)
+        if (_defenseBuffs.TryGetValue(@event.Target, out var buff) && Time.time < buff.expires)
+        {
+            float reduction = Mathf.Clamp01(buff.value);
+            actualDamage *= 1f - reduction;
+        }
+        else if (_defenseBuffs.ContainsKey(@event.Target))
+        {
+            _defenseBuffs.Remove(@event.Target);
+        }
+
+        // Apply critical & lifesteal for attackers with upgrades
+        if (_world.Components.TryGet(@event.Attacker, out PlayerUpgradesComponent attackerUpgrades))
+        {
+            // Crit check (simple 2x)
+            float critChance = attackerUpgrades.CriticalChance / 100f;
+            if (UnityEngine.Random.value < critChance)
+            {
+                actualDamage *= 2f;
+            }
+        }
         health.CurrentHealth -= actualDamage;
 
         if (health.CurrentHealth < 0)
@@ -70,6 +119,22 @@ public class DamageSystem : ISystem
 
         _world.Events.Publish(new HealthChangedEvent(@event.Target, health.CurrentHealth, health.MaxHealth));
 
+        // Lifesteal after damage dealt (only if attacker exists and is alive)
+        if (@event.Attacker != default && _world.Components.TryGet(@event.Attacker, out PlayerUpgradesComponent atkUpgrades))
+        {
+            if (atkUpgrades.LifestealPercent > 0f && _world.Components.TryGet(@event.Attacker, out HealthDataComponent attackerHealth))
+            {
+                float heal = actualDamage * (atkUpgrades.LifestealPercent / 100f);
+                if (heal > 0f && !attackerHealth.IsDead)
+                {
+                    attackerHealth.CurrentHealth = Mathf.Min(attackerHealth.CurrentHealth + heal, attackerHealth.MaxHealth);
+                    _world.Events.Publish(
+                        new HealthChangedEvent(@event.Attacker, attackerHealth.CurrentHealth, attackerHealth.MaxHealth)
+                    );
+                }
+            }
+        }
+
         // Broadcast damage visual to all clients
         var registry = _world.Services.Resolve<EntityViewRegistry>();
         Vector3 hitPoint = Vector3.zero;
@@ -91,10 +156,13 @@ public class DamageSystem : ISystem
         {
             if (_world.Components.TryGet(@event.Target, out NetworkObjectComponent netObj))
             {
-                var enemySync = netObj.NetworkObject.GetComponent<EnemyNetworkSyncView>();
-                if (enemySync != null)
+                if (netObj.NetworkObject != null && netObj.NetworkObject.IsSpawned)
                 {
-                    enemySync.BroadcastDamageVisualClientRpc(actualDamage, hitPoint);
+                    var enemySync = netObj.NetworkObject.GetComponent<EnemyNetworkSyncView>();
+                    if (enemySync != null && enemySync.IsSpawned)
+                    {
+                        enemySync.BroadcastDamageVisualClientRpc(actualDamage, hitPoint);
+                    }
                 }
             }
         }
@@ -103,5 +171,20 @@ public class DamageSystem : ISystem
     public void Shutdown()
     {
         _world.Events.Unsubscribe<DamageEvent>(OnDamage);
+        _world.Events.Unsubscribe<ApplyBuffEvent>(OnApplyBuff);
+    }
+
+    private void OnApplyBuff(ApplyBuffEvent @event)
+    {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
+        if (@event.BuffType == BuffType.DefenseBoost)
+        {
+            float value = Mathf.Clamp01(@event.Value);
+            _defenseBuffs[@event.Target] = (value, Time.time + @event.Duration);
+        }
     }
 }

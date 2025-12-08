@@ -7,6 +7,12 @@ using UnityEngine;
 public class WaveManager : MonoBehaviour
 {
     [Header("Wave Configuration")]
+    [Header("Limits")]
+    [SerializeField]
+    private int maxConcurrentEnemies = 12;
+
+    private bool _deathEventSubscribed = false;
+
     [SerializeField]
     private List<WaveConfiguration> waveConfigs = new();
 
@@ -54,6 +60,30 @@ public class WaveManager : MonoBehaviour
         {
             Debug.LogError("[Wave Manager] Failed to get SpawnSystem");
         }
+
+        // Subscribe to death events once
+        if (!_deathEventSubscribed && _world != null)
+        {
+            _world.Events.Subscribe<EntityDeathEvent>(OnEnemyDeath);
+            _deathEventSubscribed = true;
+        }
+
+        // ⭐ FIX: Validate spawn points
+        if (enemySpawnPoints == null || enemySpawnPoints.Length == 0)
+        {
+            Debug.LogError("[WaveManager] No enemy spawn points assigned!");
+        }
+        else
+        {
+            Debug.Log($"[WaveManager] Found {enemySpawnPoints.Length} enemy spawn points");
+            for (int i = 0; i < enemySpawnPoints.Length; i++)
+            {
+                if (enemySpawnPoints[i] != null)
+                {
+                    Debug.Log($"[WaveManager] Spawn point {i}: {enemySpawnPoints[i].position}");
+                }
+            }
+        }
     }
 
     public void SpawnWave(int round)
@@ -90,7 +120,18 @@ public class WaveManager : MonoBehaviour
     {
         for (int i = 0; i < config.enemyCount; i++)
         {
-            Vector3 spawnPos = GetAgressiveSpawnPosition();
+            // Check enemy count before spawning
+            int currentCount = GetCurrentEnemyCount();
+            if (currentCount >= maxConcurrentEnemies)
+            {
+                // Wait until enemies die before continuing
+                while (GetCurrentEnemyCount() >= maxConcurrentEnemies)
+                {
+                    yield return new WaitForSeconds(0.5f);
+                }
+            }
+
+            Vector3 spawnPos = GetSpawnPosition();
 
             EnemyDefinitionSO enemyData = config.enemyTypes[UnityEngine.Random.Range(0, config.enemyTypes.Count)];
 
@@ -106,25 +147,42 @@ public class WaveManager : MonoBehaviour
 
         while (true)
         {
-            int spawnCount = UnityEngine.Random.Range(1, 4);
-
-            for (int i = 0; i < spawnCount; i++)
+            int currentCount = GetCurrentEnemyCount();
+            if (currentCount < maxConcurrentEnemies)
             {
-                Vector3 spawnPos = GetAgressiveSpawnPosition();
+                int spawnCount = UnityEngine.Random.Range(1, 4);
+                int remainingSlots = maxConcurrentEnemies - currentCount;
+                spawnCount = Mathf.Min(spawnCount, remainingSlots);
 
-                EnemyDefinitionSO enemyData = config.enemyTypes[UnityEngine.Random.Range(0, config.enemyTypes.Count)];
+                for (int i = 0; i < spawnCount; i++)
+                {
+                    // Double-check before each spawn
+                    if (GetCurrentEnemyCount() >= maxConcurrentEnemies)
+                    {
+                        break;
+                    }
 
-                SpawnEnemy(enemyData, spawnPos, config);
-
-                yield return new WaitForSeconds(0.2f);
+                    Vector3 spawnPos = GetSpawnPosition();
+                    EnemyDefinitionSO enemyData = config.enemyTypes[
+                        UnityEngine.Random.Range(0, config.enemyTypes.Count)
+                    ];
+                    SpawnEnemy(enemyData, spawnPos, config);
+                    yield return new WaitForSeconds(0.2f);
+                }
             }
-
             yield return new WaitForSeconds(continuousSpawnInterval);
         }
     }
 
     private void SpawnEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPos, WaveConfiguration config)
     {
+        // Check actual enemy count before spawning
+        if (GetCurrentEnemyCount() >= maxConcurrentEnemies)
+        {
+            Debug.LogWarning($"[WaveManager] Max concurrent enemies ({maxConcurrentEnemies}) reached, skipping spawn");
+            return;
+        }
+
         EnemyDefinitionSO modifiedEnemy = ScriptableObject.CreateInstance<EnemyDefinitionSO>();
 
         CopyEnemyData(enemyData, modifiedEnemy);
@@ -143,50 +201,128 @@ public class WaveManager : MonoBehaviour
         _spawnSystem.SpawnNetworkEnemy(modifiedEnemy, spawnPos);
     }
 
-    private Vector3 GetAgressiveSpawnPosition()
+    private int GetCurrentEnemyCount()
     {
-        if (!spawnNearPlayers)
+        if (_world == null)
         {
-            return enemySpawnPoints[UnityEngine.Random.Range(0, enemySpawnPoints.Length)].position;
+            return 0;
         }
 
-        Vector3 fallbackPos = enemySpawnPoints[UnityEngine.Random.Range(0, enemySpawnPoints.Length)].position;
+        int count = 0;
+        foreach (var (entity, enemy, health) in _world.Components.Query<EnemyComponent, HealthDataComponent>())
+        {
+            if (!health.IsDead && enemy.CurrentState != EnemyState.Dead && !enemy.IsBoss)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
 
-        // Find nearest player
+    private void OnEnemyDeath(EntityDeathEvent @event)
+    {
+        // This is just for logging/debugging - actual count is queried dynamically
+        if (_world.Components.Has<EnemyComponent>(@event.Entity))
+        {
+            Debug.Log($"[WaveManager] Enemy died. Current count: {GetCurrentEnemyCount()}");
+        }
+    }
+
+    private Vector3 GetSpawnPosition()
+    {
+        // Validate spawn points
+        if (enemySpawnPoints == null || enemySpawnPoints.Length == 0)
+        {
+            Debug.LogError("[WaveManager] No spawn points available! Using Vector3.zero");
+            return Vector3.zero;
+        }
+
+        // If spawn near players is disabled, use random spawn point
+        if (!spawnNearPlayers)
+        {
+            int index = UnityEngine.Random.Range(0, enemySpawnPoints.Length);
+            Vector3 pos = enemySpawnPoints[index].position;
+            Debug.Log($"[WaveManager] Using spawn point {index}: {pos}");
+            return pos;
+        }
+
+        // Try to spawn near players
         Vector3 playerPos = FindNearestPlayerPosition();
 
-        if (playerPos == Vector3.zero)
+        // If no valid player position found, use random spawn point
+        if (playerPos == Vector3.zero || float.IsNaN(playerPos.x) || float.IsNaN(playerPos.z))
         {
+            int fallbackIndex = UnityEngine.Random.Range(0, enemySpawnPoints.Length);
+            Vector3 fallbackPos = enemySpawnPoints[fallbackIndex].position;
+            Debug.Log($"[WaveManager] No valid player position, using fallback spawn point: {fallbackPos}");
             return fallbackPos;
         }
 
+        // Generate random position around player
         float angle = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
         float distance = UnityEngine.Random.Range(minDistanceFromPlayer, maxDistanceFromPlayer);
 
-        Vector3 offset = new(Mathf.Cos(angle) * distance, 0f, Mathf.Sin(angle) * distance);
+        Vector3 offset = new Vector3(Mathf.Cos(angle) * distance, 0f, Mathf.Sin(angle) * distance);
         Vector3 spawnPos = playerPos + offset;
 
+        // Validate with grid system if available
         GridSystem grid = GridSystem.Instance;
-        Vector2Int gridPos = grid.GetGridPosition(spawnPos);
-
-        if (grid.IsValidPosition(gridPos))
+        if (grid != null)
         {
-            gridPos = grid.FindNearestWalkable(gridPos);
-            spawnPos = grid.GetWorldPosition(gridPos);
+            Vector2Int gridPos = grid.GetGridPosition(spawnPos);
+
+            if (grid.IsValidPosition(gridPos))
+            {
+                gridPos = grid.FindNearestWalkable(gridPos);
+                spawnPos = grid.GetWorldPosition(gridPos);
+                Debug.Log($"[WaveManager] Spawning near player at grid-validated position: {spawnPos}");
+            }
+            else
+            {
+                // Grid position invalid, use closest spawn point
+                spawnPos = GetClosestSpawnPoint(playerPos);
+                Debug.Log($"[WaveManager] Grid invalid, using closest spawn point: {spawnPos}");
+            }
         }
         else
         {
-            spawnPos = fallbackPos;
+            Debug.LogWarning("[WaveManager] GridSystem not found, using unchecked spawn position");
         }
 
         return spawnPos;
     }
 
+    private Vector3 GetClosestSpawnPoint(Vector3 referencePos)
+    {
+        if (enemySpawnPoints == null || enemySpawnPoints.Length == 0)
+        {
+            return Vector3.zero;
+        }
+
+        Vector3 closest = enemySpawnPoints[0].position;
+        float closestDist = Vector3.Distance(referencePos, closest);
+
+        for (int i = 1; i < enemySpawnPoints.Length; i++)
+        {
+            if (enemySpawnPoints[i] == null)
+                continue;
+
+            float dist = Vector3.Distance(referencePos, enemySpawnPoints[i].position);
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                closest = enemySpawnPoints[i].position;
+            }
+        }
+
+        return closest;
+    }
+
     private Vector3 FindNearestPlayerPosition()
     {
         Vector3 nearestPos = Vector3.zero;
-
         float nearestDist = float.MaxValue;
+        bool foundPlayer = false;
 
         foreach (
             var (entity, player, trans, health) in _world.Components.Query<
@@ -201,12 +337,13 @@ public class WaveManager : MonoBehaviour
                 continue;
             }
 
-            float dist = Vector3.Distance(trans.Position, Vector3.zero);
+            Vector3 playerPos = trans.Position;
 
-            if (dist < nearestDist)
+            if (!foundPlayer)
             {
-                nearestDist = dist;
-                nearestPos = trans.Position;
+                nearestPos = playerPos;
+                nearestDist = 0f;
+                foundPlayer = true;
             }
         }
 
@@ -254,6 +391,23 @@ public class WaveManager : MonoBehaviour
         {
             StopCoroutine(_continuousSpawnCoroutine);
             _continuousSpawnCoroutine = null;
+        }
+
+        // Unsubscribe from death events
+        if (_deathEventSubscribed && _world != null)
+        {
+            _world.Events.Unsubscribe<EntityDeathEvent>(OnEnemyDeath);
+            _deathEventSubscribed = false;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Cleanup subscription
+        if (_deathEventSubscribed && _world != null)
+        {
+            _world.Events.Unsubscribe<EntityDeathEvent>(OnEnemyDeath);
+            _deathEventSubscribed = false;
         }
     }
 

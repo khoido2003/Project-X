@@ -129,19 +129,37 @@ public class AttackExecutionView : EntityView
             return;
         }
 
-        // Spawn position
-        Vector3 spawnPos =
-            attackerTf.position + new Vector3(0f, 1.3f, 0f) + attackerTf.TransformDirection(@event.SpawnOffset);
+        // Try to find ProjectileSpawnPos component on attacker or its children
+        Transform spawnTransform = attackerTf;
+        ProjectileSpawnPos spawnPosComponent = attackerTf.GetComponentInChildren<ProjectileSpawnPos>();
+        
+        if (spawnPosComponent != null)
+        {
+            spawnTransform = spawnPosComponent.transform;
+        }
+
+        // Spawn position - use spawn transform if found, otherwise use attacker transform with offset
+        Vector3 spawnPos = spawnTransform.position;
+        if (spawnPosComponent == null)
+        {
+            spawnPos = attackerTf.position + new Vector3(0f, 1.3f, 0f) + attackerTf.TransformDirection(@event.SpawnOffset);
+        }
+        else
+        {
+            // If using ProjectileSpawnPos, still apply the offset relative to spawn transform
+            spawnPos += spawnTransform.TransformDirection(@event.SpawnOffset);
+        }
 
         // Direction
-        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
+        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? spawnTransform.forward : @event.Direction.normalized;
 
-        // Spawn rotation
+        // Spawn rotation - align with direction
         Quaternion spawnRot = Quaternion.LookRotation(forwardDir, Vector3.up);
 
         var pool = _world.Services.Resolve<ObjectPoolService>();
 
-        GameObject projectileGO = pool.Get(@event.ProjectilePrefab, spawnPos, attackerTf.rotation);
+        // Use spawnRot instead of attackerTf.rotation to ensure correct initial rotation
+        GameObject projectileGO = pool.Get(@event.ProjectilePrefab, spawnPos, spawnRot);
 
         if (!projectileGO.TryGetComponent(out ProjectileView projectile))
         {
