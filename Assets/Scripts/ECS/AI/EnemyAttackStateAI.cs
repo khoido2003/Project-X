@@ -88,6 +88,12 @@ public class EnemyAttackStateAI : IEnemyState
             Quaternion targetRotation = Quaternion.LookRotation(dir.normalized);
 
             enemyTf.Rotation = Quaternion.RotateTowards(enemyTf.Rotation, targetRotation, rotateSpeed * Time.deltaTime);
+
+            var registry = world.Services.Resolve<EntityViewRegistry>();
+            if (registry.TryGet(entity, out EntityView view))
+            {
+                view.transform.rotation = enemyTf.Rotation;
+            }
         }
     }
 

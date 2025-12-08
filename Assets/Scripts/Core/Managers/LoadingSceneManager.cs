@@ -13,6 +13,7 @@ public enum SceneName : byte
 
     Map_1,
     Map_2,
+    Map_3,
 
     Victory,
     Defeat,

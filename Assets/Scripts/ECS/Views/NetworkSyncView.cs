@@ -8,7 +8,6 @@ public class NetworkSyncView : NetworkBehaviour
     private World _world;
     private EntityId _entity;
 
-    [SerializeField]
     private PlayerRespawnUI respawnUI;
 
     private NetworkVariable<NetworkTransformState> _netTransform = new(
@@ -52,6 +51,11 @@ public class NetworkSyncView : NetworkBehaviour
             _netCombatState.OnValueChanged += OnNetCombatStateChanged;
             _netMovement.OnValueChanged += OnNetMovementChanged;
         }
+    }
+
+    private void Start()
+    {
+        respawnUI = FindFirstObjectByType<PlayerRespawnUI>();
     }
 
     private void Update()

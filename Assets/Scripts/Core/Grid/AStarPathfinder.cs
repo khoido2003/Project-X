@@ -42,20 +42,24 @@ public class AStarPathfinder
         Vector2Int start = gridSystem.GetGridPosition(startWWorld);
         Vector2Int end = gridSystem.GetGridPosition(endWorld);
 
-        if (!gridSystem.IsValidPosition(start) || !gridSystem.IsValidPosition(end))
+        if (!gridSystem.IsWalkable(start) || !gridSystem.IsWalkable(end))
         {
+            Debug.LogWarning($"[AStarPathfinder] Start {start} or Target {end} is not walkable!");
             return null;
         }
+
+        // GridLayer<bool> walkableLayer = gridSystem.GetLayer<bool>(GridLayerName.WALKABLE);
+        //
+        // GridLayer<float> costLayer = gridSystem.GetLayer<float>(GridLayerName.TERRAIN_COST);
+        //
+        // if (walkableLayer == null || !walkableLayer.GetValue(start.x, start.y) || !walkableLayer.GetValue(end.x, end.y))
+        // {
+        //     Debug.Log("Node invalid or walkableLayer is null!");
+        //     return null;
+        // }
 
         GridLayer<bool> walkableLayer = gridSystem.GetLayer<bool>(GridLayerName.WALKABLE);
-
         GridLayer<float> costLayer = gridSystem.GetLayer<float>(GridLayerName.TERRAIN_COST);
-
-        if (walkableLayer == null || !walkableLayer.GetValue(start.x, start.y) || !walkableLayer.GetValue(end.x, end.y))
-        {
-            Debug.Log("Node invalid or walkableLayer is null!");
-            return null;
-        }
 
         PriorityQueue<Node> pq = new();
 
@@ -89,15 +93,10 @@ public class AStarPathfinder
 
             foreach (Vector2Int neighborPos in GetNeighbors(currentNode.Position))
             {
-                if (
-                    !gridSystem.IsValidPosition(neighborPos)
-                    || !walkableLayer.GetValue(neighborPos.x, neighborPos.y)
-                    || closeSet.Contains(neighborPos)
-                )
+                if (!gridSystem.IsWalkable(neighborPos) || closeSet.Contains(neighborPos))
                 {
                     continue;
                 }
-
                 float terrainCost = costLayer?.GetValue(neighborPos.x, neighborPos.y) ?? 1f;
 
                 float moveCost = CalcOctileDistance(currentNode.Position, neighborPos) * terrainCost;
@@ -210,18 +209,17 @@ public class AStarPathfinder
 
                 Vector2Int node = new(position.x + x, position.y + y);
 
-                if (!gridSystemInstance.IsValidPosition(node) || !walkable.GetValue(node.x, node.y))
+                if (!gridSystemInstance.IsWalkable(node))
                 {
                     continue;
                 }
-
                 // Check for diaonal corner cutting
                 if (x != 0 && y != 0)
                 {
                     Vector2Int node1 = new(position.x + x, position.y);
                     Vector2Int node2 = new(position.x, position.y + y);
 
-                    if (!walkable.GetValue(node1.x, node1.y) || !walkable.GetValue(node2.x, node2.y))
+                    if (!gridSystemInstance.IsWalkable(node1) || !gridSystemInstance.IsWalkable(node2))
                     {
                         continue;
                     }

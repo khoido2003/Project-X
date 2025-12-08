@@ -21,3 +21,7 @@ MonoBehaviour:
     sceneName: 5
     mapPreview: {fileID: 0}
     description: Deadly Area
+  - mapName: Future Day
+    sceneName: 6
+    mapPreview: {fileID: 0}
+    description: The day everyone proud

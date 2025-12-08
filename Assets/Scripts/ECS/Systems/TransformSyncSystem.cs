@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class TransformSyncSystem : ISystem
@@ -10,17 +11,19 @@ public class TransformSyncSystem : ISystem
     {
         foreach (var (entity, trans) in _world.Components.Query<TransformComponent>())
         {
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+            if (!registry.TryGet(entity, out EntityView view))
+                continue;
+
+            // For enemies: DON'T sync here - EnemyNetworkSyncView handles it
             if (_world.Components.Has<EnemyComponent>(entity))
             {
                 continue;
             }
 
-            var registry = _world.Services.Resolve<EntityViewRegistry>();
-            if (registry.TryGet(entity, out EntityView view))
-            {
-                trans.Position = view.transform.position;
-                trans.Rotation = view.transform.rotation;
-            }
+            // Players and other entities
+            trans.Position = view.transform.position;
+            trans.Rotation = view.transform.rotation;
         }
     }
 

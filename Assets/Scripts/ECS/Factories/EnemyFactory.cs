@@ -16,60 +16,58 @@ public class EnemyFactory
         if (!NetworkManager.Singleton.IsServer)
         {
             Debug.LogError("[EnemyFactory]: Only server can spawn enemies");
-
             return null;
         }
 
         if (enemyData.prefab == null)
         {
             Debug.LogError($"[EnemyFactory] Enemy prefab is null for {enemyData.enemyName}");
-
             return null;
         }
 
         if (enemyData.prefab.GetComponent<NetworkObject>() == null)
         {
             Debug.LogError($"[EnemyFactory] Prefab {enemyData.prefab.name} does not have NetworkObject component!");
-
             return null;
         }
 
         GameObject enemyObj = NetworkObjectSpawner.SpawnNewNetworkObject(enemyData.prefab, spawnPosition, true);
-
         NetworkObject netObj = enemyObj.GetComponent<NetworkObject>();
-
         EntityId entity = _world.CreateEntity();
 
         foreach (EntityView view in enemyObj.GetComponentsInChildren<EntityView>(includeInactive: true))
         {
             view.Bind(_world, entity);
             var registry = _world.Services.Resolve<EntityViewRegistry>();
-
             registry.Register(view);
         }
 
         var networkSync = enemyObj.GetComponent<EnemyNetworkSyncView>();
-
         if (networkSync == null)
         {
             networkSync = enemyObj.AddComponent<EnemyNetworkSyncView>();
         }
-
         networkSync.Initialize(_world, entity);
 
+        // Note: EnemyNetworkSyncView doesn't inherit from NetworkSyncView
         _world.Components.Add(entity, new NetworkSyncComponent { SyncView = null });
-        _world.Components.Add(entity, new NetworkObjectComponent { NetworkObject = netObj });
 
+        _world.Components.Add(entity, new NetworkObjectComponent { NetworkObject = netObj });
         _world.Components.Add(
             entity,
             new EnemyNetworkComponent { SpawnerId = netObj.NetworkObjectId, IsNetworked = true }
         );
 
+        // Transform
+        _world.Components.Add(entity, new TransformComponent(spawnPosition, enemyObj.transform.rotation));
+
+        // Health
         _world.Components.Add(
             entity,
             new HealthDataComponent { MaxHealth = enemyData.maxHealth, CurrentHealth = enemyData.maxHealth }
         );
 
+        // Movement
         _world.Components.Add(
             entity,
             new MovementDataComponent
@@ -80,15 +78,7 @@ public class EnemyFactory
             }
         );
 
-        _world.Components.Add(entity, new TransformComponent(spawnPosition, enemyObj.transform.rotation));
-
-        foreach (EntityView view in enemyObj.GetComponentsInChildren<EntityView>(includeInactive: true))
-        {
-            view.Bind(_world, entity);
-            var registry = _world.Services.Resolve<EntityViewRegistry>();
-            registry.Register(view);
-        }
-
+        // Animation
         _world.Components.Add(
             entity,
             new AnimationDataComponent
@@ -102,24 +92,19 @@ public class EnemyFactory
             }
         );
 
+        // Enemy AI Component
         EnemyComponent enemy = new EnemyComponent
         {
             IsRanged = enemyData.isRanged,
-
-            // Vision & Detection
             DetectionRange = enemyData.detectionRange,
             LoseTargetRange = enemyData.loseTargetRange,
             FieldOfView = enemyData.fieldOfView,
             CheckInterval = enemyData.checkInterval,
             TimeSinceLastCheck = 0f,
             DetectionMask = enemyData.detectionMask,
-
-            // AI FSM
             CurrentState = EnemyState.Idle,
             StateTime = 0f,
             TargetEntity = default,
-
-            // Pathfinding
             Path = new List<Vector3>(),
             WaypointIndex = 0,
             LastRequestedTarget = Vector3.positiveInfinity,
@@ -129,13 +114,10 @@ public class EnemyFactory
             LastAgentPosition = spawnPosition,
             NoProgressTimer = 0f,
             StuckTimer = 0f,
-
-            // Patrol
             PatrolIndex = 0,
             PatrolWaypoints = new List<Vector3>(),
         };
 
-        // --- Generate patrol points if needed ---
         if (enemyData.generatePatrolPoints)
         {
             enemy.PatrolWaypoints.AddRange(

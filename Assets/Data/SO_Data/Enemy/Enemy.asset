@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinitionSO
   prefab: {fileID: 5191787420164104229, guid: e65286c6ffec9e841a064adfb1fd947c, type: 3}
   enemyName: Enemy
-  maxHealth: 10
+  maxHealth: 30
   moveSpeed: 3
   attackRange: 5
   attackCooldown: 1.5
@@ -49,7 +49,7 @@ MonoBehaviour:
     hitImpactVFX: {fileID: 0}
     attackSound: {fileID: 0}
     projectilePrefab: {fileID: 3093263165227071769, guid: 36341ae1e266f0e45b0a4e3fd8488bbf, type: 3}
-    projectileSpeed: 20
+    projectileSpeed: 30
     projectileLifetime: 5
     projectileSpawnOffset: {x: 0, y: 0, z: 0}
     areaRadius: 0

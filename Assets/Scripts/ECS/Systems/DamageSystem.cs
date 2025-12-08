@@ -91,10 +91,13 @@ public class DamageSystem : ISystem
         {
             if (_world.Components.TryGet(@event.Target, out NetworkObjectComponent netObj))
             {
-                var enemySync = netObj.NetworkObject.GetComponent<EnemyNetworkSyncView>();
-                if (enemySync != null)
+                if (netObj.NetworkObject != null && netObj.NetworkObject.IsSpawned)
                 {
-                    enemySync.BroadcastDamageVisualClientRpc(actualDamage, hitPoint);
+                    var enemySync = netObj.NetworkObject.GetComponent<EnemyNetworkSyncView>();
+                    if (enemySync != null && enemySync.IsSpawned)
+                    {
+                        enemySync.BroadcastDamageVisualClientRpc(actualDamage, hitPoint);
+                    }
                 }
             }
         }

@@ -801,6 +801,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 957b6b12e903dab4a8ec614fb489f200, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WaveManager
+  maxConcurrentEnemies: 20
   waveConfigs:
   - round: 1
     enemyCount: 5
@@ -1685,7 +1686,7 @@ Transform:
   m_GameObject: {fileID: 1672054327}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2288,6 +2289,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Level
       objectReference: {fileID: 0}
+    - target: {fileID: 1755706035891088616, guid: 33c0c583d16e02e4e82468ed69094768, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 2382687253664254890, guid: 33c0c583d16e02e4e82468ed69094768, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0
@@ -2327,6 +2332,22 @@ PrefabInstance:
     - target: {fileID: 2382687253664254890, guid: 33c0c583d16e02e4e82468ed69094768, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5592787606862491433, guid: 33c0c583d16e02e4e82468ed69094768, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6275898459049655146, guid: 33c0c583d16e02e4e82468ed69094768, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6990632331895407439, guid: 33c0c583d16e02e4e82468ed69094768, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 7766408329315415407, guid: 33c0c583d16e02e4e82468ed69094768, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
