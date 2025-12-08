@@ -76,6 +76,10 @@ public class ProjectileView : NetworkBehaviour
         {
             ReturnOrDestroy();
         }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
