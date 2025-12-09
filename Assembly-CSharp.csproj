@@ -116,6 +116,7 @@
     <Compile Include="Assets\Scripts\ECS\Events\GamePhaseEvent.cs" />
     <Compile Include="Assets\Scripts\SO\CharacterDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\Utils\InputManager.cs" />
+    <Compile Include="Assets\Scripts\ECS\Interfaces\IAudioService1.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\PlaySoundAtRandomIntervals.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\HealthDataComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\EffectsEvent.cs" />

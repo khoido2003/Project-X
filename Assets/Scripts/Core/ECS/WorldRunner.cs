@@ -19,6 +19,9 @@ public class WorldRunner : NetworkBehaviour
     private CinemachineCameraService cameraService;
 
     [SerializeField]
+    private AudioService audioService;
+
+    [SerializeField]
     private CharacterDefinitionSO[] characterData;
 
     [Header("Spawned Points")]
@@ -267,6 +270,16 @@ public class WorldRunner : NetworkBehaviour
         // Object pool
         var poolService = new ObjectPoolService();
         World.Services.Register(poolService);
+
+        // Audio Service
+        if (audioService == null)
+        {
+            Debug.LogWarning("No AudioService found! Audio will not work.");
+        }
+        else
+        {
+            World.Services.Register<IAudioService>(audioService);
+        }
     }
 
     private void InitSystems()
@@ -294,6 +307,8 @@ public class WorldRunner : NetworkBehaviour
         World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
         World.Systems.AddSystem(new EnemyMovementSystem(), World);
         World.Systems.AddSystem(new EnemyAISystem(), World);
+
+        World.Systems.AddSystem(new AudioSystem(), World);
 
         EnemyAIHelpers.RegisterDefaultStates();
     }

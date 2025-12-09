@@ -68,7 +68,7 @@ public class WaveManager : MonoBehaviour
             _deathEventSubscribed = true;
         }
 
-        // ⭐ FIX: Validate spawn points
+        // Validate spawn points
         if (enemySpawnPoints == null || enemySpawnPoints.Length == 0)
         {
             Debug.LogError("[WaveManager] No enemy spawn points assigned!");
@@ -150,7 +150,8 @@ public class WaveManager : MonoBehaviour
             int currentCount = GetCurrentEnemyCount();
             if (currentCount < maxConcurrentEnemies)
             {
-                int spawnCount = UnityEngine.Random.Range(1, 4);
+                // Reduce spawn count to prevent overflow - spawn 1-2 at a time instead of 1-4
+                int spawnCount = UnityEngine.Random.Range(1, 3); // Reduced from 1-4
                 int remainingSlots = maxConcurrentEnemies - currentCount;
                 spawnCount = Mathf.Min(spawnCount, remainingSlots);
 
@@ -167,10 +168,11 @@ public class WaveManager : MonoBehaviour
                         UnityEngine.Random.Range(0, config.enemyTypes.Count)
                     ];
                     SpawnEnemy(enemyData, spawnPos, config);
-                    yield return new WaitForSeconds(0.2f);
+                    yield return new WaitForSeconds(0.5f);
                 }
             }
-            yield return new WaitForSeconds(continuousSpawnInterval);
+            // Increase interval between spawn waves to reduce pressure
+            yield return new WaitForSeconds(continuousSpawnInterval * 1.5f);
         }
     }
 
@@ -418,11 +420,18 @@ public class WaveManager : MonoBehaviour
             return waveConfigs[round - 1];
         }
 
+        // Cap enemy count growth after round 2 to prevent overflow and lag
+        // Use a more conservative scaling that caps at a reasonable maximum
+        int baseEnemyCount = 5;
+        int scaledEnemyCount = baseEnemyCount + (round * 3); // Reduced from * 5
+        int maxEnemyCount = 25; // Cap at 25 enemies per wave (below maxConcurrentEnemies of 20)
+        int enemyCount = Mathf.Min(scaledEnemyCount, maxEnemyCount);
+
         return new WaveConfiguration
         {
             round = round,
-            enemyCount = 5 + (round * 5),
-            spawnInterval = Mathf.Max(0.2f, 0.5f - (round * 0.1f)),
+            enemyCount = enemyCount,
+            spawnInterval = Mathf.Max(0.3f, 0.5f - (round * 0.05f)), // Slower spawn rate
             healthMultiplier = 1f + (round * 0.4f),
             damageMultiplier = 1f + (round * 0.3f),
             speedMultiplier = 1f + (round * 0.15f),

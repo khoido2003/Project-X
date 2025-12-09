@@ -25,6 +25,21 @@ public abstract class SkillExecutorView : EntityView
             return;
         }
 
+        // Play skill activation sound
+        if (@event.Skill.activateSound != null)
+        {
+            var registry = WorldInstance.Services.Resolve<EntityViewRegistry>();
+            if (registry.TryGet(EntityInstance, out EntityView view))
+            {
+                AudioHelper.PlaySound3D(
+                    WorldInstance,
+                    @event.Skill.activateSound,
+                    AudioCategory.Skill,
+                    view.transform.position
+                );
+            }
+        }
+
         // Animation
         WorldInstance.Events.Publish(
             new AnimationParameterEvent(
