@@ -55,6 +55,17 @@ public class AnimationEventRelayView : EntityView
             return;
         }
 
+        // Play weapon attack sound
+        if (weapon.AttackSound != null)
+        {
+            AudioHelper.PlaySound3D(
+                _world,
+                weapon.AttackSound,
+                AudioCategory.Weapon,
+                _entityView.transform.position
+            );
+        }
+
         _world.Events.Publish(
             new AttackExecutionRequestEvent
             {

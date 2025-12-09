@@ -138,27 +138,42 @@ public class AttackExecutionView : EntityView
             spawnTransform = spawnPosComponent.transform;
         }
 
-        // Spawn position - use spawn transform if found, otherwise use attacker transform with offset
-        Vector3 spawnPos = spawnTransform.position;
-        if (spawnPosComponent == null)
+        // Calculate direction first - use provided direction or fallback to transform forward
+        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
+        
+        // Ensure direction is normalized and has valid Y component (not zero)
+        // For horizontal projectiles, keep Y at 0, but ensure X and Z are valid
+        if (Mathf.Abs(forwardDir.y) < 0.001f)
         {
-            spawnPos = attackerTf.position + new Vector3(0f, 1.3f, 0f) + attackerTf.TransformDirection(@event.SpawnOffset);
+            forwardDir.y = 0f; // Explicitly set to 0 for horizontal movement
+        }
+        forwardDir = forwardDir.normalized;
+
+        // Spawn position - use spawn transform if found, otherwise use attacker transform with offset
+        Vector3 spawnPos;
+        if (spawnPosComponent != null)
+        {
+            spawnPos = spawnTransform.position;
+            // Apply offset relative to spawn transform
+            spawnPos += spawnTransform.TransformDirection(@event.SpawnOffset);
         }
         else
         {
-            // If using ProjectileSpawnPos, still apply the offset relative to spawn transform
-            spawnPos += spawnTransform.TransformDirection(@event.SpawnOffset);
+            // Default spawn position - use attacker position with height offset
+            spawnPos = attackerTf.position + new Vector3(0f, 1.3f, 0f);
+            // Apply offset in world space relative to direction
+            if (@event.SpawnOffset.sqrMagnitude > 0.0001f)
+            {
+                spawnPos += Quaternion.LookRotation(forwardDir, Vector3.up) * @event.SpawnOffset;
+            }
         }
 
-        // Direction
-        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? spawnTransform.forward : @event.Direction.normalized;
-
-        // Spawn rotation - align with direction
+        // Spawn rotation - align with direction (ensure up vector is correct)
         Quaternion spawnRot = Quaternion.LookRotation(forwardDir, Vector3.up);
 
         var pool = _world.Services.Resolve<ObjectPoolService>();
 
-        // Use spawnRot instead of attackerTf.rotation to ensure correct initial rotation
+        // Use spawnRot to ensure correct initial rotation
         GameObject projectileGO = pool.Get(@event.ProjectilePrefab, spawnPos, spawnRot);
 
         if (!projectileGO.TryGetComponent(out ProjectileView projectile))

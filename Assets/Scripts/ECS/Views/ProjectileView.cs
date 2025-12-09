@@ -37,14 +37,29 @@ public class ProjectileView : NetworkBehaviour
         _damage = damage;
         _speed = speed;
         _lifetime = Mathf.Max(0.01f, lifetime);
+
+        // Normalize direction and ensure it's valid
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            // Fallback to forward if direction is invalid
+            direction = Vector3.forward;
+        }
         _direction = direction.normalized;
+
         _impactEffect = impactEffect;
         _spawnTime = Time.time;
         _prefabRef = prefabRef;
         _hasHit = false;
 
         // Always reset position/rotation explicitly before moving
+        // Use the provided spawn rotation to ensure correct initial orientation
         transform.SetPositionAndRotation(spawnPos, spawnRotation);
+
+        // Ensure the transform forward matches the direction
+        if (Vector3.Dot(transform.forward, _direction) < 0.9f)
+        {
+            transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
+        }
 
         // Reset any internal movement history
         _spawnTime = Time.time;
@@ -68,17 +83,28 @@ public class ProjectileView : NetworkBehaviour
             return;
         }
 
+        // Ensure direction is still normalized
+        if (_direction.sqrMagnitude < 0.9f)
+        {
+            _direction = _direction.normalized;
+        }
+
+        // Move projectile in the direction
+        Vector3 movement = _direction * _speed * Time.deltaTime;
+        transform.position += movement;
+
+        // Keep rotation aligned with movement direction
+        if (movement.sqrMagnitude > 0.0001f)
+        {
+            transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
+        }
+
         Debug.DrawRay(transform.position, _direction * 2f, Color.yellow, 0.1f);
 
-        transform.position += _direction * _speed * Time.deltaTime;
-
+        // Check lifetime
         if (Time.time - _spawnTime >= _lifetime)
         {
             ReturnOrDestroy();
-        }
-        else
-        {
-            Destroy(gameObject);
         }
     }
 
@@ -90,7 +116,7 @@ public class ProjectileView : NetworkBehaviour
         if (!NetworkManager.Singleton.IsServer)
             return;
 
-        // NEW — layer detection (obstacle, player, enemy, etc)
+        // layer detection (obstacle, player, enemy, etc)
         if (!IsInHitMask(other.gameObject))
             return;
 
@@ -148,7 +174,6 @@ public class ProjectileView : NetworkBehaviour
             }
         }
 
-        // return projectile to pool
         ReturnOrDestroy();
     }
 

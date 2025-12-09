@@ -46,6 +46,12 @@ public class AttackSystem : ISystem
             _world.Components.Add(@event.Entity, state);
         }
 
+        // Block attack if already attacking - prevents animation spam/reset
+        if (state.CurrentState == CombatState.Attacking || attack.IsAttacking)
+        {
+            return; // Attack in progress, block new attack input
+        }
+
         // If stuck in CastingSkill state, force reset to Idle
         if (state.CurrentState == CombatState.CastingSkill)
         {
@@ -64,7 +70,8 @@ public class AttackSystem : ISystem
             }
         }
 
-        if (!attack.CanAttack(weapon.BaseCooldown) || attack.IsAttacking)
+        // Check cooldown
+        if (!attack.CanAttack(weapon.BaseCooldown))
         {
             return;
         }

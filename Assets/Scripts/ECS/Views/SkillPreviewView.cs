@@ -88,6 +88,12 @@ public class SkillPreviewView : EntityView
 
     private void OnSkillExecutionRequestEvent(SkillExecutionRequestEvent @event)
     {
+        // Clear SkillPreview flag when skill is executed
+        if (WorldInstance.Components.TryGet(EntityInstance, out ActionFlagComponent flags))
+        {
+            flags.Set(ActionFlag.SkillPreview, false);
+        }
+        
         TryCastSkill();
         HideSkillVfxEffect();
     }

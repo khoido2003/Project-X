@@ -101,9 +101,7 @@ public class SkillSystem : ISystem
     {
         if (@event.EventType == AnimationEventRelayType.SKILL_END)
         {
-            _world.Events.Publish(
-                new ExitCombatStateEvent { Entity = @event.Entity, TargetState = CombatState.CastingSkill }
-            );
+            _world.Events.Publish(new ExitCombatStateEvent { Entity = @event.Entity, TargetState = CombatState.Idle });
         }
     }
 
@@ -148,13 +146,18 @@ public class SkillSystem : ISystem
             }
         }
 
-        // Ensure we return to idle so the player can attack again after skill
-        // Force reset combat state immediately - this is the primary fix
+        // Clear SkillPreview flag to allow attacks
+        if (_world.Components.TryGet(@event.Caster, out ActionFlagComponent flags))
+        {
+            flags.Set(ActionFlag.SkillPreview, false);
+        }
+
+        // Force reset combat state immediately
         if (_world.Components.TryGet(@event.Caster, out CombatStateComponent combat))
         {
             combat.CurrentState = CombatState.Idle;
             combat.LastActionTime = Time.time;
-            
+
             // Publish state change event to notify other systems
             _world.Events.Publish(
                 new CombatStateChangedEvent
@@ -165,7 +168,7 @@ public class SkillSystem : ISystem
                 }
             );
         }
-        
+
         // Also publish exit event for consistency
         _world.Events.Publish(
             new ExitCombatStateEvent { Entity = @event.Caster, TargetState = CombatState.CastingSkill }

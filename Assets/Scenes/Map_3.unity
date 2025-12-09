@@ -7454,11 +7454,11 @@ PrefabInstance:
     - target: {fileID: 1098466022860323792, guid: b3f9a430af4497d4fbc1bb3d39d24534, type: 3}
       propertyPath: 'upgradeCards.Array.data[1]'
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 3983114637597280730}
     - target: {fileID: 1098466022860323792, guid: b3f9a430af4497d4fbc1bb3d39d24534, type: 3}
       propertyPath: 'upgradeCards.Array.data[2]'
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 3983114637597280729}
     - target: {fileID: 8876812405676636333, guid: b3f9a430af4497d4fbc1bb3d39d24534, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7544,6 +7544,28 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b3f9a430af4497d4fbc1bb3d39d24534, type: 3}
+--- !u!114 &3983114637597280729 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7921620742614027063, guid: b3f9a430af4497d4fbc1bb3d39d24534, type: 3}
+  m_PrefabInstance: {fileID: 3983114637597280728}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bd8c4db02aef2e418b7c1e720d75c5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeCardUI
+--- !u!114 &3983114637597280730 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1224045745073690048, guid: b3f9a430af4497d4fbc1bb3d39d24534, type: 3}
+  m_PrefabInstance: {fileID: 3983114637597280728}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bd8c4db02aef2e418b7c1e720d75c5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeCardUI
 --- !u!224 &3984319059170963302 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1174458322293488936, guid: 030482f7ad8e06c4b93a4e0c07d24ed0, type: 3}
