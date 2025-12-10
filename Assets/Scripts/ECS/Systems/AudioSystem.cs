@@ -1,10 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
 
-/// <summary>
-/// Audio system that handles audio events and plays sounds through the audio service.
-/// Subscribes to audio events and delegates to IAudioService.
-/// </summary>
 public class AudioSystem : ISystem
 {
     private World _world;
@@ -35,7 +31,7 @@ public class AudioSystem : ISystem
 
         if (@event.IsLooping)
         {
-            // For looping sounds, you might want special handling
+            // For looping sounds, might need special handling
             // For now, just play as normal
         }
 
@@ -70,4 +66,3 @@ public class AudioSystem : ISystem
         _world.Events.Unsubscribe<SetVolumeEvent>(OnSetVolume);
     }
 }
-

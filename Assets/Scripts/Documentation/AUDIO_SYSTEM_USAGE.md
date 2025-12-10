@@ -97,7 +97,7 @@ In `AnimationEventRelayView.cs` or `AttackExecutionView.cs`:
 private void HandleAttackHit()
 {
     // ... existing attack code ...
-    
+
     // Play weapon sound
     if (weapon.AttackSound != null)
     {
@@ -136,7 +136,7 @@ protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
             );
         }
     }
-    
+
     // ... rest of skill execution ...
 }
 ```
@@ -172,11 +172,11 @@ private void OnPhaseChanged(GamePhase newPhase, int round)
         case GamePhase.CombatPhase:
             AudioHelper.PlayMusic(_world, combatMusicClip, fadeIn: 2f);
             break;
-            
+
         case GamePhase.BossPhase:
             AudioHelper.PlayMusic(_world, bossMusicClip, fadeIn: 2f);
             break;
-            
+
         case GamePhase.UpgradePhase:
             AudioHelper.PlayMusic(_world, upgradeMusicClip, fadeIn: 1f);
             break;
@@ -192,7 +192,7 @@ In `EnemyDeadStateAI.cs`:
 public void OnEnter(World world, EntityId entity)
 {
     // ... existing death code ...
-    
+
     // Play death sound
     if (world.Components.TryGet(entity, out TransformComponent trans))
     {

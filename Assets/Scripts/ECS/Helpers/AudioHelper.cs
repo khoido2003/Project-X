@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Helper class for easy audio playback throughout the codebase.
-/// Provides convenient static methods that work with the World's event system.
-/// </summary>
 public static class AudioHelper
 {
     /// <summary>
@@ -22,7 +18,13 @@ public static class AudioHelper
     /// <summary>
     /// Play a 3D sound effect at a world position
     /// </summary>
-    public static void PlaySound3D(World world, AudioClip clip, AudioCategory category, Vector3 position, float? volume = null)
+    public static void PlaySound3D(
+        World world,
+        AudioClip clip,
+        AudioCategory category,
+        Vector3 position,
+        float? volume = null
+    )
     {
         if (world == null || clip == null)
         {
@@ -71,4 +73,3 @@ public static class AudioHelper
         world.Events.Publish(new SetVolumeEvent(category, volume));
     }
 }
-

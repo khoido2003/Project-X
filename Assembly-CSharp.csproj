@@ -47,6 +47,7 @@
     <Analyzer Include="D:\unity\Editor\6000.3.0f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\ECS\Services\AudioService.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
     <Compile Include="Assets\Scripts\Utils\Singleton.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\NetworkSyncView.cs" />
@@ -88,6 +89,7 @@
     <Compile Include="Assets\Scripts\ECS\Components\AttackDataComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\EnemyComponent.cs" />
     <Compile Include="Assets\Scripts\SO\SkillDefinitionSO.cs" />
+    <Compile Include="Assets\Scripts\ECS\Helpers\AudioBoostraper.cs" />
     <Compile Include="Assets\Scripts\Core\Network\NetworkObjectDespawner.cs" />
     <Compile Include="Assets\Scripts\Core\Network\NetVars.cs" />
     <Compile Include="Assets\Scripts\Utils\RagdollUtils.cs" />
@@ -98,6 +100,7 @@
     <Compile Include="Assets\Scripts\ECS\Systems\HealthRegenSystem.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\UpdateCollectibleCount.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\TransformSyncView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Helpers\LoadingSceneHelper.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\PlayerRespawnSystem.cs" />
     <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
@@ -109,14 +112,11 @@
     <Compile Include="Assets\Scripts\ECS\Views\EnemyMovementView.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\CombatStateEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
-    <Compile Include="Assets\Scripts\Utils\LoadingSceneController.cs" />
     <Compile Include="Assets\Scripts\SO\NetworkSO.cs" />
     <Compile Include="Assets\Scripts\Core\Network\Lobby\LobbyService.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\AStarPathfinder.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\GamePhaseEvent.cs" />
     <Compile Include="Assets\Scripts\SO\CharacterDefinitionSO.cs" />
-    <Compile Include="Assets\Scripts\Utils\InputManager.cs" />
-    <Compile Include="Assets\Scripts\ECS\Interfaces\IAudioService1.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\PlaySoundAtRandomIntervals.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\HealthDataComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\EffectsEvent.cs" />
@@ -133,6 +133,7 @@
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAttackStateAI.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ServiceLocator.cs" />
+    <Compile Include="Assets\Scripts\ECS\Interfaces\IAudioService.cs" />
     <Compile Include="Assets\Scripts\Core\Network\PlayerCharSelection.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\MapSelectionManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\SkillSetComponent.cs" />
@@ -156,6 +157,7 @@
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CustomSceneManager.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\UIRoot.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\StarterSceneStar.cs" />
+    <Compile Include="Assets\Scripts\ECS\Events\AudioEvent.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyRoom\LobbyCharacterController2.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\WeaponDataComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyIdleStateAI.cs" />
@@ -165,6 +167,7 @@
     <Compile Include="Assets\Scripts\ECS\Views\Skills\HomerunSwingExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\KnockbackSystem.cs" />
     <Compile Include="Assets\Scripts\Utils\SpawnPoint.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\AudioSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SkillSystem.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\SelectedSkill.cs" />
     <Compile Include="Assets\Scripts\Utils\UnityMainThreadDispatcher.cs" />
@@ -172,8 +175,10 @@
     <Compile Include="Assets\Scripts\Core\Managers\MenuManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
     <Compile Include="Assets\Scripts\Utils\GoToMenu.cs" />
+    <Compile Include="Assets\Scripts\Core\Managers\InputManager.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\ThirdPersonController\Scripts\BasicRigidBodyPush.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\PlasmaShieldExecutorView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Helpers\AudioHelper.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\CombatStateComponent.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\NetworkGameStateManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\InputEvent.cs" />

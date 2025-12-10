@@ -1,21 +1,19 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Audio service implementation that manages all game audio.
-/// Supports multiple audio categories with independent volume controls.
-/// </summary>
 public class AudioService : MonoBehaviour, IAudioService
 {
+    public static AudioService Instance { get; private set; }
+
     [Header("Audio Sources")]
     [SerializeField]
-    private AudioSource musicSource; // For background music
+    private AudioSource musicSource;
 
     [SerializeField]
-    private int soundSourcePoolSize = 10; // Number of audio sources for sound effects
+    private int soundSourcePoolSize = 10;
 
-    [Header("Default Volumes")]
     [SerializeField]
     [Range(0f, 1f)]
     private float masterVolume = 1f;
@@ -52,7 +50,6 @@ public class AudioService : MonoBehaviour, IAudioService
     [Range(0f, 1f)]
     private float footstepVolume = 0.8f;
 
-    [Header("3D Sound Settings")]
     [SerializeField]
     private float minDistance3D = 1f;
 
@@ -67,7 +64,15 @@ public class AudioService : MonoBehaviour, IAudioService
 
     private void Awake()
     {
-        // Initialize category volumes
+        // Singleton + persist across scenes (menus/maps share one audio service)
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         _categoryVolumes[AudioCategory.Master] = masterVolume;
         _categoryVolumes[AudioCategory.Music] = musicVolume;
         _categoryVolumes[AudioCategory.UI] = uiVolume;
@@ -78,10 +83,9 @@ public class AudioService : MonoBehaviour, IAudioService
         _categoryVolumes[AudioCategory.Environment] = environmentVolume;
         _categoryVolumes[AudioCategory.Footstep] = footstepVolume;
 
-        // Setup music source
         if (musicSource == null)
         {
-            GameObject musicGO = new GameObject("MusicSource");
+            GameObject musicGO = new("MusicSource");
             musicGO.transform.SetParent(transform);
             musicSource = musicGO.AddComponent<AudioSource>();
             musicSource.loop = true;
@@ -89,14 +93,13 @@ public class AudioService : MonoBehaviour, IAudioService
         }
         _currentMusicSource = musicSource;
 
-        // Create pool of audio sources for sound effects
         for (int i = 0; i < soundSourcePoolSize; i++)
         {
-            GameObject sourceGO = new GameObject($"SoundSource_{i}");
-            sourceGO.transform.SetParent(transform);
-            AudioSource source = sourceGO.AddComponent<AudioSource>();
+            GameObject sourceGo = new GameObject($"SoundSource_{i}");
+            sourceGo.transform.SetParent(transform);
+            AudioSource source = sourceGo.AddComponent<AudioSource>();
             source.playOnAwake = false;
-            source.spatialBlend = 0f; // 2D by default
+            source.spatialBlend = 0f; // 2D sound
             source.minDistance = minDistance3D;
             source.maxDistance = maxDistance3D;
             _availableSources.Enqueue(source);
@@ -105,7 +108,6 @@ public class AudioService : MonoBehaviour, IAudioService
 
     private void Update()
     {
-        // Clean up finished audio sources
         for (int i = _activeSources.Count - 1; i >= 0; i--)
         {
             if (!_activeSources[i].isPlaying)
@@ -123,29 +125,30 @@ public class AudioService : MonoBehaviour, IAudioService
     {
         if (clip == null)
         {
-            Debug.LogWarning("[AudioService] Attempted to play null audio clip");
+            Debug.LogWarning("[AudioService] Attemped to play null audioClip");
             return;
         }
 
         AudioSource source = GetAvailableSource();
+
         if (source == null)
         {
-            Debug.LogWarning("[AudioService] No available audio sources!");
+            Debug.LogWarning("[AudioService] No available audio sources");
             return;
         }
 
         source.clip = clip;
         source.loop = false;
 
-        // Set 3D or 2D
         if (position.HasValue)
         {
-            source.spatialBlend = 1f; // 3D
+            source.spatialBlend = 1f;
             source.transform.position = position.Value;
         }
         else
         {
-            source.spatialBlend = 0f; // 2D
+            // 2D sounds
+            source.spatialBlend = 0f;
         }
 
         // Calculate volume
@@ -157,11 +160,11 @@ public class AudioService : MonoBehaviour, IAudioService
         _activeSources.Add(source);
     }
 
-    public void PlayMusic(AudioClip clip, float fadeIn = 1f)
+    public void PlayMusic(AudioClip clip, float fadeIn = 1)
     {
         if (clip == null)
         {
-            Debug.LogWarning("[AudioService] Attempted to play null music clip");
+            Debug.LogWarning("[AudioService] Attempted to play null music audioClip");
             return;
         }
 
@@ -170,10 +173,49 @@ public class AudioService : MonoBehaviour, IAudioService
             StopCoroutine(_musicFadeCoroutine);
         }
 
-        _musicFadeCoroutine = StartCoroutine(FadeMusicCoroutine(clip, fadeIn));
+        _musicFadeCoroutine = StartCoroutine(FadeInMusicCoroutine(clip, fadeIn));
     }
 
-    public void StopMusic(float fadeOut = 1f)
+    public float GetCategoryVolume(AudioCategory category)
+    {
+        return _categoryVolumes.TryGetValue(category, out float volume) ? volume : 1f;
+    }
+
+    public void SetCategoryVolume(AudioCategory category, float volume)
+    {
+        volume = Mathf.Clamp01(volume);
+        _categoryVolumes[category] = volume;
+
+        if (category == AudioCategory.Master || category == AudioCategory.Music)
+        {
+            if (_currentMusicSource != null && _currentMusicSource.isPlaying)
+            {
+                _currentMusicSource.volume =
+                    GetCategoryVolume(AudioCategory.Music) * GetCategoryVolume(AudioCategory.Master);
+            }
+        }
+
+        // Update active sound sources
+        foreach (var source in _activeSources)
+        {
+            if (source.isPlaying && source.clip != null)
+            {
+                source.volume = source.volume;
+            }
+        }
+    }
+
+    public float GetMasterVolume()
+    {
+        return GetCategoryVolume(AudioCategory.Master);
+    }
+
+    public void SetMasterVolume(float volume)
+    {
+        SetCategoryVolume(AudioCategory.Master, volume);
+    }
+
+    public void StopMusic(float fadeOut = 1)
     {
         if (_musicFadeCoroutine != null)
         {
@@ -183,46 +225,6 @@ public class AudioService : MonoBehaviour, IAudioService
         _musicFadeCoroutine = StartCoroutine(FadeOutMusicCoroutine(fadeOut));
     }
 
-    public void SetCategoryVolume(AudioCategory category, float volume)
-    {
-        volume = Mathf.Clamp01(volume);
-        _categoryVolumes[category] = volume;
-
-        // Update music source if master or music volume changed
-        if (category == AudioCategory.Master || category == AudioCategory.Music)
-        {
-            if (_currentMusicSource != null && _currentMusicSource.isPlaying)
-            {
-                _currentMusicSource.volume = GetCategoryVolume(AudioCategory.Music) * GetCategoryVolume(AudioCategory.Master);
-            }
-        }
-
-        // Update active sound sources
-        foreach (var source in _activeSources)
-        {
-            if (source.isPlaying && source.clip != null)
-            {
-                // Recalculate volume - this is simplified, in production you'd track category per source
-                source.volume = source.volume; // Will be recalculated on next play
-            }
-        }
-    }
-
-    public float GetCategoryVolume(AudioCategory category)
-    {
-        return _categoryVolumes.TryGetValue(category, out float volume) ? volume : 1f;
-    }
-
-    public void SetMasterVolume(float volume)
-    {
-        SetCategoryVolume(AudioCategory.Master, volume);
-    }
-
-    public float GetMasterVolume()
-    {
-        return GetCategoryVolume(AudioCategory.Master);
-    }
-
     private AudioSource GetAvailableSource()
     {
         if (_availableSources.Count > 0)
@@ -230,8 +232,7 @@ public class AudioService : MonoBehaviour, IAudioService
             return _availableSources.Dequeue();
         }
 
-        // If no available sources, create a new one (emergency fallback)
-        GameObject sourceGO = new GameObject("SoundSource_Dynamic");
+        GameObject sourceGO = new("SoundSource_Dynamic");
         sourceGO.transform.SetParent(transform);
         AudioSource source = sourceGO.AddComponent<AudioSource>();
         source.playOnAwake = false;
@@ -241,22 +242,20 @@ public class AudioService : MonoBehaviour, IAudioService
         return source;
     }
 
-    private IEnumerator FadeMusicCoroutine(AudioClip newClip, float fadeIn)
+    private IEnumerator FadeInMusicCoroutine(AudioClip newClip, float fadeIn)
     {
-        // Fade out current music if playing
         if (_currentMusicSource.isPlaying)
         {
             float startVolume = _currentMusicSource.volume;
             float elapsed = 0f;
-            float fadeOutTime = 0.5f;
+            float fadeoutTime = 0.5f;
 
-            while (elapsed < fadeOutTime)
+            while (elapsed < fadeoutTime)
             {
                 elapsed += Time.deltaTime;
-                _currentMusicSource.volume = Mathf.Lerp(startVolume, 0f, elapsed / fadeOutTime);
+                _currentMusicSource.volume = Mathf.Lerp(startVolume, 0f, elapsed / fadeoutTime);
                 yield return null;
             }
-
             _currentMusicSource.Stop();
         }
 
@@ -301,4 +300,3 @@ public class AudioService : MonoBehaviour, IAudioService
         _musicFadeCoroutine = null;
     }
 }
-
