@@ -29,6 +29,9 @@ public class MenuManager : MonoBehaviour
     [SerializeField]
     private Button m_quickGameBtn;
 
+    [SerializeField]
+    private UISoundConfig uiSoundConfig;
+
     private void Awake()
     {
         Debug.Log("MenuManager Awake");
@@ -75,6 +78,7 @@ public class MenuManager : MonoBehaviour
 
     public void OnClickHost()
     {
+        PlayButtonClickSound();
         NetworkManager.Singleton.StartHost();
         LoadingSceneManager.Instance.LoadScene(nextScene);
         Debug.Log("Host clicked");
@@ -82,12 +86,27 @@ public class MenuManager : MonoBehaviour
 
     public void OnClickJoin()
     {
+        PlayButtonClickSound();
         StartCoroutine(Join());
     }
 
     public void OnClickQuit()
     {
+        PlayButtonClickSound();
         Application.Quit();
+    }
+
+    private void PlayButtonClickSound()
+    {
+        if (uiSoundConfig != null && uiSoundConfig.buttonClick != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(uiSoundConfig.buttonClick, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
+        }
+        else if (m_confirmClip != null && AudioService.Instance != null)
+        {
+            // Fallback to legacy clip
+            AudioHelper.PlaySound(m_confirmClip, AudioCategory.UI);
+        }
     }
 
     private void ClearAllCharactersData()

@@ -46,8 +46,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c40e34a1af067074aaa6321e56dfa191, type: 2}
   - {fileID: 11400000, guid: 61eb7046a1612ad4687f18c4a482b5ea, type: 2}
   - {fileID: 11400000, guid: f3a53398fc9123f4b804ec8111e7164e, type: 2}
+  audioProfile: {fileID: 11400000, guid: 6b71d1d5403a5e24badcdc590cff1a09, type: 2}
   clientId: 0
-  playerId: 0
+  playerId: -1
   isSelected: 0
   enemiesDestroyed: 0
   totalDamages: 0

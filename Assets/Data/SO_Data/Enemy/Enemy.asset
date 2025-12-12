@@ -38,10 +38,11 @@ MonoBehaviour:
   patrolPointCount: 4
   patrolRadius: 10
   defaultState: 0
+  audioProfile: {fileID: 11400000, guid: 4f068eb5bfcf9fa4aa0b343406bbe870, type: 2}
   attacks:
   - attackName: Gun
     executionType: 1
-    damage: 10
+    damage: 14
     cooldown: 1
     range: 5
     animationTrigger: attack

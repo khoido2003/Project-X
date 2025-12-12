@@ -32,6 +32,9 @@ public class CharacterDefinitionSO : NetworkSO
     [Header("Skills")]
     public List<SkillDefinitionSO> skills = new();
 
+    [Header("Audio")]
+    public AudioProfileSO audioProfile;
+
     [Header("Client Info")]
     public ulong clientId;
 
@@ -63,12 +66,14 @@ public class CharacterDefinitionSO : NetworkSO
         if (prefab != null)
         {
             var netObj = prefab.GetComponent<NetworkObject>();
+
             if (netObj == null)
             {
                 Debug.LogError($"{characterName}: Prefab must have Network Object component!", this);
             }
 
             var entityView = prefab.GetComponent<EntityView>();
+
             if (entityView == null)
             {
                 Debug.LogError($"{characterName}: Prefab must have EntityView component!", this);

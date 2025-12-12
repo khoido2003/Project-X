@@ -1271,6 +1271,9 @@ MonoBehaviour:
   resultEntryPrefab: {fileID: 0}
   winnerText: {fileID: 0}
   returnToLobbyButton: {fileID: 0}
+  victoryMusic: {fileID: 0}
+  defeatMusic: {fileID: 0}
+  musicFadeIn: 1
 --- !u!1 &1016580268
 GameObject:
   m_ObjectHideFlags: 0
@@ -1421,6 +1424,7 @@ MonoBehaviour:
   combatPhaseDuration: 60
   minPlayers: 1
   resultsUI: {fileID: 2739877206516067789}
+  voiceoverConfig: {fileID: 11400000, guid: ec9f5ed23eba8d44da541160302bc08e, type: 2}
   _waveManager: {fileID: 814366805}
 --- !u!4 &1213054031
 Transform:
@@ -1472,6 +1476,8 @@ MonoBehaviour:
   entityViewRegistry: {fileID: 474556299}
   inputService: {fileID: 483386067}
   cameraService: {fileID: 509294133}
+  audioService: {fileID: 0}
+  sceneAudioConfig: {fileID: 11400000, guid: 87782b3bd438da146810e8d8d2dd2f1c, type: 2}
   characterData:
   - {fileID: 11400000, guid: 14fd96a3bc0a659488a2b441064ebf86, type: 2}
   playerSpawnPoints:

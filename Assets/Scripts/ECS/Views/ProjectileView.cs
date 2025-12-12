@@ -55,10 +55,14 @@ public class ProjectileView : NetworkBehaviour
         // Use the provided spawn rotation to ensure correct initial orientation
         transform.SetPositionAndRotation(spawnPos, spawnRotation);
 
-        // Ensure the transform forward matches the direction
-        if (Vector3.Dot(transform.forward, _direction) < 0.9f)
+        // CRITICAL: Set rotation based on direction, not spawnRotation (which might be stale)
+        if (_direction.sqrMagnitude > 0.0001f)
         {
             transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
+        }
+        else
+        {
+            transform.rotation = spawnRotation;
         }
 
         // Reset any internal movement history
@@ -145,6 +149,12 @@ public class ProjectileView : NetworkBehaviour
             );
         }
 
+        // Play impact sound at hit position
+        Vector3 hitPos = other.ClosestPoint(transform.position);
+        _world.Events.Publish(
+            new AudioCueEvent(_attacker, AudioCueType.Impact, hitPos)
+        );
+
         HitAndReturn();
     }
 
@@ -205,5 +215,6 @@ public class ProjectileView : NetworkBehaviour
         // Reset state when returned to pool
         _hasHit = false;
         _spawnTime = 0f;
+        _direction = Vector3.zero; // Clear direction to force re-initialization
     }
 }

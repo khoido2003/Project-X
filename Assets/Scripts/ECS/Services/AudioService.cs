@@ -20,7 +20,7 @@ public class AudioService : MonoBehaviour, IAudioService
 
     [SerializeField]
     [Range(0f, 1f)]
-    private float musicVolume = 0.7f;
+    private float musicVolume = 0.4f;
 
     [SerializeField]
     [Range(0f, 1f)]
@@ -31,16 +31,19 @@ public class AudioService : MonoBehaviour, IAudioService
     private float characterVolume = 1f;
 
     [SerializeField]
-    [Range(0f, 1f)]
-    private float weaponVolume = 1f;
+    [Range(0f, 2f)]
+    [Tooltip("Volume multiplier for weapon sounds (can exceed 1.0 for louder effects)")]
+    private float weaponVolume = 1.5f;
 
     [SerializeField]
-    [Range(0f, 1f)]
-    private float skillVolume = 1f;
+    [Range(0f, 2f)]
+    [Tooltip("Volume multiplier for skill sounds (can exceed 1.0 for louder effects)")]
+    private float skillVolume = 1.5f;
 
     [SerializeField]
-    [Range(0f, 1f)]
-    private float enemyVolume = 1f;
+    [Range(0f, 2f)]
+    [Tooltip("Volume multiplier for enemy sounds (can exceed 1.0 for louder effects)")]
+    private float enemyVolume = 1.5f;
 
     [SerializeField]
     [Range(0f, 1f)]
@@ -61,6 +64,10 @@ public class AudioService : MonoBehaviour, IAudioService
     private Dictionary<AudioCategory, float> _categoryVolumes = new();
     private AudioSource _currentMusicSource;
     private Coroutine _musicFadeCoroutine;
+
+    // Track footstep sounds by entity to stop them when movement stops
+    // Using entity ID as string key since EntityId struct might not work well as dictionary key
+    private Dictionary<string, AudioSource> _activeFootstepSources = new();
 
     private void Awake()
     {
@@ -123,10 +130,32 @@ public class AudioService : MonoBehaviour, IAudioService
 
     public void PlaySound(AudioClip clip, AudioCategory category, Vector3? position = null, float? volume = null)
     {
+        PlaySoundForEntity(clip, category, position, volume, default(EntityId));
+    }
+
+    public AudioSource PlaySoundForEntity(
+        AudioClip clip,
+        AudioCategory category,
+        Vector3? position = null,
+        float? volume = null,
+        EntityId entity = default
+    )
+    {
+        return PlaySoundForEntity(clip, category, position, volume, entity.Id.ToString());
+    }
+
+    private AudioSource PlaySoundForEntity(
+        AudioClip clip,
+        AudioCategory category,
+        Vector3? position,
+        float? volume,
+        string entityKey
+    )
+    {
         if (clip == null)
         {
             Debug.LogWarning("[AudioService] Attemped to play null audioClip");
-            return;
+            return null;
         }
 
         AudioSource source = GetAvailableSource();
@@ -134,7 +163,7 @@ public class AudioService : MonoBehaviour, IAudioService
         if (source == null)
         {
             Debug.LogWarning("[AudioService] No available audio sources");
-            return;
+            return null;
         }
 
         source.clip = clip;
@@ -151,13 +180,56 @@ public class AudioService : MonoBehaviour, IAudioService
             source.spatialBlend = 0f;
         }
 
-        // Calculate volume
+        // Calculate volume - allow category volumes > 1.0 for louder effects
+        // Only clamp the final result to prevent distortion
         float categoryVol = GetCategoryVolume(category);
-        float finalVolume = (volume ?? categoryVol) * GetCategoryVolume(AudioCategory.Master);
-        source.volume = finalVolume;
+        float baseVol = volume ?? categoryVol;
+        float finalVolume = baseVol * GetCategoryVolume(AudioCategory.Master);
+        source.volume = Mathf.Clamp01(finalVolume); // Clamp final to 0-1 range
 
         source.Play();
         _activeSources.Add(source);
+
+        // Track footstep sounds by entity so we can stop them
+        if (category == AudioCategory.Footstep && !string.IsNullOrEmpty(entityKey))
+        {
+            // Stop any existing footstep sound for this entity
+            if (_activeFootstepSources.TryGetValue(entityKey, out AudioSource existingSource))
+            {
+                if (existingSource != null && existingSource.isPlaying)
+                {
+                    existingSource.Stop();
+                    existingSource.clip = null;
+                    if (_activeSources.Contains(existingSource))
+                    {
+                        _activeSources.Remove(existingSource);
+                    }
+                    _availableSources.Enqueue(existingSource);
+                }
+            }
+            _activeFootstepSources[entityKey] = source;
+        }
+
+        return source;
+    }
+
+    public void StopFootstepForEntity(EntityId entity)
+    {
+        string entityKey = entity.Id.ToString();
+        if (_activeFootstepSources.TryGetValue(entityKey, out AudioSource source))
+        {
+            if (source != null && source.isPlaying)
+            {
+                source.Stop();
+                source.clip = null;
+                if (_activeSources.Contains(source))
+                {
+                    _activeSources.Remove(source);
+                }
+                _availableSources.Enqueue(source);
+            }
+            _activeFootstepSources.Remove(entityKey);
+        }
     }
 
     public void PlayMusic(AudioClip clip, float fadeIn = 1)

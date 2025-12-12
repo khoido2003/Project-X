@@ -76,7 +76,13 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     [SerializeField]
     private TextMeshProUGUI m_countdownText;
 
-    [Header("Audio clip")]
+    [Header("Audio")]
+    [SerializeField]
+    private UISoundConfig uiSoundConfig;
+
+    [SerializeField]
+    private VoiceoverConfig voiceoverConfig;
+
     [SerializeField]
     private AudioClip m_confirmClip;
 
@@ -85,6 +91,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
     private bool m_isTimerOn;
     private float m_timer;
+    private int _lastCountdownPlayed = -1; // Track last countdown number played
 
     private readonly Color k_selectedColor = new Color32(74, 74, 74, 255);
 
@@ -113,11 +120,42 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
         {
             m_timer = 0f;
         }
-        m_countdownText.text = Mathf.FloorToInt(m_timer).ToString();
+
+        int currentCountdown = Mathf.FloorToInt(m_timer);
+        m_countdownText.text = currentCountdown.ToString();
+
+        // Play countdown voiceover
+        if (currentCountdown >= 1 && currentCountdown <= 3 && currentCountdown != _lastCountdownPlayed)
+        {
+            _lastCountdownPlayed = currentCountdown;
+            if (voiceoverConfig != null && AudioService.Instance != null)
+            {
+                AudioClip countdownClip = voiceoverConfig.GetCountdownClip(currentCountdown);
+                if (countdownClip != null)
+                {
+                    AudioHelper.PlaySound(countdownClip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+                }
+            }
+        }
+
+        // Play "Ready" at 1 second, "Game Start" at 0
+        if (m_timer <= 1f && m_timer > 0f && _lastCountdownPlayed != 0)
+        {
+            if (voiceoverConfig != null && voiceoverConfig.ready != null && AudioService.Instance != null)
+            {
+                AudioHelper.PlaySound(voiceoverConfig.ready, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+                _lastCountdownPlayed = 0;
+            }
+        }
 
         if (m_timer <= 0f)
         {
             m_isTimerOn = false;
+            _lastCountdownPlayed = -1;
+            if (voiceoverConfig != null && voiceoverConfig.gameStart != null && AudioService.Instance != null)
+            {
+                AudioHelper.PlaySound(voiceoverConfig.gameStart, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+            }
             StartGame();
         }
     }
@@ -571,6 +609,36 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
         RemoveSelectedStates();
 
         m_playerStates[playerId].playerState = ConnectionState.disconnected;
+    }
+
+    #endregion
+
+    /////////////////////////////////////////////////////////////////
+    #region Audio helpers
+
+
+    public void PlayButtonClickSound()
+    {
+        if (uiSoundConfig != null && uiSoundConfig.buttonClick != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(uiSoundConfig.buttonClick, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
+        }
+        else if (m_confirmClip != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(m_confirmClip, AudioCategory.UI);
+        }
+    }
+
+    public void PlayButtonCancelSound()
+    {
+        if (uiSoundConfig != null && uiSoundConfig.buttonCancel != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(uiSoundConfig.buttonCancel, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
+        }
+        else if (m_cancelClip != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(m_cancelClip, AudioCategory.UI);
+        }
     }
 
     #endregion

@@ -24,6 +24,10 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
 {
     public SceneName SceneActive => m_sceneActive;
 
+    [Header("Audio Configuration")]
+    [SerializeField]
+    private SceneAudioConfig sceneAudioConfig;
+
     private SceneName m_sceneActive;
 
     public static event Action OnLoadingStarted;
@@ -89,16 +93,7 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
         SceneManager.LoadScene(sceneToLoad.ToString());
 
         m_sceneActive = sceneToLoad;
-        switch (sceneToLoad)
-        {
-            case SceneName.Loading:
-                break;
-
-            case SceneName.Menu:
-
-                // TODO:  Load sound
-                break;
-        }
+        PlaySceneMusic(sceneToLoad);
     }
 
     private IEnumerator LoadSceneLocalAsync(SceneName sceneToLoad)
@@ -109,17 +104,6 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
 
         AsyncOperation asyncOp = SceneManager.LoadSceneAsync(sceneToLoad.ToString());
         asyncOp.allowSceneActivation = true;
-
-        switch (sceneToLoad)
-        {
-            case SceneName.Loading:
-                break;
-
-            case SceneName.Menu:
-
-                // TODO:  Load sound
-                break;
-        }
 
         while (!asyncOp.isDone)
         {
@@ -132,6 +116,9 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
 
             yield return null;
         }
+
+        // Play music after scene is loaded
+        PlaySceneMusic(sceneToLoad);
     }
 
     private void OnLoadComplete(ulong clientId, string sceneName, LoadSceneMode loadSceneMode)
@@ -163,7 +150,7 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
 
             case SceneName.Map_1:
             case SceneName.Map_2:
-
+            case SceneName.Map_3:
                 Debug.Log($"Client {clientId} loaded into gameplay scene: {sceneName}");
                 break;
 
@@ -172,7 +159,30 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
                 break;
         }
 
+        // Play scene music on all clients
+        PlaySceneMusicClientRpc(m_sceneActive);
+
         OnLoadingFinished?.Invoke();
+    }
+
+    [ClientRpc]
+    private void PlaySceneMusicClientRpc(SceneName sceneName)
+    {
+        PlaySceneMusic(sceneName);
+    }
+
+    private void PlaySceneMusic(SceneName sceneName)
+    {
+        if (sceneAudioConfig == null || AudioService.Instance == null)
+        {
+            return;
+        }
+
+        AudioClip music = sceneAudioConfig.GetMusicForScene(sceneName);
+        if (music != null)
+        {
+            AudioHelper.PlayMusic(music, sceneAudioConfig.musicFadeInTime);
+        }
     }
 
     private IEnumerator WaitForCharacterSelectionManager(ulong clientId)

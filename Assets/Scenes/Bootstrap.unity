@@ -232,7 +232,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 486166e37f63a27418057c62e8259787, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 1
@@ -653,6 +653,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5efd92e669e6eb45a1a25ea32a71fc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LoadingSceneManager
+  sceneAudioConfig: {fileID: 11400000, guid: 87782b3bd438da146810e8d8d2dd2f1c, type: 2}
 --- !u!4 &1082711104
 Transform:
   m_ObjectHideFlags: 0
@@ -1217,6 +1218,34 @@ PrefabInstance:
     - target: {fileID: 244214942910963422, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
       propertyPath: m_Name
       value: AudioService
+      objectReference: {fileID: 0}
+    - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
+      propertyPath: enemyVolume
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
+      propertyPath: musicSource
+      value: 
+      objectReference: {fileID: 343000972}
+    - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
+      propertyPath: musicVolume
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
+      propertyPath: skillVolume
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
+      propertyPath: masterVolume
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
+      propertyPath: weaponVolume
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
+      propertyPath: footstepVolume
+      value: 0.706
       objectReference: {fileID: 0}
     - target: {fileID: 6409005905456760780, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
       propertyPath: m_LocalPosition.x

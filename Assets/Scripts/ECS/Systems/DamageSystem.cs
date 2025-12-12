@@ -1,10 +1,6 @@
-using System;
 using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.Services.Lobbies.Models;
-using Unity.VisualScripting;
 using UnityEngine;
-using WebSocketSharp;
 
 public class DamageSystem : ISystem
 {
@@ -119,15 +115,38 @@ public class DamageSystem : ISystem
 
         _world.Events.Publish(new HealthChangedEvent(@event.Target, health.CurrentHealth, health.MaxHealth));
 
-        // Lifesteal after damage dealt (only if attacker exists and is alive)
-        if (@event.Attacker != default && _world.Components.TryGet(@event.Attacker, out PlayerUpgradesComponent atkUpgrades))
+        // Play damage/hurt sound on target
+        Vector3 hitPosition = Vector3.zero;
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(@event.Target, out EntityView targetView))
         {
-            if (atkUpgrades.LifestealPercent > 0f && _world.Components.TryGet(@event.Attacker, out HealthDataComponent attackerHealth))
+            hitPosition = targetView.transform.position;
+        }
+
+        // Publish impact sound at hit position (from attacker's profile if available)
+        if (!@event.Attacker.Equals(default))
+        {
+            _world.Events.Publish(new AudioCueEvent(@event.Attacker, AudioCueType.Impact, hitPosition));
+        }
+
+        // Lifesteal after damage dealt (only if attacker exists and is alive)
+        if (
+            @event.Attacker != default
+            && _world.Components.TryGet(@event.Attacker, out PlayerUpgradesComponent atkUpgrades)
+        )
+        {
+            if (
+                atkUpgrades.LifestealPercent > 0f
+                && _world.Components.TryGet(@event.Attacker, out HealthDataComponent attackerHealth)
+            )
             {
                 float heal = actualDamage * (atkUpgrades.LifestealPercent / 100f);
                 if (heal > 0f && !attackerHealth.IsDead)
                 {
-                    attackerHealth.CurrentHealth = Mathf.Min(attackerHealth.CurrentHealth + heal, attackerHealth.MaxHealth);
+                    attackerHealth.CurrentHealth = Mathf.Min(
+                        attackerHealth.CurrentHealth + heal,
+                        attackerHealth.MaxHealth
+                    );
                     _world.Events.Publish(
                         new HealthChangedEvent(@event.Attacker, attackerHealth.CurrentHealth, attackerHealth.MaxHealth)
                     );
@@ -136,7 +155,6 @@ public class DamageSystem : ISystem
         }
 
         // Broadcast damage visual to all clients
-        var registry = _world.Services.Resolve<EntityViewRegistry>();
         Vector3 hitPoint = Vector3.zero;
 
         if (registry.TryGet(@event.Target, out EntityView view))

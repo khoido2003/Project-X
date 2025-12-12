@@ -9526,6 +9526,18 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 981893846}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: m_cancelClip
+      value: 
+      objectReference: {fileID: 8300000, guid: e53dae01e1d851a478019a464fe59a53, type: 3}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: m_confirmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 4bef7ebada0d04544a46a1bf6567cc2d, type: 3}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: uiSoundConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: df6cb09220640b247a5ad87e824f4116, type: 2}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_clientColor.a
       value: 1
       objectReference: {fileID: 0}

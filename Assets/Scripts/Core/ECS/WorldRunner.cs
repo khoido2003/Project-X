@@ -21,6 +21,10 @@ public class WorldRunner : NetworkBehaviour
     [SerializeField]
     private AudioService audioService;
 
+    [Header("Audio Configuration")]
+    [SerializeField]
+    private SceneAudioConfig sceneAudioConfig;
+
     [SerializeField]
     private CharacterDefinitionSO[] characterData;
 
@@ -58,11 +62,33 @@ public class WorldRunner : NetworkBehaviour
         InitServices();
         InitSystems();
 
+        // Play game music when game starts
+        PlayGameMusic();
+
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
             StartCoroutine(DelayedSpawnExistingPlayers());
+        }
+    }
+
+    private void PlayGameMusic()
+    {
+        if (sceneAudioConfig == null || audioService == null)
+        {
+            return;
+        }
+
+        // Get current scene name
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (System.Enum.TryParse<SceneName>(sceneName, out SceneName sceneEnum))
+        {
+            AudioClip music = sceneAudioConfig.GetMusicForScene(sceneEnum);
+            if (music != null)
+            {
+                AudioHelper.PlayMusic(World, music, sceneAudioConfig.musicFadeInTime);
+            }
         }
     }
 
@@ -274,9 +300,27 @@ public class WorldRunner : NetworkBehaviour
         // Audio Service
         if (audioService == null)
         {
-            Debug.LogWarning("No AudioService found! Audio will not work.");
+            audioService = AudioService.Instance;
+
+            if (audioService == null)
+            {
+                audioService = FindFirstObjectByType<AudioService>();
+            }
+
+            if (audioService == null)
+            {
+                Debug.LogWarning("No AudioService found in scene - instantiating one.");
+                var go = new GameObject("AudioService");
+                audioService = go.AddComponent<AudioService>();
+            }
         }
-        else
+        else if (AudioService.Instance != null && AudioService.Instance != audioService)
+        {
+            Debug.LogWarning("AudioService reference set but singleton already exists; using singleton.");
+            audioService = AudioService.Instance;
+        }
+
+        if (audioService != null)
         {
             World.Services.Register<IAudioService>(audioService);
         }
@@ -309,6 +353,7 @@ public class WorldRunner : NetworkBehaviour
         World.Systems.AddSystem(new EnemyAISystem(), World);
 
         World.Systems.AddSystem(new AudioSystem(), World);
+        World.Systems.AddSystem(new AudioProfileSystem(), World);
 
         EnemyAIHelpers.RegisterDefaultStates();
     }

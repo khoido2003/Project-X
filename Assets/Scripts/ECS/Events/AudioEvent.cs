@@ -70,3 +70,37 @@ public struct SetVolumeEvent
         Volume = volume;
     }
 }
+
+// -----------------------------------------------------------------------------
+// Per-entity audio cues (lightweight, effect-focused)
+
+public enum AudioCueType
+{
+    Spawn,
+    Attack,
+    Skill,
+    Impact,
+    Footstep,
+    Death,
+}
+
+public struct AudioCueEvent
+{
+    public EntityId Entity;
+    public AudioCueType CueType;
+    public Vector3? PositionOverride;
+    public float? VolumeOverride;
+
+    public AudioCueEvent(
+        EntityId entity,
+        AudioCueType cueType,
+        Vector3? positionOverride = null,
+        float? volumeOverride = null
+    )
+    {
+        Entity = entity;
+        CueType = cueType;
+        PositionOverride = positionOverride;
+        VolumeOverride = volumeOverride;
+    }
+}

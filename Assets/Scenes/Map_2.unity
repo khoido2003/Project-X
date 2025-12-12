@@ -1047,6 +1047,9 @@ MonoBehaviour:
   resultEntryPrefab: {fileID: 0}
   winnerText: {fileID: 0}
   returnToLobbyButton: {fileID: 0}
+  victoryMusic: {fileID: 0}
+  defeatMusic: {fileID: 0}
+  musicFadeIn: 1
 --- !u!1 &1016580268
 GameObject:
   m_ObjectHideFlags: 0
@@ -1197,6 +1200,7 @@ MonoBehaviour:
   combatPhaseDuration: 60
   minPlayers: 1
   resultsUI: {fileID: 2739877206516067789}
+  voiceoverConfig: {fileID: 11400000, guid: ec9f5ed23eba8d44da541160302bc08e, type: 2}
   _waveManager: {fileID: 814366805}
 --- !u!4 &1213054031
 Transform:
@@ -1248,6 +1252,8 @@ MonoBehaviour:
   entityViewRegistry: {fileID: 474556299}
   inputService: {fileID: 483386067}
   cameraService: {fileID: 509294133}
+  audioService: {fileID: 0}
+  sceneAudioConfig: {fileID: 11400000, guid: 87782b3bd438da146810e8d8d2dd2f1c, type: 2}
   characterData:
   - {fileID: 11400000, guid: 14fd96a3bc0a659488a2b441064ebf86, type: 2}
   playerSpawnPoints:
@@ -3974,6 +3980,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 256592335}
     m_Modifications:
+    - target: {fileID: 3477969173049278009, guid: 621c4a74c2fc5c84494ae5aa0c99721e, type: 3}
+      propertyPath: m_Name
+      value: Level_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7634991802535362645, guid: 621c4a74c2fc5c84494ae5aa0c99721e, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 044417a1acdae1b46b398b44df6f2106, type: 2}
     - target: {fileID: 1156836264929293912, guid: 65bca2bddf595c545845af853544ba39, type: 3}
       propertyPath: m_Name
       value: GameResultUI
@@ -4058,14 +4072,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3477969173049278009, guid: 621c4a74c2fc5c84494ae5aa0c99721e, type: 3}
-      propertyPath: m_Name
-      value: Level_2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7634991802535362645, guid: 621c4a74c2fc5c84494ae5aa0c99721e, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 044417a1acdae1b46b398b44df6f2106, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
