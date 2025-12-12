@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 094a91e192074804bbd0d31d5140e20a, type: 3}
+  m_Name: SceneAudioConfig
+  m_EditorClassIdentifier: Assembly-CSharp::SceneAudioConfig
+  menuMusic: {fileID: 8300000, guid: 486166e37f63a27418057c62e8259787, type: 3}
+  characterSelectionMusic: {fileID: 8300000, guid: c4e446e9096b1674cbbfe7d4bdd5dbe1, type: 3}
+  map1Music: {fileID: 8300000, guid: cd8f2744e56f1b948a405f01ac9bd54a, type: 3}
+  map2Music: {fileID: 8300000, guid: cd8f2744e56f1b948a405f01ac9bd54a, type: 3}
+  map3Music: {fileID: 8300000, guid: cd8f2744e56f1b948a405f01ac9bd54a, type: 3}
+  victoryMusic: {fileID: 8300000, guid: d5f0e062f6eccb04f820139694ab613b, type: 3}
+  defeatMusic: {fileID: 8300000, guid: d5f0e062f6eccb04f820139694ab613b, type: 3}
+  musicFadeInTime: 1
+  musicFadeOutTime: 1

@@ -229,6 +229,17 @@ if (movement.IsMoving && movement.IsGrounded)
 }
 ```
 
+## Audio Profiles (per-entity cues)
+
+Assign an `AudioProfileSO` to your `CharacterDefinitionSO` or `EnemyDefinitionSO` to centralize voice, attack, footstep, hurt, spawn, and death sounds. Add `AudioCueEntry` rows (category, volume, clip list) and the `AudioProfileSystem` will play them when `AudioCueEvent` is published:
+
+```
+// Spawn / footstep / attack etc.
+world.Events.Publish(new AudioCueEvent(entityId, AudioCueType.Footstep));
+```
+
+Animations can call `AnimationEventRelayView.OnFootstep()` directly; attack/skill/death cues are already sent automatically when those events occur.
+
 ## Audio Categories
 
 Use these categories to organize your sounds:

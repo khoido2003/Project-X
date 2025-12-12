@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee87a4959dacbe44b985e082fb2d465d, type: 3}
+  m_Name: VoiceoverConfig
+  m_EditorClassIdentifier: Assembly-CSharp::VoiceoverConfig
+  countdown3: {fileID: 8300000, guid: c454cc2b9103cdc4cb6881bedca9e9bc, type: 3}
+  countdown2: {fileID: 8300000, guid: 13909fbbef37d5647a1f9bdd373d51b5, type: 3}
+  countdown1: {fileID: 8300000, guid: 5355a02801b76c342b09f26f886a6d95, type: 3}
+  ready: {fileID: 8300000, guid: 201f4354952ca864d8fc727af5034b18, type: 3}
+  gameStart: {fileID: 8300000, guid: 7a6662d3cbbd8bd478132de9b0dea566, type: 3}
+  roundAnnouncement: {fileID: 8300000, guid: 57608f78858c7a2458dec44333499e25, type: 3}
+  upgradePhase: {fileID: 8300000, guid: 75d6779e217e7134e9655edae512172d, type: 3}
+  combatPhase: {fileID: 8300000, guid: b13e36ef15baf154f88fb21056bf6ffe, type: 3}
+  bossFight: {fileID: 8300000, guid: 580334dda335b1340a25230735804700, type: 3}
+  gameOver: {fileID: 8300000, guid: be27c7d66bee3744b895f671636ec861, type: 3}
+  victory: {fileID: 8300000, guid: 473fcbc3bd5dc3f488b74373fd49e80e, type: 3}
+  defeat: {fileID: 8300000, guid: c03cc62fce203d649823aad392ea32c9, type: 3}
+  voiceoverVolume: 0.8

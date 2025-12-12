@@ -94,6 +94,12 @@ public class CharacterFactory
             }
         );
 
+        // Audio profile
+        if (characterData.audioProfile != null)
+        {
+            _world.Components.Add(entity, new AudioProfileComponent { Profile = characterData.audioProfile });
+        }
+
         // Skills
         _world.Components.Add(entity, new SkillSetComponent(characterData.skills));
         _world.Components.Add(entity, new SkillCastBufferComponent());
@@ -186,6 +192,12 @@ public class CharacterFactory
                 MoveYParam = data.moveYParam,
             }
         );
+
+        // Audio profile
+        if (data.audioProfile != null)
+        {
+            _world.Components.Add(entity, new AudioProfileComponent { Profile = data.audioProfile });
+        }
 
         // Skills
         _world.Components.Add(entity, new SkillSetComponent(data.skills));

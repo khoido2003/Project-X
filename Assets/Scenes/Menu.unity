@@ -700,6 +700,7 @@ MonoBehaviour:
   m_hostBtn: {fileID: 1361433506}
   m_joinBtn: {fileID: 532622579}
   m_quickGameBtn: {fileID: 786708652}
+  uiSoundConfig: {fileID: 11400000, guid: df6cb09220640b247a5ad87e824f4116, type: 2}
 --- !u!1 &45645469
 GameObject:
   m_ObjectHideFlags: 0

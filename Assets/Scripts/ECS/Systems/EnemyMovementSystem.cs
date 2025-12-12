@@ -1,9 +1,12 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public class EnemyMovementSystem : ISystem
 {
     private World _world;
+    private const float FOOTSTEP_INTERVAL = 0.4f; // Time between footsteps
+    private readonly Dictionary<EntityId, float> _lastFootstepTime = new();
 
     // --- Config ---
     private const float WAYPOINT_TOLERANCE = 0.5f;
@@ -24,7 +27,10 @@ public class EnemyMovementSystem : ISystem
 
     public void FixedUpdate(float dt) { }
 
-    public void Shutdown() { }
+    public void Shutdown()
+    {
+        _lastFootstepTime.Clear();
+    }
 
     public void Update(float dt)
     {
@@ -268,6 +274,26 @@ public class EnemyMovementSystem : ISystem
 
         movement.IsMoving = dir.sqrMagnitude > 0.0001f;
         movement.MoveDirection = dir.normalized;
+
+        // Play footstep sound when moving and grounded
+        if (movement.IsMoving && movement.IsGrounded)
+        {
+            float currentTime = Time.time;
+            if (
+                !_lastFootstepTime.TryGetValue(entity, out float lastTime)
+                || currentTime - lastTime >= FOOTSTEP_INTERVAL
+            )
+            {
+                _lastFootstepTime[entity] = currentTime;
+                _world.Events.Publish(new AudioCueEvent(entity, AudioCueType.Footstep, trans.Position));
+            }
+        }
+        else
+        {
+            // Stop footstep sound when not moving
+            var audioService = _world.Services.Resolve<IAudioService>();
+            audioService?.StopFootstepForEntity(entity);
+        }
 
         if (dir.sqrMagnitude > 0.0001f)
         {

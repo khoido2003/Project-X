@@ -284,7 +284,14 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     [ClientRpc]
     public void BroadcastDeathClientRpc()
     {
-        if (IsServer || !IsSpawned)
+        // Add safety check
+        if (!IsSpawned || NetworkObject == null)
+        {
+            Debug.LogWarning("BroadcastDeathClientRpc called on invalid NetworkObject");
+            return;
+        }
+
+        if (IsServer)
         {
             return;
         }

@@ -39,6 +39,11 @@ public abstract class SkillExecutorView : EntityView
                 );
             }
         }
+        else
+        {
+            // Profile-driven fallback
+            WorldInstance.Events.Publish(new AudioCueEvent(EntityInstance, AudioCueType.Skill, @event.TargetPoint));
+        }
 
         // Animation
         WorldInstance.Events.Publish(

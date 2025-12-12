@@ -58,11 +58,13 @@ public class AnimationEventRelayView : EntityView
         // Play weapon attack sound
         if (weapon.AttackSound != null)
         {
-            AudioHelper.PlaySound3D(
-                _world,
-                weapon.AttackSound,
-                AudioCategory.Weapon,
-                _entityView.transform.position
+            AudioHelper.PlaySound3D(_world, weapon.AttackSound, AudioCategory.Weapon, _entityView.transform.position);
+        }
+        else
+        {
+            // Fallback to profile-based attack cue if defined
+            _world.Events.Publish(
+                new AudioCueEvent(_entityView.EntityInstance, AudioCueType.Attack, _entityView.transform.position)
             );
         }
 
@@ -125,6 +127,19 @@ public class AnimationEventRelayView : EntityView
     {
         _world.Events.Publish(
             new AnimationEventRelayEvent(_entityView.EntityInstance, AnimationEventRelayType.SKILL_END)
+        );
+    }
+
+    // Called directly by animation events for footsteps
+    public void OnFootstep()
+    {
+        if (_world == null)
+        {
+            return;
+        }
+
+        _world.Events.Publish(
+            new AudioCueEvent(_entityView.EntityInstance, AudioCueType.Footstep, _entityView.transform.position)
         );
     }
 }

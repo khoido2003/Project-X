@@ -15,4 +15,6 @@ public interface IAudioService
     void SetMasterVolume(float volume);
 
     float GetMasterVolume();
+
+    void StopFootstepForEntity(EntityId entity);
 }

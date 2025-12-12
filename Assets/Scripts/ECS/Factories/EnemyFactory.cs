@@ -11,8 +11,13 @@ public class EnemyFactory
         _world = world;
     }
 
-    public GameObject CreateNetworkEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPosition)
+    public GameObject CreateNetworkEnemy(
+        EnemyDefinitionSO enemyData,
+        Vector3 spawnPosition,
+        out EntityId entity
+    )
     {
+        entity = default;
         if (!NetworkManager.Singleton.IsServer)
         {
             Debug.LogError("[EnemyFactory]: Only server can spawn enemies");
@@ -33,7 +38,7 @@ public class EnemyFactory
 
         GameObject enemyObj = NetworkObjectSpawner.SpawnNewNetworkObject(enemyData.prefab, spawnPosition, true);
         NetworkObject netObj = enemyObj.GetComponent<NetworkObject>();
-        EntityId entity = _world.CreateEntity();
+        entity = _world.CreateEntity();
 
         foreach (EntityView view in enemyObj.GetComponentsInChildren<EntityView>(includeInactive: true))
         {
@@ -91,6 +96,12 @@ public class EnemyFactory
                 TakeCoverParam = enemyData.takeCoverParam,
             }
         );
+
+        // Audio profile
+        if (enemyData.audioProfile != null)
+        {
+            _world.Components.Add(entity, new AudioProfileComponent { Profile = enemyData.audioProfile });
+        }
 
         // Enemy AI Component
         EnemyComponent enemy = new EnemyComponent
@@ -164,11 +175,11 @@ public class EnemyFactory
     // ============================
     // ENEMY CREATION TEST MODE
     // ============================
-    public GameObject CreateEnemy(EnemyDefinitionSO data, Vector3 spawnPos)
+    public GameObject CreateEnemy(EnemyDefinitionSO data, Vector3 spawnPos, out EntityId entity)
     {
         GameObject instance = Object.Instantiate(data.prefab, spawnPos, Quaternion.identity);
 
-        EntityId entity = _world.CreateEntity();
+        entity = _world.CreateEntity();
 
         foreach (EntityView view in instance.GetComponentsInChildren<EntityView>(includeInactive: true))
         {
@@ -202,6 +213,12 @@ public class EnemyFactory
                 TakeCoverParam = data.takeCoverParam,
             }
         );
+
+        // Audio profile
+        if (data.audioProfile != null)
+        {
+            _world.Components.Add(entity, new AudioProfileComponent { Profile = data.audioProfile });
+        }
 
         // --- Attack Data (needed for AnimationEventRelayView) ---
         _world.Components.Add(

@@ -39,6 +39,9 @@ public class EnemyDefinitionSO : ScriptableObject
     [Header("AI Behavior")]
     public EnemyState defaultState = EnemyState.Idle;
 
+    [Header("Audio")]
+    public AudioProfileSO audioProfile;
+
     [Header("Attacks")]
     public List<AttackDefinition> attacks = new();
 }

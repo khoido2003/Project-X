@@ -18,6 +18,10 @@ public class UpgradeCardContainerUI : MonoBehaviour
     [SerializeField]
     private Slider timerFillBar;
 
+    [Header("Audio")]
+    [SerializeField]
+    private UISoundConfig uiSoundConfig;
+
     private UpgradeOption[] _currentOptions;
     private bool _isShowing;
     private float _timeRemaining;
@@ -102,6 +106,12 @@ public class UpgradeCardContainerUI : MonoBehaviour
             }
         }
 
+        // Play card appear sound
+        if (uiSoundConfig != null && uiSoundConfig.upgradeCardAppear != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(uiSoundConfig.upgradeCardAppear, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
+        }
+
         Debug.Log($"[UpgradeCardUI] Showing {options.Length} upgrade options");
     }
 
@@ -132,6 +142,12 @@ public class UpgradeCardContainerUI : MonoBehaviour
 
         var selectedUpgrade = _currentOptions[cardIndex];
         Debug.Log($"[UpgradeCardUI] Selected upgrade: {selectedUpgrade.Name}");
+
+        // Play selection sound
+        if (uiSoundConfig != null && uiSoundConfig.upgradeSelected != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(uiSoundConfig.upgradeSelected, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
+        }
 
         if (NetworkUpgradeSystem.Instance != null)
         {

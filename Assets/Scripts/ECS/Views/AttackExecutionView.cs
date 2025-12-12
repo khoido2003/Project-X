@@ -114,10 +114,17 @@ public class AttackExecutionView : EntityView
                 }
             );
 
+            Vector3 impactPos = hit.ClosestPoint(origin);
+
             if (@event.ImpactEffect)
             {
-                Instantiate(@event.ImpactEffect, hit.ClosestPoint(origin), Quaternion.identity);
+                Instantiate(@event.ImpactEffect, impactPos, Quaternion.identity);
             }
+
+            // Play impact sound at hit position
+            _world.Events.Publish(
+                new AudioCueEvent(@event.Attacker, AudioCueType.Impact, impactPos)
+            );
         }
     }
 

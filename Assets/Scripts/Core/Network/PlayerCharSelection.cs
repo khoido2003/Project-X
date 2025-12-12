@@ -109,17 +109,14 @@ public class PlayerCharSelection : NetworkBehaviour
         switch (actions)
         {
             case ButtonActions.lobby_ready:
-
+                CharacterSelectionManager.Instance.PlayButtonClickSound();
                 CharacterSelectionManager.Instance.SetPlayerReadyUIButtons(true, m_charSelected.Value);
-
                 ReadyServerRpc();
-
                 break;
 
             case ButtonActions.lobby_not_ready:
-
+                CharacterSelectionManager.Instance.PlayButtonCancelSound();
                 CharacterSelectionManager.Instance.SetPlayerReadyUIButtons(false, m_charSelected.Value);
-
                 NotReadyServerRpc();
                 break;
         }
