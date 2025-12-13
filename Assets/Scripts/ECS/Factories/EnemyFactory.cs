@@ -11,11 +11,7 @@ public class EnemyFactory
         _world = world;
     }
 
-    public GameObject CreateNetworkEnemy(
-        EnemyDefinitionSO enemyData,
-        Vector3 spawnPosition,
-        out EntityId entity
-    )
+    public GameObject CreateNetworkEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPosition, out EntityId entity)
     {
         entity = default;
         if (!NetworkManager.Singleton.IsServer)
@@ -97,11 +93,23 @@ public class EnemyFactory
             }
         );
 
-        // Audio profile
-        if (enemyData.audioProfile != null)
+        // Audio profile - always add component, even if null, for better error tracking
+        // Debug: Check if audioProfile is null and log details
+        if (enemyData.audioProfile == null)
         {
-            _world.Components.Add(entity, new AudioProfileComponent { Profile = enemyData.audioProfile });
+            Debug.LogWarning(
+                $"[EnemyFactory] Enemy '{enemyData.enemyName}' (Entity {entity.Id}) does not have an AudioProfile assigned in EnemyDefinitionSO. "
+                    + $"EnemyDefinitionSO name: '{enemyData.name}', Asset path: Check the Inspector to verify the audioProfile field is assigned. Audio cues will not play."
+            );
         }
+        else
+        {
+            Debug.Log(
+                $"[EnemyFactory] Enemy '{enemyData.enemyName}' (Entity {entity.Id}) has AudioProfile: '{enemyData.audioProfile.name}'"
+            );
+        }
+
+        _world.Components.Add(entity, new AudioProfileComponent { Profile = enemyData.audioProfile });
 
         // Enemy AI Component
         EnemyComponent enemy = new EnemyComponent
@@ -214,10 +222,14 @@ public class EnemyFactory
             }
         );
 
-        // Audio profile
-        if (data.audioProfile != null)
+        // Audio profile - always add component, even if null, for better error tracking
+        _world.Components.Add(entity, new AudioProfileComponent { Profile = data.audioProfile });
+
+        if (data.audioProfile == null)
         {
-            _world.Components.Add(entity, new AudioProfileComponent { Profile = data.audioProfile });
+            Debug.LogWarning(
+                $"[EnemyFactory] Enemy '{data.enemyName}' (Entity {entity.Id}) does not have an AudioProfile assigned in EnemyDefinitionSO. Audio cues will not play."
+            );
         }
 
         // --- Attack Data (needed for AnimationEventRelayView) ---

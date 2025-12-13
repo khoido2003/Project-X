@@ -5,12 +5,10 @@ using UnityEngine;
 [Serializable]
 public class AudioCueEntry
 {
-    public AudioCueType CueType = AudioCueType.Attack;
-
-    [Tooltip("Category used to drive per-channel volume controls")]
-    public AudioCategory Category = AudioCategory.Character;
+    public SoundType SoundType = SoundType.Attack;
 
     [Range(0f, 1f)]
+    [Tooltip("Volume multiplier for this specific sound (0-1)")]
     public float Volume = 1f;
 
     [Tooltip("One will be picked at random. Leave empty to skip this cue.")]
@@ -19,12 +17,10 @@ public class AudioCueEntry
     public bool TryPickClip(out AudioClip clip)
     {
         clip = null;
-
         if (Clips == null || Clips.Length == 0)
         {
             return false;
         }
-
         int idx = UnityEngine.Random.Range(0, Clips.Length);
         clip = Clips[idx];
         return clip != null;
@@ -38,17 +34,17 @@ public class AudioProfileSO : ScriptableObject
     private List<AudioCueEntry> cues = new();
 
     /// <summary>
-    /// Returns a clip/category/volume tuple for a given cue type.
+    /// Returns a clip and volume for a given sound type.
+    /// Category is determined by the entity type (Player/Enemy) automatically.
     /// </summary>
-    public bool TryGetCue(AudioCueType cueType, out AudioClip clip, out AudioCategory category, out float volume)
+    public bool TryGetCue(SoundType soundType, out AudioClip clip, out float volume)
     {
-        category = AudioCategory.Character;
         volume = 1f;
         clip = null;
 
         foreach (var entry in cues)
         {
-            if (entry == null || entry.CueType != cueType)
+            if (entry == null || entry.SoundType != soundType)
             {
                 continue;
             }
@@ -58,7 +54,6 @@ public class AudioProfileSO : ScriptableObject
                 continue;
             }
 
-            category = entry.Category;
             volume = entry.Volume;
             return true;
         }

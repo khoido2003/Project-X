@@ -455,6 +455,26 @@ public class WaveManager : MonoBehaviour
         target.checkInterval = source.checkInterval;
         target.detectionMask = source.detectionMask;
         target.attacks = new List<AttackDefinition>(source.attacks);
+        
+        // Animation parameters
+        target.isMovingParam = source.isMovingParam;
+        target.isRunningParam = source.isRunningParam;
+        target.moveXParam = source.moveXParam;
+        target.moveYParam = source.moveYParam;
+        target.totalAttackAnimations = source.totalAttackAnimations;
+        target.attackAnimationTrigger = source.attackAnimationTrigger;
+        target.takeCoverParam = source.takeCoverParam;
+        
+        // Patrol settings
+        target.generatePatrolPoints = source.generatePatrolPoints;
+        target.patrolPointCount = source.patrolPointCount;
+        target.patrolRadius = source.patrolRadius;
+        
+        // AI Behavior
+        target.defaultState = source.defaultState;
+        
+        // Audio - CRITICAL: This was missing!
+        target.audioProfile = source.audioProfile;
     }
 }
 

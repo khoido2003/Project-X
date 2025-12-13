@@ -123,7 +123,7 @@ public class AttackExecutionView : EntityView
 
             // Play impact sound at hit position
             _world.Events.Publish(
-                new AudioCueEvent(@event.Attacker, AudioCueType.Impact, impactPos)
+                new AudioCueEvent(@event.Attacker, SoundType.Impact, impactPos)
             );
         }
     }

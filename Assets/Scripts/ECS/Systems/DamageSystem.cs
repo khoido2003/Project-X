@@ -126,7 +126,7 @@ public class DamageSystem : ISystem
         // Publish impact sound at hit position (from attacker's profile if available)
         if (!@event.Attacker.Equals(default))
         {
-            _world.Events.Publish(new AudioCueEvent(@event.Attacker, AudioCueType.Impact, hitPosition));
+            _world.Events.Publish(new AudioCueEvent(@event.Attacker, SoundType.Impact, hitPosition));
         }
 
         // Lifesteal after damage dealt (only if attacker exists and is alive)

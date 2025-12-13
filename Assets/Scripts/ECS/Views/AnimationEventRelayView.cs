@@ -25,18 +25,14 @@ public class AnimationEventRelayView : EntityView
             case AnimationEventRelayType.ATTACK_HIT:
                 HandleAttackHit();
                 break;
-
             case AnimationEventRelayType.SKILL_HIT:
                 HandleSkillHit();
                 break;
-
             case AnimationEventRelayType.ATTACK_END:
                 HandleAttackEnd();
                 break;
             case AnimationEventRelayType.SKILL_END:
                 HandleSkillEnd();
-                break;
-            default:
                 break;
         }
     }
@@ -55,19 +51,26 @@ public class AnimationEventRelayView : EntityView
             return;
         }
 
-        // Play weapon attack sound
+        // Play attack sound - simplified!
+        // System automatically determines if this is Player or Enemy
         if (weapon.AttackSound != null)
         {
-            AudioHelper.PlaySound3D(_world, weapon.AttackSound, AudioCategory.Weapon, _entityView.transform.position);
+            // Direct sound play with automatic category detection
+            var category = _world.Components.Has<PlayerTagComponent>(_entityView.EntityInstance)
+                ? AudioCategory.Player
+                : AudioCategory.Enemy;
+
+            AudioHelper.PlaySound3D(_world, weapon.AttackSound, category, _entityView.transform.position);
         }
         else
         {
-            // Fallback to profile-based attack cue if defined
+            // Fallback to profile-based sound
             _world.Events.Publish(
-                new AudioCueEvent(_entityView.EntityInstance, AudioCueType.Attack, _entityView.transform.position)
+                new AudioCueEvent(_entityView.EntityInstance, SoundType.Attack, _entityView.transform.position)
             );
         }
 
+        // Trigger attack execution
         _world.Events.Publish(
             new AttackExecutionRequestEvent
             {
@@ -77,8 +80,6 @@ public class AnimationEventRelayView : EntityView
                 Range = weapon.BaseRange,
                 Damage = weapon.BaseDamage,
                 ImpactEffect = weapon.HitImpactParticlePrefab,
-
-                // Ranged / AoE support
                 ProjectilePrefab = weapon.ProjectilePrefab,
                 ProjectileSpeed = weapon.ProjectileSpeed,
                 ProjectileLifetime = weapon.ProjectileLifetime,
@@ -130,7 +131,6 @@ public class AnimationEventRelayView : EntityView
         );
     }
 
-    // Called directly by animation events for footsteps
     public void OnFootstep()
     {
         if (_world == null)
@@ -138,8 +138,9 @@ public class AnimationEventRelayView : EntityView
             return;
         }
 
+        // Simple footstep event - system handles Player vs Enemy automatically
         _world.Events.Publish(
-            new AudioCueEvent(_entityView.EntityInstance, AudioCueType.Footstep, _entityView.transform.position)
+            new AudioCueEvent(_entityView.EntityInstance, SoundType.Footstep, _entityView.transform.position)
         );
     }
 }

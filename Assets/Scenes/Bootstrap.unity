@@ -1221,7 +1221,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
       propertyPath: enemyVolume
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
       propertyPath: musicSource
@@ -1246,6 +1246,10 @@ PrefabInstance:
     - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
       propertyPath: footstepVolume
       value: 0.706
+      objectReference: {fileID: 0}
+    - target: {fileID: 4061632279965336305, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
+      propertyPath: soundEffectVolumeMultiplier
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6409005905456760780, guid: d9f6c91c24ed7a04e9b3ea3853cd1d08, type: 3}
       propertyPath: m_LocalPosition.x

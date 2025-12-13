@@ -65,14 +65,15 @@ public class MovementSystem : ISystem
             if (movement.IsMoving && movement.IsGrounded)
             {
                 float currentTime = Time.time;
-                if (!_lastFootstepTime.TryGetValue(entity, out float lastTime) || currentTime - lastTime >= FOOTSTEP_INTERVAL)
+                if (
+                    !_lastFootstepTime.TryGetValue(entity, out float lastTime)
+                    || currentTime - lastTime >= FOOTSTEP_INTERVAL
+                )
                 {
                     _lastFootstepTime[entity] = currentTime;
                     if (_world.Components.TryGet(entity, out TransformComponent trans))
                     {
-                        _world.Events.Publish(
-                            new AudioCueEvent(entity, AudioCueType.Footstep, trans.Position)
-                        );
+                        _world.Events.Publish(new AudioCueEvent(entity, SoundType.Footstep, trans.Position));
                     }
                 }
             }
