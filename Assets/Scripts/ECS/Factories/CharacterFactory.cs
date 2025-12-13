@@ -94,10 +94,14 @@ public class CharacterFactory
             }
         );
 
-        // Audio profile
-        if (characterData.audioProfile != null)
+        // Audio profile - always add component, even if null, for better error tracking
+        _world.Components.Add(entity, new AudioProfileComponent { Profile = characterData.audioProfile });
+
+        if (characterData.audioProfile == null)
         {
-            _world.Components.Add(entity, new AudioProfileComponent { Profile = characterData.audioProfile });
+            Debug.LogWarning(
+                $"[CharacterFactory] Character '{characterData.characterName}' (Entity {entity.Id}) does not have an AudioProfile assigned in CharacterDefinitionSO. Audio cues will not play."
+            );
         }
 
         // Skills
@@ -193,10 +197,14 @@ public class CharacterFactory
             }
         );
 
-        // Audio profile
-        if (data.audioProfile != null)
+        // Audio profile - always add component, even if null, for better error tracking
+        _world.Components.Add(entity, new AudioProfileComponent { Profile = data.audioProfile });
+
+        if (data.audioProfile == null)
         {
-            _world.Components.Add(entity, new AudioProfileComponent { Profile = data.audioProfile });
+            Debug.LogWarning(
+                $"[CharacterFactory] Character '{data.characterName}' (Entity {entity.Id}) does not have an AudioProfile assigned in CharacterDefinitionSO. Audio cues will not play."
+            );
         }
 
         // Skills

@@ -235,7 +235,7 @@ Assign an `AudioProfileSO` to your `CharacterDefinitionSO` or `EnemyDefinitionSO
 
 ```
 // Spawn / footstep / attack etc.
-world.Events.Publish(new AudioCueEvent(entityId, AudioCueType.Footstep));
+world.Events.Publish(new AudioCueEvent(entityId, SoundType.Footstep));
 ```
 
 Animations can call `AnimationEventRelayView.OnFootstep()` directly; attack/skill/death cues are already sent automatically when those events occur.

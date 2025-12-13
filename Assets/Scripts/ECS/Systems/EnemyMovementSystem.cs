@@ -285,7 +285,7 @@ public class EnemyMovementSystem : ISystem
             )
             {
                 _lastFootstepTime[entity] = currentTime;
-                _world.Events.Publish(new AudioCueEvent(entity, AudioCueType.Footstep, trans.Position));
+                _world.Events.Publish(new AudioCueEvent(entity, SoundType.Footstep, trans.Position));
             }
         }
         else

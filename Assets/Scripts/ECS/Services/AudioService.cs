@@ -14,13 +14,14 @@ public class AudioService : MonoBehaviour, IAudioService
     [SerializeField]
     private int soundSourcePoolSize = 10;
 
+    [Header("Volume Settings")]
     [SerializeField]
     [Range(0f, 1f)]
     private float masterVolume = 1f;
 
     [SerializeField]
     [Range(0f, 1f)]
-    private float musicVolume = 0.4f;
+    private float musicVolume = 0.3f;
 
     [SerializeField]
     [Range(0f, 1f)]
@@ -28,31 +29,25 @@ public class AudioService : MonoBehaviour, IAudioService
 
     [SerializeField]
     [Range(0f, 1f)]
-    private float characterVolume = 1f;
+    private float playerVolume = 1f;
 
     [SerializeField]
-    [Range(0f, 2f)]
-    [Tooltip("Volume multiplier for weapon sounds (can exceed 1.0 for louder effects)")]
-    private float weaponVolume = 1.5f;
-
-    [SerializeField]
-    [Range(0f, 2f)]
-    [Tooltip("Volume multiplier for skill sounds (can exceed 1.0 for louder effects)")]
-    private float skillVolume = 1.5f;
-
-    [SerializeField]
-    [Range(0f, 2f)]
-    [Tooltip("Volume multiplier for enemy sounds (can exceed 1.0 for louder effects)")]
-    private float enemyVolume = 1.5f;
+    [Range(0f, 1f)]
+    private float enemyVolume = 1f;
 
     [SerializeField]
     [Range(0f, 1f)]
     private float environmentVolume = 1f;
 
+    [Header("Sound Effect Boost")]
     [SerializeField]
-    [Range(0f, 1f)]
-    private float footstepVolume = 0.8f;
+    [Range(0.5f, 5f)]
+    [Tooltip(
+        "Multiplier to boost sound effect volumes relative to music. Higher values make SFX louder. Default 3.0 for quiet audio files."
+    )]
+    private float soundEffectVolumeMultiplier = 4f;
 
+    [Header("3D Audio Settings")]
     [SerializeField]
     private float minDistance3D = 1f;
 
@@ -64,14 +59,10 @@ public class AudioService : MonoBehaviour, IAudioService
     private Dictionary<AudioCategory, float> _categoryVolumes = new();
     private AudioSource _currentMusicSource;
     private Coroutine _musicFadeCoroutine;
-
-    // Track footstep sounds by entity to stop them when movement stops
-    // Using entity ID as string key since EntityId struct might not work well as dictionary key
     private Dictionary<string, AudioSource> _activeFootstepSources = new();
 
     private void Awake()
     {
-        // Singleton + persist across scenes (menus/maps share one audio service)
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -80,16 +71,15 @@ public class AudioService : MonoBehaviour, IAudioService
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        // Initialize category volumes
         _categoryVolumes[AudioCategory.Master] = masterVolume;
         _categoryVolumes[AudioCategory.Music] = musicVolume;
         _categoryVolumes[AudioCategory.UI] = uiVolume;
-        _categoryVolumes[AudioCategory.Character] = characterVolume;
-        _categoryVolumes[AudioCategory.Weapon] = weaponVolume;
-        _categoryVolumes[AudioCategory.Skill] = skillVolume;
+        _categoryVolumes[AudioCategory.Player] = playerVolume;
         _categoryVolumes[AudioCategory.Enemy] = enemyVolume;
         _categoryVolumes[AudioCategory.Environment] = environmentVolume;
-        _categoryVolumes[AudioCategory.Footstep] = footstepVolume;
 
+        // Setup music source
         if (musicSource == null)
         {
             GameObject musicGO = new("MusicSource");
@@ -99,14 +89,16 @@ public class AudioService : MonoBehaviour, IAudioService
             musicSource.playOnAwake = false;
         }
         _currentMusicSource = musicSource;
+        _currentMusicSource.volume = GetCategoryVolume(AudioCategory.Music) * GetCategoryVolume(AudioCategory.Master);
 
+        // Create sound source pool
         for (int i = 0; i < soundSourcePoolSize; i++)
         {
             GameObject sourceGo = new GameObject($"SoundSource_{i}");
             sourceGo.transform.SetParent(transform);
             AudioSource source = sourceGo.AddComponent<AudioSource>();
             source.playOnAwake = false;
-            source.spatialBlend = 0f; // 2D sound
+            source.spatialBlend = 0f;
             source.minDistance = minDistance3D;
             source.maxDistance = maxDistance3D;
             _availableSources.Enqueue(source);
@@ -154,12 +146,11 @@ public class AudioService : MonoBehaviour, IAudioService
     {
         if (clip == null)
         {
-            Debug.LogWarning("[AudioService] Attemped to play null audioClip");
+            Debug.LogWarning("[AudioService] Attempted to play null audioClip");
             return null;
         }
 
         AudioSource source = GetAvailableSource();
-
         if (source == null)
         {
             Debug.LogWarning("[AudioService] No available audio sources");
@@ -169,6 +160,7 @@ public class AudioService : MonoBehaviour, IAudioService
         source.clip = clip;
         source.loop = false;
 
+        // Setup 3D audio if position provided
         if (position.HasValue)
         {
             source.spatialBlend = 1f;
@@ -176,39 +168,20 @@ public class AudioService : MonoBehaviour, IAudioService
         }
         else
         {
-            // 2D sounds
             source.spatialBlend = 0f;
         }
 
-        // Calculate volume - allow category volumes > 1.0 for louder effects
-        // Only clamp the final result to prevent distortion
+        // Calculate final volume: clipVolume * categoryVolume * masterVolume * soundEffectMultiplier
+        // Apply sound effect multiplier for all non-music sounds to make them louder relative to music
+        float clipVolume = volume ?? 1f;
         float categoryVol = GetCategoryVolume(category);
-        float baseVol = volume ?? categoryVol;
-        float finalVolume = baseVol * GetCategoryVolume(AudioCategory.Master);
-        source.volume = Mathf.Clamp01(finalVolume); // Clamp final to 0-1 range
+        float masterVol = GetCategoryVolume(AudioCategory.Master);
+        float volumeMultiplier = (category == AudioCategory.Music) ? 1f : soundEffectVolumeMultiplier;
+        float finalVolume = clipVolume * categoryVol * masterVol * volumeMultiplier;
+        source.volume = Mathf.Clamp01(finalVolume);
 
         source.Play();
         _activeSources.Add(source);
-
-        // Track footstep sounds by entity so we can stop them
-        if (category == AudioCategory.Footstep && !string.IsNullOrEmpty(entityKey))
-        {
-            // Stop any existing footstep sound for this entity
-            if (_activeFootstepSources.TryGetValue(entityKey, out AudioSource existingSource))
-            {
-                if (existingSource != null && existingSource.isPlaying)
-                {
-                    existingSource.Stop();
-                    existingSource.clip = null;
-                    if (_activeSources.Contains(existingSource))
-                    {
-                        _activeSources.Remove(existingSource);
-                    }
-                    _availableSources.Enqueue(existingSource);
-                }
-            }
-            _activeFootstepSources[entityKey] = source;
-        }
 
         return source;
     }
@@ -264,15 +237,6 @@ public class AudioService : MonoBehaviour, IAudioService
             {
                 _currentMusicSource.volume =
                     GetCategoryVolume(AudioCategory.Music) * GetCategoryVolume(AudioCategory.Master);
-            }
-        }
-
-        // Update active sound sources
-        foreach (var source in _activeSources)
-        {
-            if (source.isPlaying && source.clip != null)
-            {
-                source.volume = source.volume;
             }
         }
     }
@@ -331,12 +295,10 @@ public class AudioService : MonoBehaviour, IAudioService
             _currentMusicSource.Stop();
         }
 
-        // Play new music
         _currentMusicSource.clip = newClip;
         _currentMusicSource.volume = 0f;
         _currentMusicSource.Play();
 
-        // Fade in
         float targetVolume = GetCategoryVolume(AudioCategory.Music) * GetCategoryVolume(AudioCategory.Master);
         float elapsedIn = 0f;
 

@@ -1,7 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Plays simple per-entity cues (spawn/attack/skill/impact/footstep/death) from AudioProfileSO.
+/// Plays entity-based audio cues.
+/// Automatically determines if entity is Player or Enemy for volume control.
 /// </summary>
 public class AudioProfileSystem : ISystem
 {
@@ -19,48 +20,94 @@ public class AudioProfileSystem : ISystem
 
     private void OnAudioCueEvent(AudioCueEvent @event)
     {
-        if (!_world.Components.TryGet(@event.Entity, out AudioProfileComponent profile) || profile.Profile == null)
+        // Get audio profile
+        if (!_world.Components.TryGet(@event.Entity, out AudioProfileComponent profile))
         {
+            Debug.LogWarning(
+                $"[AudioProfileSystem] Entity {@event.Entity.Id} missing AudioProfileComponent. SoundType: {@event.SoundType}. Make sure the entity was created through a Factory."
+            );
             return;
         }
 
-        if (
-            !profile.Profile.TryGetCue(
-                @event.CueType,
-                out AudioClip clip,
-                out AudioCategory category,
-                out float baseVolume
-            )
-        )
+        if (profile.Profile == null)
         {
+            // Try to get entity name for better error message
+            string entityName = $"Entity {@event.Entity.Id}";
+            if (_world.Components.TryGet(@event.Entity, out CharacterSelectionComponent charSel))
+            {
+                entityName = charSel.CharacterData?.characterName ?? entityName;
+            }
+            else if (_world.Components.Has<EnemyComponent>(@event.Entity))
+            {
+                // Can't easily get enemy name, but we can indicate it's an enemy
+                entityName = $"Enemy {@event.Entity.Id}";
+            }
+
+            Debug.LogWarning(
+                $"[AudioProfileSystem] {entityName} has AudioProfileComponent but Profile is null. SoundType: {@event.SoundType}. " +
+                $"Please assign an AudioProfileSO to the entity's DefinitionSO (CharacterDefinitionSO or EnemyDefinitionSO)."
+            );
             return;
         }
 
+        // Get sound clip from profile
+        if (!profile.Profile.TryGetCue(@event.SoundType, out AudioClip clip, out float baseVolume))
+        {
+            Debug.LogWarning(
+                $"[AudioProfileSystem] AudioProfile '{profile.Profile.name}' does not have a cue for SoundType: {@event.SoundType} (Entity: {@event.Entity.Id})"
+            );
+            return;
+        }
+
+        if (clip == null)
+        {
+            Debug.LogWarning(
+                $"[AudioProfileSystem] AudioProfile '{profile.Profile.name}' returned null clip for SoundType: {@event.SoundType}"
+            );
+            return;
+        }
+
+        // Get position
         if (!_world.Components.TryGet(@event.Entity, out TransformComponent transform))
         {
+            Debug.LogWarning(
+                $"[AudioProfileSystem] Entity {@event.Entity.Id} missing TransformComponent for sound playback"
+            );
             return;
         }
 
         Vector3 position = @event.PositionOverride ?? transform.Position;
         float? volume = @event.VolumeOverride ?? baseVolume;
 
-        // For footstep sounds, pass entity ID so we can stop them later
-        if (@event.CueType == AudioCueType.Footstep)
+        // Determine category based on entity type
+        AudioCategory category = DetermineAudioCategory(@event.Entity);
+
+        // Play sound
+        var audioService = _world.Services.Resolve<IAudioService>();
+        if (audioService is AudioService service)
         {
-            var audioService = _world.Services.Resolve<IAudioService>();
-            if (audioService is AudioService service)
-            {
-                service.PlaySoundForEntity(clip, category, position, volume, @event.Entity);
-            }
-            else
-            {
-                AudioHelper.PlaySound3D(_world, clip, category, position, volume);
-            }
+            service.PlaySoundForEntity(clip, category, position, volume, @event.Entity);
         }
         else
         {
             AudioHelper.PlaySound3D(_world, clip, category, position, volume);
         }
+    }
+
+    private AudioCategory DetermineAudioCategory(EntityId entity)
+    {
+        if (_world.Components.Has<PlayerTagComponent>(entity))
+        {
+            return AudioCategory.Player;
+        }
+
+        if (_world.Components.Has<EnemyComponent>(entity))
+        {
+            return AudioCategory.Enemy;
+        }
+
+        // Default fallback
+        return AudioCategory.Environment;
     }
 
     public void Shutdown()

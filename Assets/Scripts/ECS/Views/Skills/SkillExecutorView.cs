@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public abstract class SkillExecutorView : EntityView
@@ -8,11 +7,9 @@ public abstract class SkillExecutorView : EntityView
     protected virtual void Start()
     {
         WorldInstance.Events.Subscribe<SkillConfirmExecutionEvent>(OnSkillConfirmExecutionEvent);
-
         WorldInstance.Events.Subscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
     }
 
-    // CREATE SKILL EFFECT/VFX/PREFAB
     private void OnSkillEffectTriggerEvent(SkillEffectTriggerEvent @event)
     {
         if (@event.Skill == null || @event.Skill.category != Category)
@@ -25,24 +22,24 @@ public abstract class SkillExecutorView : EntityView
             return;
         }
 
-        // Play skill activation sound
+        // Play skill sound - simplified!
         if (@event.Skill.activateSound != null)
         {
             var registry = WorldInstance.Services.Resolve<EntityViewRegistry>();
             if (registry.TryGet(EntityInstance, out EntityView view))
             {
-                AudioHelper.PlaySound3D(
-                    WorldInstance,
-                    @event.Skill.activateSound,
-                    AudioCategory.Skill,
-                    view.transform.position
-                );
+                // Category automatically determined by system
+                var category = WorldInstance.Components.Has<PlayerTagComponent>(EntityInstance)
+                    ? AudioCategory.Player
+                    : AudioCategory.Enemy;
+
+                AudioHelper.PlaySound3D(WorldInstance, @event.Skill.activateSound, category, view.transform.position);
             }
         }
         else
         {
             // Profile-driven fallback
-            WorldInstance.Events.Publish(new AudioCueEvent(EntityInstance, AudioCueType.Skill, @event.TargetPoint));
+            WorldInstance.Events.Publish(new AudioCueEvent(EntityInstance, SoundType.Skill, @event.TargetPoint));
         }
 
         // Animation
@@ -55,9 +52,8 @@ public abstract class SkillExecutorView : EntityView
             )
         );
 
-        // Store the skill to buffer to trigger it later
+        // Buffer skill for execution
         var skillBuffer = WorldInstance.Components.Get<SkillCastBufferComponent>(EntityInstance);
-
         skillBuffer.Skill = @event.Skill;
         skillBuffer.Direction = @event.Direction;
         skillBuffer.TargetPoint = @event.TargetPoint;

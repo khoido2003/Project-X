@@ -152,7 +152,7 @@ public class ProjectileView : NetworkBehaviour
         // Play impact sound at hit position
         Vector3 hitPos = other.ClosestPoint(transform.position);
         _world.Events.Publish(
-            new AudioCueEvent(_attacker, AudioCueType.Impact, hitPos)
+            new AudioCueEvent(_attacker, SoundType.Impact, hitPos)
         );
 
         HitAndReturn();

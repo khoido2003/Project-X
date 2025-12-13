@@ -5,14 +5,25 @@ public enum AudioCategory
     Master,
     Music,
     UI,
-    Character,
-    Weapon,
-    Skill,
-    Enemy,
-    Environment,
-    Footstep,
+    Player, // All player sounds (attacks, skills, footsteps, etc.)
+    Enemy, // All enemy sounds (attacks, footsteps, death, etc.)
+    Environment, // Ambient sounds, environmental effects
 }
 
+public enum SoundType
+{
+    Attack,
+    Skill,
+    Impact, // Getting hit
+    Footstep,
+    Death,
+    Spawn,
+    // Add more as needed
+}
+
+/// <summary>
+/// Event to play a sound effect.
+/// </summary>
 public struct PlaySoundEvent
 {
     public AudioClip Clip;
@@ -71,35 +82,22 @@ public struct SetVolumeEvent
     }
 }
 
-// -----------------------------------------------------------------------------
-// Per-entity audio cues (lightweight, effect-focused)
-
-public enum AudioCueType
-{
-    Spawn,
-    Attack,
-    Skill,
-    Impact,
-    Footstep,
-    Death,
-}
-
 public struct AudioCueEvent
 {
     public EntityId Entity;
-    public AudioCueType CueType;
+    public SoundType SoundType;
     public Vector3? PositionOverride;
     public float? VolumeOverride;
 
     public AudioCueEvent(
         EntityId entity,
-        AudioCueType cueType,
+        SoundType soundType,
         Vector3? positionOverride = null,
         float? volumeOverride = null
     )
     {
         Entity = entity;
-        CueType = cueType;
+        SoundType = soundType;
         PositionOverride = positionOverride;
         VolumeOverride = volumeOverride;
     }

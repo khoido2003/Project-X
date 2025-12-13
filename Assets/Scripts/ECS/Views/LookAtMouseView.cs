@@ -37,7 +37,7 @@ public class LookAtMouseView : EntityView
 
         aimDir.y = 0;
 
-        if (aimDir.sqrMagnitude < 0.01f)
+        if (aimDir.sqrMagnitude < 0.1f)
         {
             return;
         }

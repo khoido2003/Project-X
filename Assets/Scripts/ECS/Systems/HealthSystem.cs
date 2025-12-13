@@ -55,7 +55,7 @@ public class HealthSystem : ISystem
         // Try to identify what kind of entity this is
         if (_world.Components.Has<EnemyComponent>(entity))
         {
-            _world.Events.Publish(new AudioCueEvent(entity, AudioCueType.Death, deathPosition));
+            _world.Events.Publish(new AudioCueEvent(entity, SoundType.Death, deathPosition));
             _world.Events.Publish(new EntityDeathEvent(entity));
 
             // Switch AI to Dead state
@@ -81,7 +81,7 @@ public class HealthSystem : ISystem
         else if (_world.Components.Has<PlayerTagComponent>(entity))
         {
             // Handle player death differently
-            _world.Events.Publish(new AudioCueEvent(entity, AudioCueType.Death, deathPosition));
+            _world.Events.Publish(new AudioCueEvent(entity, SoundType.Death, deathPosition));
             _world.Events.Publish(new EntityDeathEvent(entity));
             Debug.Log("Player has died!");
 
