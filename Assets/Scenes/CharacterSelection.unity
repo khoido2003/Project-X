@@ -9574,8 +9574,12 @@ PrefabInstance:
       value: 0.19000277
       objectReference: {fileID: 0}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: voiceoverConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: ec9f5ed23eba8d44da541160302bc08e, type: 2}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_timeToStartGame
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_countdownContainer
