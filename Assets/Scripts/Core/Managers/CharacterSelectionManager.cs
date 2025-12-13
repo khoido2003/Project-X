@@ -122,20 +122,15 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
         }
 
         int currentCountdown = Mathf.FloorToInt(m_timer);
-        m_countdownText.text = currentCountdown.ToString();
+
+        // Sync countdown to all clients
+        UpdateCountdownClientRpc(currentCountdown, m_timer);
 
         // Play countdown voiceover
         if (currentCountdown >= 1 && currentCountdown <= 3 && currentCountdown != _lastCountdownPlayed)
         {
             _lastCountdownPlayed = currentCountdown;
-            if (voiceoverConfig != null && AudioService.Instance != null)
-            {
-                AudioClip countdownClip = voiceoverConfig.GetCountdownClip(currentCountdown);
-                if (countdownClip != null)
-                {
-                    AudioHelper.PlaySound(countdownClip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
-                }
-            }
+            PlayCountdownVoiceoverClientRpc(currentCountdown);
         }
 
         // Play "Ready" at 1 second, "Game Start" at 0
@@ -143,7 +138,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
         {
             if (voiceoverConfig != null && voiceoverConfig.ready != null && AudioService.Instance != null)
             {
-                AudioHelper.PlaySound(voiceoverConfig.ready, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+                PlayReadyVoiceoverClientRpc();
                 _lastCountdownPlayed = 0;
             }
         }
@@ -154,7 +149,7 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
             _lastCountdownPlayed = -1;
             if (voiceoverConfig != null && voiceoverConfig.gameStart != null && AudioService.Instance != null)
             {
-                AudioHelper.PlaySound(voiceoverConfig.gameStart, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+                PlayGameStartVoiceoverClientRpc();
             }
             StartGame();
         }
@@ -244,9 +239,24 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
         m_timer = m_timeToStartGame;
         m_isTimerOn = true;
+        _lastCountdownPlayed = -1;
 
-        m_countdownContainer.gameObject.SetActive(true);
-        m_countdownText.text = Mathf.FloorToInt(m_timer).ToString();
+        // Notify all clients that countdown started
+        StartCountdownClientRpc();
+    }
+
+    [ClientRpc]
+    private void StartCountdownClientRpc()
+    {
+        if (m_countdownContainer != null)
+        {
+            m_countdownContainer.gameObject.SetActive(true);
+        }
+
+        if (m_countdownText != null)
+        {
+            m_countdownText.text = Mathf.FloorToInt(m_timeToStartGame).ToString();
+        }
     }
 
     #endregion
@@ -495,6 +505,51 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     private void StartGameClientRpc()
     {
         LoadingFadeEffect.Instance.FadeAll();
+    }
+
+    [ClientRpc]
+    private void UpdateCountdownClientRpc(int countdown, float timer)
+    {
+        if (m_countdownContainer != null)
+        {
+            m_countdownContainer.gameObject.SetActive(true);
+        }
+
+        if (m_countdownText != null)
+        {
+            m_countdownText.text = countdown.ToString();
+        }
+    }
+
+    [ClientRpc]
+    private void PlayCountdownVoiceoverClientRpc(int countdownNumber)
+    {
+        if (voiceoverConfig != null && AudioService.Instance != null)
+        {
+            AudioClip countdownClip = voiceoverConfig.GetCountdownClip(countdownNumber);
+            if (countdownClip != null)
+            {
+                AudioHelper.PlaySound(countdownClip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+            }
+        }
+    }
+
+    [ClientRpc]
+    private void PlayReadyVoiceoverClientRpc()
+    {
+        if (voiceoverConfig != null && voiceoverConfig.ready != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(voiceoverConfig.ready, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+        }
+    }
+
+    [ClientRpc]
+    private void PlayGameStartVoiceoverClientRpc()
+    {
+        if (voiceoverConfig != null && voiceoverConfig.gameStart != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(voiceoverConfig.gameStart, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+        }
     }
 
     [ClientRpc]

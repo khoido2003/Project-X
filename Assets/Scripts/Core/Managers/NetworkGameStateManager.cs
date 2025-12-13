@@ -295,32 +295,10 @@ public class NetworkGameStateManager : NetworkBehaviour
     {
         Debug.Log($"[CLient] Received game results with {results.Length} players");
 
-        // Play victory/defeat voiceover based on results (only play one, not gameOver)
+        // Play victory/defeat voiceover based on results with a delay to avoid overlap with final round announcement
         if (voiceoverConfig != null && AudioService.Instance != null)
         {
-            // Determine if local player won (simplified - check if they're in top 3)
-            // You can customize this logic based on your game rules
-            bool isVictory = false;
-            if (results.Length > 0)
-            {
-                // Check if local player is first (or in top positions)
-                ulong localClientId = NetworkManager.Singleton.LocalClientId;
-                for (int i = 0; i < Mathf.Min(3, results.Length); i++)
-                {
-                    if (results[i].ClientId == localClientId)
-                    {
-                        isVictory = true;
-                        break;
-                    }
-                }
-            }
-
-            // Only play victory or defeat, not gameOver (to avoid overlap)
-            AudioClip resultClip = isVictory ? voiceoverConfig.victory : voiceoverConfig.defeat;
-            if (resultClip != null)
-            {
-                AudioHelper.PlaySound(resultClip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
-            }
+            StartCoroutine(PlayGameEndVoiceoverDelayed(results));
         }
 
         if (resultsUI != null)
@@ -330,6 +308,36 @@ public class NetworkGameStateManager : NetworkBehaviour
         else
         {
             Debug.LogError("[Client] GameResultsUI not found!");
+        }
+    }
+
+    private IEnumerator PlayGameEndVoiceoverDelayed(PlayerResult[] results)
+    {
+        // Wait a bit to ensure any final round announcements have finished
+        yield return new WaitForSeconds(2f);
+
+        // Determine if local player won (simplified - check if they're in top 3)
+        // You can customize this logic based on your game rules
+        bool isVictory = false;
+        if (results.Length > 0)
+        {
+            // Check if local player is first (or in top positions)
+            ulong localClientId = NetworkManager.Singleton.LocalClientId;
+            for (int i = 0; i < Mathf.Min(3, results.Length); i++)
+            {
+                if (results[i].ClientId == localClientId)
+                {
+                    isVictory = true;
+                    break;
+                }
+            }
+        }
+
+        // Only play victory or defeat, not gameOver (to avoid overlap)
+        AudioClip resultClip = isVictory ? voiceoverConfig.victory : voiceoverConfig.defeat;
+        if (resultClip != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(resultClip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
         }
     }
 
@@ -390,9 +398,12 @@ public class NetworkGameStateManager : NetworkBehaviour
     {
         int enemyCount = CountAliveEnemies();
 
-        // Play countdown voiceover when phase is ending
+        // Check if this is the final round before boss phase
+        bool isFinalRound = _netCurrentRound.Value + 1 >= maxRounds;
+
+        // Play countdown voiceover when phase is ending (but skip if it's the final round to avoid overlap with game end)
         float timeRemaining = combatPhaseDuration - _phaseTimer;
-        if (timeRemaining <= 3f && timeRemaining > 0f)
+        if (timeRemaining <= 3f && timeRemaining > 0f && !isFinalRound)
         {
             int countdownNumber = Mathf.CeilToInt(timeRemaining);
             if (countdownNumber != _lastCountdownPlayed && voiceoverConfig != null)

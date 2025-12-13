@@ -201,9 +201,13 @@ public class GameHUD : MonoBehaviour
             }
 
             int score = 0;
+            int playerKills = 0;
+            int enemyKills = 0;
             if (_world.Components.TryGet(entity, out PlayerScoreComponent scoreComp))
             {
                 score = scoreComp.TotalScore;
+                playerKills = scoreComp.PlayerKills;
+                enemyKills = scoreComp.EnemyKills;
             }
 
             players.Add(
@@ -215,6 +219,8 @@ public class GameHUD : MonoBehaviour
                     CurrentHealth = health.CurrentHealth,
                     MaxHealth = health.MaxHealth,
                     IsDead = health.IsDead,
+                    PlayerKills = playerKills,
+                    EnemyKills = enemyKills,
                 }
             );
         }
@@ -256,12 +262,24 @@ public class GameHUD : MonoBehaviour
     private void UpdatePlayerEntry(GameObject entry, PlayerDisplayInfo player, int rank)
     {
         var texts = entry.GetComponentsInChildren<TextMeshProUGUI>();
-        if (texts.Length >= 4)
+        if (texts.Length >= 5)
         {
             texts[0].text = $"#{rank}";
             texts[1].text = player.PlayerName;
             texts[2].text = $"{player.Score}";
-            texts[3].text = player.IsDead
+            texts[3].text = $"P:{player.PlayerKills} E:{player.EnemyKills}";
+            texts[4].text = player.IsDead
+                ? "DEAD"
+                : $"{Mathf.CeilToInt(player.CurrentHealth)}/{Mathf.CeilToInt(player.MaxHealth)}";
+        }
+        else if (texts.Length >= 4)
+        {
+            // Fallback for UI with only 4 text fields - combine kills with health
+            texts[0].text = $"#{rank}";
+            texts[1].text = player.PlayerName;
+            texts[2].text = $"{player.Score}";
+            texts[3].text = $"P:{player.PlayerKills} E:{player.EnemyKills}";
+            texts[4].text = player.IsDead
                 ? "DEAD"
                 : $"{Mathf.CeilToInt(player.CurrentHealth)}/{Mathf.CeilToInt(player.MaxHealth)}";
         }
@@ -325,5 +343,7 @@ public class GameHUD : MonoBehaviour
         public float CurrentHealth;
         public float MaxHealth;
         public bool IsDead;
+        public int PlayerKills;
+        public int EnemyKills;
     }
 }
