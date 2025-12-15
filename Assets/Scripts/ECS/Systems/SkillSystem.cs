@@ -94,7 +94,28 @@ public class SkillSystem : ISystem
 
         _world.Events.Publish(new EnterCombatStateEvent { Entity = caster, TargetState = CombatState.CastingSkill });
 
-        _world.Events.Publish(new SkillConfirmExecutionEvent(caster, skill, Vector3.zero, Vector3.forward));
+        // Use buffered target/direction if available (set by client request)
+        Vector3 targetPoint = Vector3.zero;
+        Vector3 direction = Vector3.forward;
+
+        if (_world.Components.TryGet(caster, out SkillCastBufferComponent buffer))
+        {
+            targetPoint = buffer.TargetPoint;
+            direction = buffer.Direction;
+        }
+
+        // Ensure a valid horizontal direction
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.0001f && _world.Components.TryGet(caster, out TransformComponent trans))
+        {
+            direction = trans.Rotation * Vector3.forward;
+        }
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            direction = Vector3.forward;
+        }
+
+        _world.Events.Publish(new SkillConfirmExecutionEvent(caster, skill, targetPoint, direction.normalized));
     }
 
     private void OnAnimationRelayEvent(AnimationEventRelayEvent @event)

@@ -122,9 +122,7 @@ public class AttackExecutionView : EntityView
             }
 
             // Play impact sound at hit position
-            _world.Events.Publish(
-                new AudioCueEvent(@event.Attacker, SoundType.Impact, impactPos)
-            );
+            _world.Events.Publish(new AudioCueEvent(@event.Attacker, SoundType.Impact, impactPos));
         }
     }
 
@@ -136,23 +134,25 @@ public class AttackExecutionView : EntityView
             return;
         }
 
+        // Trigger aiming rig for ranged attacks
+        TriggerAimingRigForAttack(@event, attackerTf);
+
         // Try to find ProjectileSpawnPos component on attacker or its children
         Transform spawnTransform = attackerTf;
         ProjectileSpawnPos spawnPosComponent = attackerTf.GetComponentInChildren<ProjectileSpawnPos>();
-        
+
         if (spawnPosComponent != null)
         {
             spawnTransform = spawnPosComponent.transform;
         }
 
-        // Calculate direction first - use provided direction or fallback to transform forward
         Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
-        
+
         // Ensure direction is normalized and has valid Y component (not zero)
         // For horizontal projectiles, keep Y at 0, but ensure X and Z are valid
         if (Mathf.Abs(forwardDir.y) < 0.001f)
         {
-            forwardDir.y = 0f; // Explicitly set to 0 for horizontal movement
+            forwardDir.y = 0f;
         }
         forwardDir = forwardDir.normalized;
 
@@ -161,6 +161,7 @@ public class AttackExecutionView : EntityView
         if (spawnPosComponent != null)
         {
             spawnPos = spawnTransform.position;
+
             // Apply offset relative to spawn transform
             spawnPos += spawnTransform.TransformDirection(@event.SpawnOffset);
         }
@@ -168,6 +169,7 @@ public class AttackExecutionView : EntityView
         {
             // Default spawn position - use attacker position with height offset
             spawnPos = attackerTf.position + new Vector3(0f, 1.3f, 0f);
+
             // Apply offset in world space relative to direction
             if (@event.SpawnOffset.sqrMagnitude > 0.0001f)
             {
@@ -175,12 +177,9 @@ public class AttackExecutionView : EntityView
             }
         }
 
-        // Spawn rotation - align with direction (ensure up vector is correct)
         Quaternion spawnRot = Quaternion.LookRotation(forwardDir, Vector3.up);
-
         var pool = _world.Services.Resolve<ObjectPoolService>();
 
-        // Use spawnRot to ensure correct initial rotation
         GameObject projectileGO = pool.Get(@event.ProjectilePrefab, spawnPos, spawnRot);
 
         if (!projectileGO.TryGetComponent(out ProjectileView projectile))
@@ -214,6 +213,36 @@ public class AttackExecutionView : EntityView
         if (@event.EventType == AnimationEventRelayType.ATTACK_END)
         {
             _attackHitCache.Remove(@event.Entity);
+        }
+    }
+
+    private void TriggerAimingRigForAttack(AttackExecutionRequestEvent @event, Transform attackerTf)
+    {
+        if (!_registry.TryGet(@event.Attacker, out EntityView attackerView))
+        {
+            return;
+        }
+
+        AimingRigView aimingRig = attackerView.GetComponent<AimingRigView>();
+        if (aimingRig == null)
+        {
+            return;
+        }
+
+        // Check if character has aiming rig enabled
+        if (_world.Components.TryGet(@event.Attacker, out CharacterSelectionComponent characterSelection))
+        {
+            if (characterSelection.CharacterData != null && characterSelection.CharacterData.useAimingRig)
+            {
+                Vector3 aimTarget = attackerTf.position + @event.Direction.normalized * @event.Range;
+                if (@event.Direction.sqrMagnitude < 0.001f)
+                {
+                    aimTarget = attackerTf.position + attackerTf.forward * @event.Range;
+                }
+
+                // Aim for the attack duration (typically 0.5-1 second)
+                aimingRig.StartAiming(aimTarget, 1f);
+            }
         }
     }
 

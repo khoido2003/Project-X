@@ -130,6 +130,10 @@ public class CharacterFactory
                     AttackAnimationTrigger = attack.animationTrigger,
                     TotalAttackAnimations = attack.totalAnimations,
                     AttackSound = attack.attackSound,
+                    ProjectilePrefab = attack.projectilePrefab,
+                    ProjectileLifetime = attack.projectileLifetime,
+                    ProjectileSpawnOffset = attack.projectileSpawnOffset,
+                    ProjectileSpeed = attack.projectileSpeed,
                 }
             );
         }

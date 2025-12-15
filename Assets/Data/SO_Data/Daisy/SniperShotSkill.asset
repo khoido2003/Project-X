@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d15cc89f7a752448b49dbd2bae84dfd, type: 3}
+  m_Name: SniperShotSkill
+  m_EditorClassIdentifier: Assembly-CSharp::SniperShotSkillSO
+  assetId: a1520e4226922d04a833de1b05f932f4
+  skillName: Sniper Shot
+  category: 5
+  isInstant: 0
+  keyTrigger: Space
+  damage: 120
+  castRange: 10
+  cooldown: 3
+  hitVfxPrefab: {fileID: 198104090543139058, guid: 4430919f14c50f84085d287cbcb2c30e, type: 3}
+  skillVfxPrefab: {fileID: 198533653044838976, guid: b46264f9e12caed4cb53e7c2ad64aa54, type: 3}
+  activateSound: {fileID: 8300000, guid: e8e15a6dc1992406e9bf9fd158199864, type: 3}
+  activationAnimationTrigger: attack
+  chargeDuration: 1
+  maxRange: 20
+  canPierce: 1
+  maxPierceCount: 3
+  projectilePrefab: {fileID: 7507264756160909461, guid: 3aca5c498e86d674a98774271a9fe9ed, type: 3}
+  projectileSpeed: 30
+  projectileLifetime: 5
+  chargeVfxPrefab: {fileID: 198742971877052672, guid: c445b201205907b4f90b242a07f4dbc9, type: 3}

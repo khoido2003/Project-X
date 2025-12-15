@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07e7b928afb9556468a6d5c0fbd62b39, type: 3}
+  m_Name: DaisySO
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterDefinitionSO
+  assetId: 
+  characterName: Daisy
+  prefab: {fileID: 2679261005080247242, guid: 866c11419e0e18049ae7a25fe37a57a6, type: 3}
+  isPlayer: 1
+  characterSprite: {fileID: 21300000, guid: 21b2b3f923cb29145b951d77ef5dc6e7, type: 3}
+  weaponSprite: {fileID: 21300000, guid: 0e48012f5dfa16345963314be590a3c0, type: 3}
+  maxHealth: 90
+  moveSpeed: 6
+  forwardMultiplier: 1
+  isMovingParam: isMoving
+  moveXParam: moveX
+  moveYParam: moveY
+  attackAnimationTrigger: attack
+  totalAttackAnimations: 1
+  useAimingRig: 0
+  aimRotationSpeed: 360
+  attacks:
+  - attackName: Rifle Shoot
+    executionType: 1
+    damage: 20
+    cooldown: 0.6
+    range: 5
+    animationTrigger: attack
+    totalAnimations: 1
+    hitImpactVFX: {fileID: 4583144699886880120, guid: 0ffe88c3d58371140ae613c1a127d777, type: 3}
+    attackSound: {fileID: 0}
+    projectilePrefab: {fileID: 7412084954217616309, guid: 834b1ec1f6cd30d4683e095560d6facc, type: 3}
+    projectileSpeed: 30
+    projectileLifetime: 5
+    projectileSpawnOffset: {x: 0, y: 0, z: 0}
+    areaRadius: 0
+    areaDuration: 0
+  skills:
+  - {fileID: 11400000, guid: db101c2f6e3a9064fa6c2533fbcaea46, type: 2}
+  - {fileID: 11400000, guid: e4149f0c8851e2a428776cd8791bf163, type: 2}
+  - {fileID: 11400000, guid: a1520e4226922d04a833de1b05f932f4, type: 2}
+  audioProfile: {fileID: 11400000, guid: 03e229b1384b22e4e940bd950f76ac59, type: 2}
+  clientId: 0
+  playerId: 0
+  isSelected: 1
+  enemiesDestroyed: 0
+  totalDamages: 0

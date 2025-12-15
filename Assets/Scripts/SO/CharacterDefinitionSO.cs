@@ -26,6 +26,13 @@ public class CharacterDefinitionSO : NetworkSO
     public string attackAnimationTrigger = "attack";
     public int totalAttackAnimations = 4;
 
+    [Header("Aiming Rig Settings")]
+    [Tooltip("Enable aiming rig for ranged characters. Melee characters should leave this disabled.")]
+    public bool useAimingRig = false;
+
+    [Tooltip("Speed at which the character rotates to aim (degrees per second).")]
+    public float aimRotationSpeed = 360f;
+
     [Header("Attacks")]
     public List<AttackDefinition> attacks = new();
 
