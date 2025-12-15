@@ -104,6 +104,7 @@ public class HomerunSwingExecutorView : SkillExecutorView
         if (skill.swingVfxPrefab)
         {
             var swingFx = Instantiate(skill.swingVfxPrefab, origin, Quaternion.LookRotation(direction));
+
             Destroy(swingFx.gameObject, 2f);
         }
 

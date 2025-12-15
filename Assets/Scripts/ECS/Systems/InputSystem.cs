@@ -28,6 +28,8 @@ public class InputSystem : ISystem
             // LeftMouse clicked
             if (_input.IsLeftMouseDown() && _world.Components.TryGet(entity, out ActionFlagComponent flags))
             {
+                Vector3 mousePos = _input.GetMouseWorldPosition();
+
                 if (flags.Get(ActionFlag.SkillPreview))
                 {
                     _world.Events.Publish(new SkillExecutionRequestEvent(entity));
@@ -38,7 +40,7 @@ public class InputSystem : ISystem
                     _world.Events.Publish(new AttackPressedInputEvent(entity));
 
                     // Request Server validation
-                    sync.SyncView.RequestAttackServerRpc();
+                    sync.SyncView.RequestAttackServerRpc(mousePos);
                 }
             }
 

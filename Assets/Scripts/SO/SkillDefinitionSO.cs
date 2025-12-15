@@ -2,9 +2,15 @@ using UnityEngine;
 
 public enum SkillCategory
 {
+    // Cipher
     DashStrike,
     HomerunSwing,
     PlasmaShield,
+
+    // Daisy
+    RapidFire,
+    ExplosiveShot,
+    SniperShot,
 }
 
 public abstract class SkillDefinitionSO : NetworkSO

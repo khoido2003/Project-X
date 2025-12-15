@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae417498b70a9d6459fba3467bb79bdf, type: 3}
+  m_Name: DaisyAudio
+  m_EditorClassIdentifier: Assembly-CSharp::AudioProfileSO
+  cues:
+  - SoundType: 5
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 9322a56ef2a4a441e8b32d154e6679d4, type: 3}
+  - SoundType: 0
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 83ed39cba46604b7f99ebc0c0867e076, type: 3}
+    - {fileID: 8300000, guid: e567d4549e60f430aad885cfc6b45e60, type: 3}
+  - SoundType: 1
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 78db9d561d1134f1c91be2940e267353, type: 3}
+  - SoundType: 2
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 5eec874995d1c43718bc54378910e531, type: 3}
+  - SoundType: 3
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: ed4f31ccba5d8b246bd5fabc8efc97c2, type: 3}
+  - SoundType: 4
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: b642b9ca492aa4bb881eaf16810ab9bf, type: 3}

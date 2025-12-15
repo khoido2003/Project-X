@@ -50,6 +50,7 @@
     <Analyzer Include="D:\unity_projects\Project-X\Library\PackageCache\com.unity.dt.app-ui@8ac7e730dd5d\Runtime\MVVM\SourceGenerators\netstandard2.0\MVVMSourceGenerators.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\AudioService.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
     <Compile Include="Assets\Scripts\Utils\Singleton.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="Assets\Scripts\ECS\Components\SkillCastBufferComponent.cs" />
     <Compile Include="Assets\Scripts\Utils\Drawer.cs" />
     <Compile Include="Assets\Scripts\Utils\TypescriptEffect.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\RapidFireSkillSO.cs" />
     <Compile Include="Assets\Scripts\Core\Network\NetworkObjectSpawner.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AnimationEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\TransformDataComponent.cs" />
@@ -107,12 +109,15 @@
     <Compile Include="Assets\Scripts\ECS\Helpers\LoadingSceneHelper.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\PlayerRespawnSystem.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ExplosiveProjectileView.cs" />
     <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\CinemachineCameraService.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyRoom\BaseCharacterLobby.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\ExplosiveShotSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IEnemyState.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\RapidFireExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\EnemyMovementView.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\CombatStateEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
@@ -124,6 +129,7 @@
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\PlaySoundAtRandomIntervals.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AudioProfileComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\HealthDataComponent.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\ExplosiveShotExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\EffectsEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AttackExecutionView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\CameraFollowSystem.cs" />
@@ -140,6 +146,7 @@
     <Compile Include="Assets\Scripts\Core\ECS\ServiceLocator.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IAudioService.cs" />
     <Compile Include="Assets\Scripts\Core\Network\PlayerCharSelection.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\SniperShotSkillSO.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\MapSelectionManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\SkillSetComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\EnemyEvent.cs" />
@@ -177,9 +184,11 @@
     <Compile Include="Assets\Scripts\ECS\Systems\AudioSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SkillSystem.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\SelectedSkill.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\AimingRigView.cs" />
     <Compile Include="Assets\Scripts\Utils\UnityMainThreadDispatcher.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IInputService.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\MenuManager.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Projectiles\PiercingProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
     <Compile Include="Assets\Scripts\Utils\GoToMenu.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\InputManager.cs" />
@@ -194,7 +203,6 @@
     <Compile Include="Assets\Scripts\ECS\Services\TimeService.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAIHelpers.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\LoadingSceneManager.cs" />
-    <Compile Include="Assets\Scripts\ECS\Views\ProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\InputService.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\StunSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\SpawnSystem.cs" />
@@ -221,6 +229,7 @@
     <Compile Include="Assets\Scripts\ECS\AI\EnemyDeadStateAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\PlayerSpawnEvent.cs" />
     <Compile Include="Assets\Scripts\Core\Network\ClientConnection.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\SniperShotExecutorView.cs" />
     <Compile Include="Assets\Scripts\SO\SpawnConfigSO.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\SimpleCameraController.cs" />
@@ -265,6 +274,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF.shader" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Dissolve.shader" />
+    <None Include="Assets\Models\PolygonParticles\Materials\SHARED BY LUXURYPANDA.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile SSD.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plasma.shader" />

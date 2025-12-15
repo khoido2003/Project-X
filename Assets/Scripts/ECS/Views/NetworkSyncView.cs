@@ -271,7 +271,7 @@ public class NetworkSyncView : NetworkBehaviour
     // ATTACK
 
     [ServerRpc]
-    public void RequestAttackServerRpc()
+    public void RequestAttackServerRpc(Vector3 mouseWorldPos)
     {
         if (!_world.Components.TryGet(_entity, out AttackDataComponent attack))
         {
@@ -290,6 +290,9 @@ public class NetworkSyncView : NetworkBehaviour
             RejectAttackClientRpc();
             return;
         }
+
+        // Capture the aim direction from the client's mouse position
+        attack.AttackDirection = CalculateAttackDirection(mouseWorldPos);
 
         _world.Events.Publish(new AttackPressedInputEvent(_entity));
 
@@ -406,6 +409,40 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
+        // Ensure server has a buffer to store the chosen skill (authoritative selection)
+        if (!_world.Components.TryGet(_entity, out SkillCastBufferComponent buffer))
+        {
+            buffer = new SkillCastBufferComponent();
+            _world.Components.Add(_entity, buffer);
+        }
+
+        // When the key is pressed, prime the buffer with the selected skill
+        if (isPressed)
+        {
+            buffer.Skill = skillSet.Skills[index];
+
+            // Seed target point toward the mouse for better defaults if execution RPC arrives with bad data
+            buffer.TargetPoint = mousePos;
+
+            // Derive a rough direction toward mouse using current transform as a fallback
+            Vector3 dir = mousePos;
+            if (_world.Components.TryGet(_entity, out TransformComponent trans))
+            {
+                dir -= trans.Position;
+            }
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.0001f)
+            {
+                dir = Vector3.forward;
+            }
+            buffer.Direction = dir.normalized;
+        }
+        else
+        {
+            // On release, clear buffered skill so we don't fire stale selections
+            buffer.Skill = null;
+        }
+
         _world.Events.Publish(new SkillPressedInputEvent(_entity, skillIndex, isPressed));
 
         BroadcastSkillClientRpc(skillIndex, isPressed, mousePos);
@@ -454,6 +491,35 @@ public class NetworkSyncView : NetworkBehaviour
             }
         }
 
+        // Validate and persist direction for downstream systems
+        Vector3 validatedDirection = direction;
+        validatedDirection.y = 0f;
+
+        if (validatedDirection.sqrMagnitude < 0.0001f)
+        {
+            if (_world.Components.TryGet(_entity, out TransformComponent trans))
+            {
+                validatedDirection = trans.Rotation * Vector3.forward;
+            }
+            else
+            {
+                var registry = _world.Services.Resolve<EntityViewRegistry>();
+                if (registry.TryGet(_entity, out EntityView view))
+                {
+                    validatedDirection = view.transform.forward;
+                }
+            }
+        }
+
+        if (validatedDirection.sqrMagnitude < 0.0001f)
+        {
+            validatedDirection = Vector3.forward;
+        }
+
+        validatedDirection = validatedDirection.normalized;
+        buffer.TargetPoint = targetPoint;
+        buffer.Direction = validatedDirection;
+
         // Simulate on server
         _world.Events.Publish(new EnterCombatStateEvent { Entity = _entity, TargetState = CombatState.CastingSkill });
 
@@ -463,11 +529,11 @@ public class NetworkSyncView : NetworkBehaviour
                 Caster = _entity,
                 Skill = buffer.Skill,
                 TargetPoint = targetPoint,
-                Direction = direction,
+                Direction = validatedDirection,
             }
         );
 
-        BroadcastSkillExecutionClientRpc(targetPoint, direction);
+        BroadcastSkillExecutionClientRpc(targetPoint, validatedDirection);
     }
 
     [ClientRpc]
@@ -787,6 +853,34 @@ public class NetworkSyncView : NetworkBehaviour
     //////////////////////////////////////////////////
 
     #region Utils
+
+    private Vector3 CalculateAttackDirection(Vector3 mouseWorldPos)
+    {
+        Vector3 attackDir = Vector3.zero;
+
+        if (_world.Components.TryGet(_entity, out TransformComponent trans))
+        {
+            attackDir = mouseWorldPos - trans.Position;
+        }
+
+        if (attackDir.sqrMagnitude < 0.0001f)
+        {
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+            if (registry.TryGet(_entity, out EntityView view))
+            {
+                attackDir = view.transform.forward;
+            }
+        }
+
+        attackDir.y = 0f;
+
+        if (attackDir.sqrMagnitude < 0.0001f)
+        {
+            attackDir = Vector3.forward;
+        }
+
+        return attackDir.normalized;
+    }
 
     private float SerializeValue(object value)
     {

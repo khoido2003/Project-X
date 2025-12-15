@@ -76,6 +76,35 @@ public class AttackSystem : ISystem
             return;
         }
 
+        // Ensure we have a valid attack direction (set by the client when requesting the attack)
+        Vector3 attackDir = attack.AttackDirection;
+
+        if (attackDir.sqrMagnitude < 0.0001f)
+        {
+            // Fallback to entity forward if no direction was provided
+            if (_world.Components.TryGet(@event.Entity, out TransformComponent transform))
+            {
+                attackDir = transform.Rotation * Vector3.forward;
+            }
+            else
+            {
+                var registry = _world.Services.Resolve<EntityViewRegistry>();
+                if (registry.TryGet(@event.Entity, out EntityView view))
+                {
+                    attackDir = view.transform.forward;
+                }
+            }
+        }
+
+        attackDir.y = 0f;
+
+        if (attackDir.sqrMagnitude < 0.0001f)
+        {
+            attackDir = Vector3.forward;
+        }
+
+        attack.AttackDirection = attackDir.normalized;
+
         // Switch Combat State
         _world.Events.Publish(
             new EnterCombatStateEvent { Entity = @event.Entity, TargetState = CombatState.Attacking }
@@ -83,7 +112,6 @@ public class AttackSystem : ISystem
 
         attack.IsAttacking = true;
         attack.LastAttackTime = Time.time;
-        attack.AttackDirection = Vector3.forward;
 
         ////////////////////////////////////////////////////////
 
