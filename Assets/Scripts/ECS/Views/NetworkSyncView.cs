@@ -29,6 +29,8 @@ public class NetworkSyncView : NetworkBehaviour
     private Quaternion _targerRotation;
     private float _lerpProgress;
 
+    public bool IsEntityInitialized { get; private set; }
+
     /////////////////////////////////////////////////////////////////////////////
 
     public void Initialize(World world, EntityId entity)
@@ -53,59 +55,160 @@ public class NetworkSyncView : NetworkBehaviour
         }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (IsOwner && !IsServer && !IsEntityInitialized)
+        {
+            var runner = WorldRunner.Instance;
+            if (runner != null && runner.World != null)
+            {
+                _world = runner.World;
+
+                var entityView = GetComponent<EntityView>();
+                if (entityView != null)
+                {
+                    _entity = entityView.EntityInstance;
+                }
+                else
+                {
+                    entityView = GetComponentInChildren<EntityView>();
+                    if (entityView != null)
+                    {
+                        _entity = entityView.EntityInstance;
+                    }
+                }
+
+                if (_entity == null || _entity.Id == 0)
+                {
+                    _entity = _world.CreateEntity();
+                    var registry = _world.Services.Resolve<EntityViewRegistry>();
+
+                    foreach (EntityView view in this.GetComponentsInChildren<EntityView>(includeInactive: true))
+                    {
+                        view.Bind(_world, _entity);
+                        registry.Register(view);
+                    }
+
+                    // Bind all other EntityViews in the hierarchy
+                    if (entityView != null && entityView != this)
+                    {
+                        entityView.Bind(_world, _entity);
+                        if (registry != null)
+                        {
+                            registry.Register(entityView);
+                        }
+                    }
+
+                    // Also bind any child EntityViews
+                    var childViews = GetComponentsInChildren<EntityView>();
+                    foreach (var childView in childViews)
+                    {
+                        if (childView != this && childView != entityView)
+                        {
+                            childView.Bind(_world, _entity);
+                            if (registry != null)
+                            {
+                                registry.Register(childView);
+                            }
+                        }
+                    }
+                }
+
+                // Add/ensure all required ECS components for local player
+                if (!_world.Components.Has<NetworkOwnerComponent>(_entity))
+                {
+                    _world.Components.Add(
+                        _entity,
+                        new NetworkOwnerComponent
+                        {
+                            ClientId = NetworkManager.Singleton.LocalClientId,
+                            IsLocalPlayer = true,
+                        }
+                    );
+                }
+                else
+                {
+                    var owner = _world.Components.Get<NetworkOwnerComponent>(_entity);
+                    owner.ClientId = NetworkManager.Singleton.LocalClientId;
+                    owner.IsLocalPlayer = true;
+                }
+
+                if (!_world.Components.Has<PlayerTagComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new PlayerTagComponent());
+                }
+                if (!_world.Components.Has<ActionFlagComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new ActionFlagComponent());
+                }
+                if (!_world.Components.Has<TransformComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new TransformComponent(transform.position, transform.rotation));
+                }
+                if (!_world.Components.Has<HealthDataComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new HealthDataComponent { MaxHealth = 100, CurrentHealth = 100 });
+                }
+                if (!_world.Components.Has<MovementDataComponent>(_entity))
+                {
+                    _world.Components.Add(
+                        _entity,
+                        new MovementDataComponent
+                        {
+                            MoveSpeed = 5f,
+                            ForwardMultiplier = 3f,
+                            IsPlayerControlled = true,
+                        }
+                    );
+                }
+                if (!_world.Components.Has<CombatStateComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new CombatStateComponent());
+                }
+                if (!_world.Components.Has<SkillSetComponent>(_entity))
+                {
+                    _world.Components.Add(
+                        _entity,
+                        new SkillSetComponent(new System.Collections.Generic.List<SkillDefinitionSO>())
+                    );
+                }
+                if (!_world.Components.Has<SkillCastBufferComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new SkillCastBufferComponent());
+                }
+                if (!_world.Components.Has<AnimationDataComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new AnimationDataComponent());
+                }
+                if (!_world.Components.Has<PlayerScoreComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new PlayerScoreComponent());
+                }
+                if (!_world.Components.Has<PlayerRespawnComponent>(_entity))
+                {
+                    _world.Components.Add(
+                        _entity,
+                        new PlayerRespawnComponent { OriginalSpawnPosition = transform.position }
+                    );
+                }
+                if (!_world.Components.Has<PlayerUpgradesComponent>(_entity))
+                {
+                    _world.Components.Add(_entity, new PlayerUpgradesComponent());
+                }
+
+                // Fire PlayerSpawnEvent for camera system and other listeners
+                _world.Events.Publish(new PlayerSpawnEvent(_entity, gameObject, transform));
+                IsEntityInitialized = true;
+                Debug.Log($"[NetworkSyncView] Client entity initialized for local player, Entity ID: {_entity.Id}");
+            }
+        }
+    }
+
     private void Start()
     {
         respawnUI = FindFirstObjectByType<PlayerRespawnUI>();
-    }
-
-    private void Update()
-    {
-        if (IsServer)
-        {
-            ServerUpdate();
-        }
-        else if (IsOwner)
-        {
-            ClientPredictionUpdate();
-        }
-        else
-        {
-            ClientInterpolation();
-        }
-    }
-
-    private void FixedUpdate()
-    {
-        _currentTick++;
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        if (IsServer)
-        {
-            _world.Events.Unsubscribe<HealthChangedEvent>(OnHealthChanged);
-            _world.Events.Unsubscribe<CombatStateChangedEvent>(OnCombatStateChanged);
-            _world.Events.Unsubscribe<AnimationParameterEvent>(OnAnimationParameter);
-            _world.Events.Unsubscribe<AttackExecutionRequestEvent>(OnAttackExecutionRequest);
-        }
-
-        if (IsClient)
-        {
-            _netTransform.OnValueChanged -= OnNetTransformChanged;
-            _netHealth.OnValueChanged -= OnNetHealthChanged;
-            _netCombatState.OnValueChanged -= OnNetCombatStateChanged;
-            _netMovement.OnValueChanged -= OnNetMovementChanged;
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////
-
-    #region SERVER Method
-
-    private void ServerUpdate()
-    {
-        SyncTransform();
-        SyncMovement();
     }
 
     private void SyncTransform()
@@ -146,8 +249,6 @@ public class NetworkSyncView : NetworkBehaviour
             }
         }
     }
-
-    #endregion
 
     /////////////////////////////////////////////////////////////////////////////
 

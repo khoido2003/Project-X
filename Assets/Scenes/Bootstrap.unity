@@ -127,6 +127,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 767912540677268889, guid: fc5321605a688f545842035ed07e561e, type: 3}
+      propertyPath: m_characterDatas.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 767912540677268889, guid: fc5321605a688f545842035ed07e561e, type: 3}
+      propertyPath: 'm_characterDatas.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 80f3a4406a07fe147ac777daaeb9de33, type: 2}
     - target: {fileID: 1023704578699899170, guid: fc5321605a688f545842035ed07e561e, type: 3}
       propertyPath: m_Name
       value: ClientConnection
