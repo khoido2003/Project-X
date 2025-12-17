@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class SkillPreviewView : EntityView
@@ -36,15 +35,31 @@ public class SkillPreviewView : EntityView
     {
         base.Bind(world, entity);
 
-        WorldInstance.Events.Subscribe<MouseWorldInputEvent>(OnMouseWorldInputEvent);
+        if (WorldInstance == null)
+        {
+            Debug.LogWarning("[SkillPreviewView] WorldInstance is null during Bind, subscriptions will be deferred");
+            return;
+        }
 
-        WorldInstance.Events.Subscribe<SkillPreviewRequestEvent>(OnSkillPreviewRequestEvent);
-
-        WorldInstance.Events.Subscribe<SkillExecutionRequestEvent>(OnSkillExecutionRequestEvent);
+        try
+        {
+            WorldInstance.Events.Subscribe<MouseWorldInputEvent>(OnMouseWorldInputEvent);
+            WorldInstance.Events.Subscribe<SkillPreviewRequestEvent>(OnSkillPreviewRequestEvent);
+            WorldInstance.Events.Subscribe<SkillExecutionRequestEvent>(OnSkillExecutionRequestEvent);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[SkillPreviewView] Failed to subscribe to events during Bind: {ex.Message}");
+        }
     }
 
     private void Update()
     {
+        if (WorldInstance == null || EntityInstance.Id == 0)
+        {
+            return;
+        }
+
         // Only local player shows preview
         if (!WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner) || !owner.IsLocalPlayer)
         {
@@ -93,7 +108,7 @@ public class SkillPreviewView : EntityView
         {
             flags.Set(ActionFlag.SkillPreview, false);
         }
-        
+
         TryCastSkill();
         HideSkillVfxEffect();
     }

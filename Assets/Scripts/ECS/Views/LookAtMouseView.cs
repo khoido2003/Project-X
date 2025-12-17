@@ -20,7 +20,11 @@ public class LookAtMouseView : EntityView
     {
         if (!_isLocalPlayer)
         {
-            return;
+            CheckIfLocalPlayer();
+            if (!_isLocalPlayer)
+            {
+                return;
+            }
         }
 
         if (_inputService == null)
@@ -43,6 +47,7 @@ public class LookAtMouseView : EntityView
         }
 
         Quaternion targetRotation = Quaternion.LookRotation(aimDir);
+        Quaternion previousRotation = _transform.rotation;
         _transform.rotation = Quaternion.RotateTowards(
             _transform.rotation,
             targetRotation,
@@ -55,6 +60,10 @@ public class LookAtMouseView : EntityView
         if (WorldInstance != null && WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner))
         {
             _isLocalPlayer = owner.IsLocalPlayer;
+            if (_isLocalPlayer)
+            {
+                Debug.Log($"[LookAtMouseView] Detected as LOCAL player, enabling mouse look");
+            }
         }
     }
 

@@ -51,24 +51,32 @@ public class WorldRunner : NetworkBehaviour
         }
 
         Instance = this;
+
+        Debug.Log("[WorldRunner] Creating World instance...");
+        World = new World();
+
+        Debug.Log("[WorldRunner] Initializing services...");
+        InitServices();
+        
+        Debug.Log("[WorldRunner] Initializing systems...");
+        InitSystems();
+
+        bool isServer = NetworkManager.Singleton?.IsServer == true;
+        bool isClient = NetworkManager.Singleton?.IsClient == true;
+        Debug.Log($"[WorldRunner] World initialized successfully! IsServer: {isServer}, IsClient: {isClient}");
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
-        World = new World();
-
-        InitServices();
-        InitSystems();
-
         // Play game music when game starts
         PlayGameMusic();
 
+        // Only server handles spawning logic
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-
             StartCoroutine(DelayedSpawnExistingPlayers());
         }
     }
@@ -94,12 +102,14 @@ public class WorldRunner : NetworkBehaviour
 
     private void Update()
     {
+        // All clients run Update
         var time = World.Services.Resolve<ITimeService>();
         World.Systems.UpdateAll(time.DeltaTime);
     }
 
     private void FixedUpdate()
     {
+        // All clients run FixedUpdate
         var time = World.Services.Resolve<ITimeService>();
         World.Systems.FixedUpdateAll(time.FixedDeltaTime);
     }
@@ -118,7 +128,7 @@ public class WorldRunner : NetworkBehaviour
 
     private void OnDestroy()
     {
-        World.Systems.ShutdownAll();
+        World?.Systems.ShutdownAll();
 
         if (Instance == this)
         {
@@ -136,7 +146,6 @@ public class WorldRunner : NetworkBehaviour
         if (HasSpawnedPlayer(clientId))
         {
             Debug.Log($"Client {clientId} already has a spawned player, skipping spawn!");
-
             return;
         }
 
@@ -161,7 +170,7 @@ public class WorldRunner : NetworkBehaviour
         }
 
         Debug.Log(
-            $"Spawningng existing players. Connected Clients: {NetworkManager.Singleton.ConnectedClientsIds.Count}"
+            $"Spawning existing players. Connected Clients: {NetworkManager.Singleton.ConnectedClientsIds.Count}"
         );
 
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
@@ -176,7 +185,7 @@ public class WorldRunner : NetworkBehaviour
 
         if (characterData == null)
         {
-            Debug.LogError($"No character data found for client  {clientId}");
+            Debug.LogError($"No character data found for client {clientId}");
             return;
         }
 
@@ -210,7 +219,6 @@ public class WorldRunner : NetworkBehaviour
         }
 
         Debug.LogError($"No character selected for client {clientId}");
-
         return null;
     }
 
@@ -245,7 +253,6 @@ public class WorldRunner : NetworkBehaviour
         }
 
         int randomIndex = availableIndices[UnityEngine.Random.Range(0, availableIndices.Count)];
-
         _spawnPointsUsed[randomIndex] = true;
 
         return playerSpawnPoints[randomIndex].position;
@@ -282,7 +289,6 @@ public class WorldRunner : NetworkBehaviour
             Debug.LogError("No InputService found!");
             return;
         }
-
         World.Services.Register<IInputService>(inputService);
 
         // EntityView Registry
@@ -328,33 +334,57 @@ public class WorldRunner : NetworkBehaviour
 
     private void InitSystems()
     {
-        _spawnSystem = new SpawnSystem(spawnConfig);
-        World.Systems.AddSystem(_spawnSystem, World);
-
-        World.Systems.AddSystem(new InputSystem(), World);
+        bool isServer = NetworkManager.Singleton?.IsServer == true;
+        
+        Debug.Log($"[WorldRunner] Initializing systems. IsServer: {isServer}");
+        
+        // ===== SYSTEMS FOR ALL CLIENTS (Visual/Audio/Camera/Input) =====
         World.Systems.AddSystem(new CameraFollowSystem(), World);
         World.Systems.AddSystem(new TransformSyncSystem(), World);
-
-        World.Systems.AddSystem(new HealthSystem(), World);
-        World.Systems.AddSystem(new MovementSystem(), World);
-        World.Systems.AddSystem(new AttackSystem(), World);
-        World.Systems.AddSystem(new DamageSystem(), World);
-        World.Systems.AddSystem(new SkillSystem(), World);
-        World.Systems.AddSystem(new CombatStateSystem(), World);
-
-        World.Systems.AddSystem(new StunSystem(), World);
-        World.Systems.AddSystem(new KnockbackSystem(), World);
-        World.Systems.AddSystem(new HealthRegenSystem(), World);
-        World.Systems.AddSystem(new PlayerRespawnSystem(), World);
-
-        World.Systems.AddSystem(new EnemyVisionSystem(), World);
-        World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
-        World.Systems.AddSystem(new EnemyMovementSystem(), World);
-        World.Systems.AddSystem(new EnemyAISystem(), World);
-
         World.Systems.AddSystem(new AudioSystem(), World);
         World.Systems.AddSystem(new AudioProfileSystem(), World);
-
-        EnemyAIHelpers.RegisterDefaultStates();
+        
+        // CRITICAL: InputSystem must run on ALL clients to handle local input
+        // It sends RPCs to server (RequestAttackServerRpc, skill casts, etc.)
+        World.Systems.AddSystem(new InputSystem(), World);
+        
+        // ===== SERVER-ONLY SYSTEMS (Gameplay Logic) =====
+        if (isServer)
+        {
+            Debug.Log("[WorldRunner] Registering SERVER gameplay systems...");
+            
+            // Spawning
+            _spawnSystem = new SpawnSystem(spawnConfig);
+            World.Systems.AddSystem(_spawnSystem, World);
+            
+            // Core gameplay
+            World.Systems.AddSystem(new MovementSystem(), World);
+            World.Systems.AddSystem(new HealthSystem(), World);
+            World.Systems.AddSystem(new AttackSystem(), World);
+            World.Systems.AddSystem(new DamageSystem(), World);
+            World.Systems.AddSystem(new SkillSystem(), World);
+            World.Systems.AddSystem(new CombatStateSystem(), World);
+            
+            // Status effects
+            World.Systems.AddSystem(new StunSystem(), World);
+            World.Systems.AddSystem(new KnockbackSystem(), World);
+            World.Systems.AddSystem(new HealthRegenSystem(), World);
+            World.Systems.AddSystem(new PlayerRespawnSystem(), World);
+            
+            // Enemy AI
+            World.Systems.AddSystem(new EnemyVisionSystem(), World);
+            World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
+            World.Systems.AddSystem(new EnemyMovementSystem(), World);
+            World.Systems.AddSystem(new EnemyAISystem(), World);
+            
+            EnemyAIHelpers.RegisterDefaultStates();
+            
+            Debug.Log("[WorldRunner] Server systems registered successfully");
+        }
+        else
+        {
+            Debug.Log("[WorldRunner] Client-only mode - gameplay systems NOT registered");
+        }
     }
+
 }

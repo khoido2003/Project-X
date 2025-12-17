@@ -1,297 +1,213 @@
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
-public class AimingRigView : EntityView
+/// <summary>
+/// Controls character aiming to make them visually aim toward the mouse/target position.
+/// Works with Unity's Animation Rigging package.
+///
+/// Setup Requirements:
+/// 1. Add this component to your character prefab
+/// 2. Create a Rig Setup in your character:
+///    - Add Rig Builder component to the character root
+///    - Create a child GameObject named "AimRig"
+///    - Add Rig component to AimRig
+///    - Create an "AimTarget" child under AimRig with MultiAimConstraint
+/// 3. Configure MultiAimConstraint to target the spine/chest bone
+/// </summary>
+public class AimingRigView : MonoBehaviour
 {
-    [Header("Aiming Rig References")]
-    [Tooltip(
-        "Optional: Spine/upper body bone to rotate for aiming. If null, will rotate the root transform slightly to compensate for animation offset."
-    )]
+    [Header("References")]
+    [Tooltip("The Rig component that controls aiming. Auto-detected if not set.")]
     [SerializeField]
-    private Transform spineBone;
+    private Rig _aimRig;
 
-    [Header("Aiming Settings")]
-    [Tooltip("Speed at which the character rotates to aim (degrees per second).")]
+    [Tooltip("The transform that the character aims toward. Auto-created if not set.")]
     [SerializeField]
-    private float aimRotationSpeed = 360f;
+    private Transform _aimTarget;
 
-    [Tooltip("Rotation weight/blend (0-1). Higher = more rotation applied.")]
+    [Header("Settings")]
+    [Tooltip("How fast the aim weight transitions (0-1 per second)")]
     [SerializeField]
-    [Range(0f, 1f)]
-    private float rotationWeight = 1f;
+    private float _aimTransitionSpeed = 5f;
 
-    [Header("Continuous Aiming")]
-    [Tooltip("If enabled, character will continuously aim at mouse position when not using skills.")]
+    [Tooltip("Maximum weight for the aiming rig (0-1)")]
     [SerializeField]
-    private bool continuousAiming = false;
+    private float _maxAimWeight = 1f;
 
-    [Header("Debug")]
+    [Tooltip("If true, continuously aim at mouse position")]
     [SerializeField]
-    private bool showDebugGizmos = false;
+    private bool _continuousAiming = false;
 
-    private CharacterDefinitionSO _characterDef;
+    private float _targetWeight = 0f;
+    private float _aimDuration = 0f;
+    private float _aimStartTime = 0f;
     private Vector3 _currentAimTarget;
-    private Vector3 _targetAimDirection;
-    private bool _isAiming;
-    private float _aimDuration;
-    private float _aimStartTime;
-    private bool _isSkillAiming;
+    private bool _isAiming = false;
 
-    private Quaternion _initialRotation;
-    private Transform _targetTransform;
-
+    // For continuous aiming
     private IInputService _inputService;
+    private World _world;
+    private EntityView _entityView;
     private bool _isLocalPlayer;
-
-    public bool IsAiming => _isAiming;
-
-    public override void Bind(World world, EntityId entity)
-    {
-        base.Bind(world, entity);
-
-        // Try to get character definition from CharacterSelectionComponent
-        if (world.Components.TryGet(entity, out CharacterSelectionComponent characterSelection))
-        {
-            _characterDef = characterSelection.CharacterData;
-            ApplyCharacterSettings();
-        }
-
-        InitializeTransform();
-        TryResolveInput();
-        CheckIfLocalPlayer();
-    }
 
     private void Start()
     {
-        if (_targetTransform == null)
+        _entityView = GetComponent<EntityView>();
+
+        // Auto-detect Rig if not set
+        if (_aimRig == null)
         {
-            InitializeTransform();
+            _aimRig = GetComponentInChildren<Rig>();
         }
 
-        // Try to get character definition if not already set
-        if (_characterDef == null && WorldInstance != null)
+        // Create aim target if not set
+        if (_aimTarget == null && _aimRig != null)
         {
-            if (WorldInstance.Components.TryGet(EntityInstance, out CharacterSelectionComponent characterSelection))
+            // Look for existing AimTarget
+            var existingTarget = _aimRig.transform.Find("AimTarget");
+            if (existingTarget != null)
             {
-                _characterDef = characterSelection.CharacterData;
-                ApplyCharacterSettings();
+                _aimTarget = existingTarget;
+            }
+            else
+            {
+                // Create a new aim target
+                var aimTargetGO = new GameObject("AimTarget");
+                aimTargetGO.transform.SetParent(_aimRig.transform);
+                aimTargetGO.transform.localPosition = Vector3.forward * 10f;
+                _aimTarget = aimTargetGO.transform;
+            }
+        }
+
+        // Initialize with zero weight
+        if (_aimRig != null)
+        {
+            _aimRig.weight = 0f;
+        }
+
+        // Check if this is the local player for continuous aiming
+        StartCoroutine(InitializeDelayed());
+    }
+
+    private System.Collections.IEnumerator InitializeDelayed()
+    {
+        // Wait a frame for everything to be set up
+        yield return null;
+
+        if (_entityView != null && _entityView.WorldInstance != null)
+        {
+            _world = _entityView.WorldInstance;
+            _inputService = _world.Services.Resolve<IInputService>();
+
+            if (_world.Components.TryGet(_entityView.EntityInstance, out NetworkOwnerComponent owner))
+            {
+                _isLocalPlayer = owner.IsLocalPlayer;
             }
         }
     }
 
     private void Update()
     {
-        // Handle continuous aiming for ranged characters
-        if (continuousAiming && !_isSkillAiming && _characterDef != null && _characterDef.useAimingRig)
+        if (_aimRig == null)
         {
-            if (_isLocalPlayer && _inputService != null)
+            return;
+        }
+
+        // Handle continuous aiming for local player
+        if (_continuousAiming && _isLocalPlayer && _inputService != null)
+        {
+            Vector3 mousePos = _inputService.GetMouseWorldPosition();
+            if (mousePos.sqrMagnitude > 0.001f)
             {
-                Vector3 mousePos = _inputService.GetMouseWorldPosition();
-                if (mousePos.sqrMagnitude > 0.001f)
-                {
-                    _currentAimTarget = mousePos;
-                    _targetAimDirection = (mousePos - transform.position).normalized;
-                    _targetAimDirection.y = 0f;
-                    ApplyAimingRotation();
-                    return;
-                }
+                // Calculate aim target ahead of character at mouse height
+                Vector3 aimPos = mousePos;
+                aimPos.y = transform.position.y + 1.5f; // Aim at character chest height
+                _aimTarget.position = aimPos;
+                _targetWeight = _maxAimWeight;
             }
         }
-
-        if (!_isAiming)
+        // Handle timed aiming (from attacks/skills)
+        else if (_isAiming)
         {
-            // Return to neutral position when not aiming
-            ReturnToNeutral();
-            return;
-        }
-
-        UpdateAiming();
-    }
-
-    private void InitializeTransform()
-    {
-        // Use spine bone if assigned, otherwise use root transform
-        _targetTransform = spineBone != null ? spineBone : transform;
-
-        // Store initial rotation
-        if (_targetTransform != null)
-        {
-            _initialRotation = _targetTransform.localRotation;
-        }
-    }
-
-    private void ApplyCharacterSettings()
-    {
-        if (_characterDef == null)
-            return;
-
-        aimRotationSpeed = _characterDef.aimRotationSpeed;
-
-        // Enable continuous aiming if character uses aiming rig
-        if (_characterDef.useAimingRig)
-        {
-            continuousAiming = true;
-        }
-    }
-
-    private void CheckIfLocalPlayer()
-    {
-        if (WorldInstance != null && WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner))
-        {
-            _isLocalPlayer = owner.IsLocalPlayer;
-        }
-    }
-
-    private void TryResolveInput()
-    {
-        if (WorldInstance == null)
-        {
-            return;
-        }
-
-        _inputService = WorldInstance.Services.Resolve<IInputService>();
-    }
-
-    /// <summary>
-    /// Start aiming at a target position
-    /// </summary>
-    public void StartAiming(Vector3 targetPosition, float duration = 0f)
-    {
-        _currentAimTarget = targetPosition;
-        _isAiming = true;
-        _isSkillAiming = true; // Mark as skill-based aiming
-        _aimStartTime = Time.time;
-        _aimDuration = duration;
-
-        CalculateAimDirection();
-    }
-
-    /// <summary>
-    /// Start aiming in a specific direction
-    /// </summary>
-    public void StartAimingDirection(Vector3 direction, float duration = 0f)
-    {
-        _targetAimDirection = direction.normalized;
-        _isAiming = true;
-        _isSkillAiming = true; // Mark as skill-based aiming
-        _aimStartTime = Time.time;
-        _aimDuration = duration;
-    }
-
-    /// <summary>
-    /// Stop aiming and return to neutral
-    /// </summary>
-    public void StopAiming()
-    {
-        _isAiming = false;
-        _isSkillAiming = false;
-    }
-
-    private void UpdateAiming()
-    {
-        // Check if aiming duration has expired
-        if (_aimDuration > 0f && Time.time - _aimStartTime >= _aimDuration)
-        {
-            _isSkillAiming = false;
-            _isAiming = false;
-            return;
-        }
-
-        // Calculate aim direction
-        if (_currentAimTarget != Vector3.zero)
-        {
-            Vector3 aimDirection = (_currentAimTarget - transform.position).normalized;
-            aimDirection.y = 0f; // Keep horizontal for body rotation
-            _targetAimDirection = aimDirection;
-        }
-
-        if (_targetAimDirection.sqrMagnitude < 0.01f)
-        {
-            return;
-        }
-
-        // Apply aiming rotation
-        ApplyAimingRotation();
-    }
-
-    private void CalculateAimDirection()
-    {
-        if (_currentAimTarget == Vector3.zero)
-        {
-            // Try to get from input service if local player
-            if (_isLocalPlayer && _inputService != null)
+            float elapsed = Time.time - _aimStartTime;
+            if (elapsed >= _aimDuration)
             {
-                Vector3 mousePos = _inputService.GetMouseWorldPosition();
-                _targetAimDirection = (mousePos - transform.position).normalized;
-                _targetAimDirection.y = 0f;
+                // Time expired, stop aiming
+                _isAiming = false;
+                _targetWeight = 0f;
             }
             else
             {
-                _targetAimDirection = transform.forward;
+                // Still aiming
+                _targetWeight = _maxAimWeight;
             }
         }
         else
         {
-            _targetAimDirection = (_currentAimTarget - transform.position).normalized;
-            _targetAimDirection.y = 0f;
+            _targetWeight = 0f;
         }
+
+        // Smoothly transition the rig weight
+        _aimRig.weight = Mathf.MoveTowards(_aimRig.weight, _targetWeight, _aimTransitionSpeed * Time.deltaTime);
     }
 
-    private void ApplyAimingRotation()
+    /// <summary>
+    /// Start aiming at a specific world position for a duration
+    /// </summary>
+    /// <param name="targetPosition">World position to aim at</param>
+    /// <param name="duration">How long to aim (seconds)</param>
+    public void StartAiming(Vector3 targetPosition, float duration)
     {
-        if (_targetTransform == null)
-            return;
-
-        // Calculate the rotation needed to aim at target
-        Quaternion targetWorldRotation = Quaternion.LookRotation(_targetAimDirection, Vector3.up);
-
-        // Convert to local space relative to parent
-        Transform parent = _targetTransform.parent != null ? _targetTransform.parent : transform;
-        Quaternion targetLocalRotation = Quaternion.Inverse(parent.rotation) * targetWorldRotation;
-
-        // Remove pitch and roll, keep only yaw (horizontal rotation)
-        Vector3 euler = targetLocalRotation.eulerAngles;
-        euler.x = 0f; // No vertical rotation
-        euler.z = 0f; // No roll
-        targetLocalRotation = Quaternion.Euler(euler);
-
-        // Smoothly rotate toward target
-        Quaternion currentRotation = _targetTransform.localRotation;
-        Quaternion smoothedRotation = Quaternion.RotateTowards(
-            currentRotation,
-            targetLocalRotation,
-            aimRotationSpeed * Time.deltaTime
-        );
-
-        // Blend between current and target rotation based on weight
-        _targetTransform.localRotation = Quaternion.Slerp(currentRotation, smoothedRotation, rotationWeight);
-    }
-
-    private void ReturnToNeutral()
-    {
-        if (_targetTransform != null)
+        if (_aimTarget == null)
         {
-            _targetTransform.localRotation = Quaternion.RotateTowards(
-                _targetTransform.localRotation,
-                _initialRotation,
-                aimRotationSpeed * Time.deltaTime
-            );
-        }
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (!showDebugGizmos || !_isAiming)
+            Debug.LogWarning("[AimingRigView] No aim target set, cannot aim");
             return;
+        }
 
-        // Draw aim direction
-        Gizmos.color = Color.red;
-        Gizmos.DrawRay(transform.position, _targetAimDirection * 5f);
+        _currentAimTarget = targetPosition;
+        _currentAimTarget.y = transform.position.y + 1.5f; // Adjust to chest height
+        _aimTarget.position = _currentAimTarget;
 
-        // Draw target position
-        if (_currentAimTarget != Vector3.zero)
+        _aimDuration = duration;
+        _aimStartTime = Time.time;
+        _isAiming = true;
+        _targetWeight = _maxAimWeight;
+
+        Debug.Log($"[AimingRigView] StartAiming to {_currentAimTarget} for {duration}s");
+    }
+
+    /// <summary>
+    /// Stop aiming immediately
+    /// </summary>
+    public void StopAiming()
+    {
+        _isAiming = false;
+        _targetWeight = 0f;
+    }
+
+    /// <summary>
+    /// Update the aim target position (for moving targets)
+    /// </summary>
+    public void UpdateAimTarget(Vector3 targetPosition)
+    {
+        if (_aimTarget != null)
         {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(_currentAimTarget, 0.5f);
+            _currentAimTarget = targetPosition;
+            _currentAimTarget.y = transform.position.y + 1.5f;
+            _aimTarget.position = _currentAimTarget;
         }
     }
+
+    /// <summary>
+    /// Get the current aim weight
+    /// </summary>
+    public float GetAimWeight()
+    {
+        return _aimRig != null ? _aimRig.weight : 0f;
+    }
+
+    /// <summary>
+    /// Check if currently aiming
+    /// </summary>
+    public bool IsAiming => _isAiming || _aimRig?.weight > 0.1f;
 }

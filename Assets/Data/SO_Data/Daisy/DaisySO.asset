@@ -26,20 +26,20 @@ MonoBehaviour:
   moveYParam: moveY
   attackAnimationTrigger: attack
   totalAttackAnimations: 1
-  useAimingRig: 0
+  useAimingRig: 1
   aimRotationSpeed: 360
   attacks:
   - attackName: Rifle Shoot
     executionType: 1
-    damage: 20
-    cooldown: 0.6
+    damage: 30
+    cooldown: 0.2
     range: 5
     animationTrigger: attack
     totalAnimations: 1
     hitImpactVFX: {fileID: 4583144699886880120, guid: 0ffe88c3d58371140ae613c1a127d777, type: 3}
     attackSound: {fileID: 0}
     projectilePrefab: {fileID: 7412084954217616309, guid: 834b1ec1f6cd30d4683e095560d6facc, type: 3}
-    projectileSpeed: 30
+    projectileSpeed: 20
     projectileLifetime: 5
     projectileSpawnOffset: {x: 0, y: 0, z: 0}
     areaRadius: 0

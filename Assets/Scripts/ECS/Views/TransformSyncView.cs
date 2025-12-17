@@ -35,15 +35,35 @@ public class TransformSyncView : EntityView
             return;
         }
 
-        if (_world.Components.TryGet(_entity, out NetworkOwnerComponent owner) && owner.IsLocalPlayer)
+        bool isServer = NetworkManager.Singleton?.IsServer == true;
+        bool isLocalPlayer = _world.Components.TryGet(_entity, out NetworkOwnerComponent owner) && owner.IsLocalPlayer;
+
+        if (isServer)
         {
+            // SERVER: Write from Unity Transform to ECS (CharacterController moves Unity Transform)
             trans.Position = _transform.position;
             trans.Rotation = _transform.rotation;
         }
         else
         {
-            _transform.position = trans.Position;
-            _transform.rotation = trans.Rotation;
+            // CLIENT: Read from ECS and apply to Unity Transform
+            // NetworkSyncView updates ECS from NetworkVariables
+
+            if (isLocalPlayer)
+            {
+                // LOCAL PLAYER on CLIENT:
+                // - Position comes from server (ECS) since movement is server-authoritative
+                // - Rotation is LOCAL (handled by LookAtMouseView for responsive mouse look)
+                _transform.position = trans.Position;
+                // DON'T overwrite rotation - LookAtMouseView handles it locally
+            }
+            else
+            {
+                // REMOTE PLAYERS on CLIENT:
+                // - Both position and rotation come from server (ECS)
+                _transform.position = trans.Position;
+                _transform.rotation = trans.Rotation;
+            }
         }
     }
 }
