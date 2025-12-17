@@ -93,6 +93,7 @@ public class ProjectileView : NetworkBehaviour
             return;
         }
 
+        // Ensure direction is normalized
         if (_direction.sqrMagnitude < 0.9f)
         {
             _direction = _direction.normalized;
@@ -102,10 +103,8 @@ public class ProjectileView : NetworkBehaviour
         Vector3 movement = _direction * _speed * Time.deltaTime;
         transform.position += movement;
 
-        if (movement.sqrMagnitude > 0.0001f)
-        {
-            transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
-        }
+        // NOTE: Rotation is set once in Initialize() and NOT updated here to prevent jitter
+        // If projectile needs to change direction during flight (e.g., homing), use a separate method
 
         Debug.DrawRay(transform.position, _direction * 2f, Color.yellow, 0.1f);
 
@@ -118,6 +117,14 @@ public class ProjectileView : NetworkBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (_hasHit)
+        {
+            return;
+        }
+
+        // CRITICAL FIX: Spawn protection - ignore collisions briefly after spawn
+        // This prevents projectile from hitting the shooter's gun/weapon parts
+        float timeSinceSpawn = Time.time - _spawnTime;
+        if (timeSinceSpawn < 0.05f)
         {
             return;
         }

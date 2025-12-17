@@ -33,6 +33,7 @@ public class AnimationView : EntityView
         switch (@event.ParameterType)
         {
             case AnimationParameterType.Trigger:
+                Debug.Log($"[AnimationView] SetTrigger '{@event.ParameterName}' for entity {EntityInstance.Id}");
                 animator.SetTrigger(@event.ParameterName);
                 break;
             case AnimationParameterType.Bool:

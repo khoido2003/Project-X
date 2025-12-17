@@ -10,6 +10,7 @@ public class PiercingProjectileView : NetworkBehaviour
     private int _currentPierceCount;
     private HashSet<EntityId> _hitEntities;
     private ProjectileView _projectileView;
+    private float _spawnTime;
 
     public void Initialize(World world, EntityId attacker, int maxPierceCount)
     {
@@ -19,12 +20,19 @@ public class PiercingProjectileView : NetworkBehaviour
         _currentPierceCount = 0;
         _hitEntities = new HashSet<EntityId>();
         _projectileView = GetComponent<ProjectileView>();
+        _spawnTime = Time.time;
     }
 
     private void OnTriggerEnter(Collider other)
     {
         // Server-authoritative collision detection
         if (!NetworkManager.Singleton.IsServer)
+            return;
+
+        // CRITICAL FIX: Spawn protection - ignore collisions briefly after spawn
+        // This prevents projectile from hitting the shooter's gun/weapon parts
+        float timeSinceSpawn = Time.time - _spawnTime;
+        if (timeSinceSpawn < 0.05f)
             return;
 
         if (!other.TryGetComponent(out EntityView targetView))

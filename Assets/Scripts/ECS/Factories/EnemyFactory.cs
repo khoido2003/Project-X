@@ -43,6 +43,16 @@ public class EnemyFactory
             registry.Register(view);
         }
 
+        var attackExecView = enemyObj.GetComponent<AttackExecutionView>();
+        if (attackExecView == null)
+        {
+            attackExecView = enemyObj.AddComponent<AttackExecutionView>();
+            attackExecView.Bind(_world, entity);
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+            registry.Register(attackExecView);
+            Debug.Log($"[EnemyFactory] Added AttackExecutionView to enemy entity {entity.Id}");
+        }
+
         var networkSync = enemyObj.GetComponent<EnemyNetworkSyncView>();
         if (networkSync == null)
         {
@@ -170,6 +180,18 @@ public class EnemyFactory
                     ProjectileLifetime = attack.projectileLifetime,
                     ProjectileSpawnOffset = attack.projectileSpawnOffset,
                 }
+            );
+
+            // CRITICAL FIX: Set weapon data on EnemyNetworkSyncView for client-side projectile spawning
+            // This populates the serialized fields that clients will use when spawning visual projectiles
+            networkSync.SetWeaponData(
+                attack.executionType,
+                attack.projectilePrefab,
+                attack.hitImpactVFX,
+                attack.projectileSpeed,
+                attack.projectileLifetime,
+                attack.projectileSpawnOffset,
+                attack.animationTrigger
             );
         }
 

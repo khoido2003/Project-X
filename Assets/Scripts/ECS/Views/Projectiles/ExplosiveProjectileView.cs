@@ -51,6 +51,12 @@ public class ExplosiveProjectileView : NetworkBehaviour
         _spawnTime = Time.time;
         _projectileCollider = GetComponent<Collider>();
 
+        // Set rotation based on direction (once, not every frame)
+        if (_direction.sqrMagnitude > 0.0001f)
+        {
+            transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
+        }
+
         // Enable collider for this component to handle collisions
         if (_projectileCollider != null)
         {
@@ -71,9 +77,8 @@ public class ExplosiveProjectileView : NetworkBehaviour
             return;
         }
 
-        // Move projectile
+        // Move projectile (rotation is set once in Initialize())
         transform.position += _direction * _speed * Time.deltaTime;
-        transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
 
         // Check lifetime
         if (Time.time - _spawnTime >= _lifetime)
@@ -85,6 +90,14 @@ public class ExplosiveProjectileView : NetworkBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (_hasExploded)
+        {
+            return;
+        }
+
+        // CRITICAL FIX: Spawn protection - ignore collisions briefly after spawn
+        // This prevents projectile from hitting the shooter's gun/weapon parts
+        float timeSinceSpawn = Time.time - _spawnTime;
+        if (timeSinceSpawn < 0.05f)
         {
             return;
         }

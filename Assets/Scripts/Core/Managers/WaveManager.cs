@@ -50,15 +50,19 @@ public class WaveManager : MonoBehaviour
     {
         _world = WorldRunner.Instance.World;
 
-        var field = typeof(WorldRunner).GetField(
-            "_spawnSystem",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
-        );
-        _spawnSystem = field?.GetValue(WorldRunner.Instance) as SpawnSystem;
-
-        if (_spawnSystem == null)
+        // Only get SpawnSystem on server (it's server-only now)
+        if (NetworkManager.Singleton?.IsServer == true)
         {
-            Debug.LogError("[Wave Manager] Failed to get SpawnSystem");
+            var field = typeof(WorldRunner).GetField(
+                "_spawnSystem",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
+            );
+            _spawnSystem = field?.GetValue(WorldRunner.Instance) as SpawnSystem;
+
+            if (_spawnSystem == null)
+            {
+                Debug.LogError("[Wave Manager] Failed to get SpawnSystem");
+            }
         }
 
         // Subscribe to death events once
@@ -122,8 +126,10 @@ public class WaveManager : MonoBehaviour
         {
             // Check enemy count before spawning
             int currentCount = GetCurrentEnemyCount();
+
             if (currentCount >= maxConcurrentEnemies)
             {
+                Debug.Log($"[WaveManager] Max enemies reached, waiting for enemies to die...");
                 // Wait until enemies die before continuing
                 while (GetCurrentEnemyCount() >= maxConcurrentEnemies)
                 {
@@ -132,7 +138,6 @@ public class WaveManager : MonoBehaviour
             }
 
             Vector3 spawnPos = GetSpawnPosition();
-
             EnemyDefinitionSO enemyData = config.enemyTypes[UnityEngine.Random.Range(0, config.enemyTypes.Count)];
 
             SpawnEnemy(enemyData, spawnPos, config);
@@ -455,7 +460,7 @@ public class WaveManager : MonoBehaviour
         target.checkInterval = source.checkInterval;
         target.detectionMask = source.detectionMask;
         target.attacks = new List<AttackDefinition>(source.attacks);
-        
+
         // Animation parameters
         target.isMovingParam = source.isMovingParam;
         target.isRunningParam = source.isRunningParam;
@@ -464,15 +469,15 @@ public class WaveManager : MonoBehaviour
         target.totalAttackAnimations = source.totalAttackAnimations;
         target.attackAnimationTrigger = source.attackAnimationTrigger;
         target.takeCoverParam = source.takeCoverParam;
-        
+
         // Patrol settings
         target.generatePatrolPoints = source.generatePatrolPoints;
         target.patrolPointCount = source.patrolPointCount;
         target.patrolRadius = source.patrolRadius;
-        
+
         // AI Behavior
         target.defaultState = source.defaultState;
-        
+
         // Audio - CRITICAL: This was missing!
         target.audioProfile = source.audioProfile;
     }

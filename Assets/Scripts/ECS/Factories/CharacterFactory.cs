@@ -17,15 +17,12 @@ public class CharacterFactory
         out EntityId entity
     )
     {
-        GameObject playerObj = NetworkObjectSpawner.SpawnNewNetworkObjectChangeOwnershipToClient(
-            characterData.prefab,
-            spawnPosition,
-            clientId,
-            true
-        );
+        GameObject playerObj = Object.Instantiate(characterData.prefab, spawnPosition, Quaternion.identity);
 
+        // Create entity in World
         entity = _world.CreateEntity();
 
+        // Bind all views
         foreach (EntityView view in playerObj.GetComponentsInChildren<EntityView>(includeInactive: true))
         {
             view.Bind(_world, entity);
@@ -33,19 +30,53 @@ public class CharacterFactory
             registry.Register(view);
         }
 
+        var attackExecView = playerObj.GetComponent<AttackExecutionView>();
+        if (attackExecView == null)
+        {
+            attackExecView = playerObj.AddComponent<AttackExecutionView>();
+            attackExecView.Bind(_world, entity);
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+            registry.Register(attackExecView);
+            Debug.Log($"[CharacterFactory] Added AttackExecutionView to entity {entity.Id}");
+        }
+
+        // Get or add NetworkSyncView
         var networkSync = playerObj.GetComponent<NetworkSyncView>();
         if (networkSync == null)
         {
-            networkSync = playerObj.AddComponent<NetworkSyncView>();
+            Debug.LogError(
+                $"[CharacterFactory] Prefab {characterData.characterName} is missing NetworkSyncView component!"
+            );
+            Object.Destroy(playerObj);
+            entity = default;
+            return null;
         }
 
-        networkSync.Initialize(_world, entity);
-
-        // Network component
+        // Get NetworkObject component
         NetworkObject netObj = playerObj.GetComponent<NetworkObject>();
+        if (netObj == null)
+        {
+            Debug.LogError(
+                $"[CharacterFactory] Prefab {characterData.characterName} is missing NetworkObject component!"
+            );
+            Object.Destroy(playerObj);
+            entity = default;
+            return null;
+        }
 
+        Debug.Log(
+            $"[CharacterFactory] NetworkSyncView instance: {networkSync.GetInstanceID()}, NetworkObject: {netObj.GetInstanceID()}"
+        );
+
+        // CRITICAL: Initialize BEFORE spawning the NetworkObject
+        // This must be called on the server BEFORE SpawnWithOwnership
+        networkSync.Initialize(_world, entity);
+        Debug.Log(
+            $"[CharacterFactory] Called Initialize() on NetworkSyncView for entity {entity.Id}, client {clientId}"
+        );
+
+        // Add network components
         _world.Components.Add(entity, new NetworkSyncComponent { SyncView = networkSync });
-
         _world.Components.Add(entity, new NetworkObjectComponent { NetworkObject = netObj });
 
         _world.Components.Add(
@@ -142,6 +173,14 @@ public class CharacterFactory
         _world.Components.Add(entity, new PlayerScoreComponent { });
         _world.Components.Add(entity, new PlayerRespawnComponent { OriginalSpawnPosition = spawnPosition });
         _world.Components.Add(entity, new PlayerUpgradesComponent { });
+
+        // CRITICAL FIX: NOW spawn the NetworkObject and change ownership
+        // This triggers OnNetworkSpawn, but Initialize() has already been called
+        Debug.Log($"[CharacterFactory] About to spawn NetworkObject for entity {entity.Id}, client {clientId}");
+        netObj.SpawnWithOwnership(clientId);
+        Debug.Log(
+            $"[CharacterFactory] Successfully spawned NetworkObject {netObj.NetworkObjectId} for entity {entity.Id}, client {clientId}"
+        );
 
         return playerObj;
     }

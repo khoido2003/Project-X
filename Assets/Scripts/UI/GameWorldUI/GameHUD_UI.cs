@@ -195,7 +195,7 @@ public class GameHUD : MonoBehaviour
             }
 
             string playerName = $"Player {owner.ClientId}";
-            if (_world.Components.TryGet(entity, out CharacterSelectionComponent charSelect))
+            if (_world.Components.TryGet(entity, out CharacterSelectionComponent charSelect) && charSelect.CharacterData != null)
             {
                 playerName = charSelect.CharacterData.characterName;
             }

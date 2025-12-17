@@ -39,9 +39,11 @@ public class AnimationEventRelayView : EntityView
 
     private void HandleAttackHit()
     {
+        Debug.Log($"[AnimationEventRelayView] HandleAttackHit called for entity {_entityView?.EntityInstance.Id}");
+        
         if (!_world.Components.TryGet(_entityView.EntityInstance, out AttackDataComponent attack))
         {
-            Debug.LogError("Missing AttackDataComponent");
+            Debug.LogError($"[AnimationEventRelayView] Missing AttackDataComponent for entity {_entityView?.EntityInstance.Id}");
             return;
         }
 
@@ -71,6 +73,8 @@ public class AnimationEventRelayView : EntityView
         }
 
         // Trigger attack execution
+        Debug.Log($"[AnimationEventRelayView] Publishing AttackExecutionRequestEvent for entity {_entityView.EntityInstance.Id}, Type: {weapon.ExecutionType}");
+        
         _world.Events.Publish(
             new AttackExecutionRequestEvent
             {

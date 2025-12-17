@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 1987161284759936799}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -28.49, y: 0, z: -0.89}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -54,6 +54,7 @@ GameObject:
   - component: {fileID: 3313654040752219329}
   - component: {fileID: 3808668821938019850}
   - component: {fileID: 5329789389201210581}
+  - component: {fileID: 8510749509602240122}
   m_Layer: 8
   m_Name: Daisy
   m_TagString: Untagged
@@ -148,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2430068917
+  GlobalObjectIdHash: 1483859917
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -288,6 +289,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkSyncView
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8510749509602240122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2679261005080247242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f4827610de27ab498d2b94228bf97e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AimingRigView
+  _aimRig: {fileID: 1794511648151712094}
+  _aimTarget: {fileID: 351464857911312784}
+  _aimTransitionSpeed: 5
+  _maxAimWeight: 1
+  _continuousAiming: 1
 --- !u!1 &2972720399291164892
 GameObject:
   m_ObjectHideFlags: 0
@@ -382,11 +400,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.MultiAimConstraint
   m_Weight: 1
   m_Data:
-    m_ConstrainedObject: {fileID: 0}
+    m_ConstrainedObject: {fileID: 5364702304306347191}
     m_SourceObjects:
       m_Length: 1
       m_Item0:
-        transform: {fileID: 0}
+        transform: {fileID: 351464857911312784}
         weight: 1
       m_Item1:
         transform: {fileID: 0}
@@ -412,7 +430,7 @@ MonoBehaviour:
     m_Offset: {x: 0, y: 0, z: 0}
     m_MinLimit: -180
     m_MaxLimit: 180
-    m_AimAxis: 3
+    m_AimAxis: 2
     m_UpAxis: 1
     m_WorldUpType: 0
     m_WorldUpObject: {fileID: 0}
@@ -448,7 +466,7 @@ Transform:
   m_GameObject: {fileID: 9189658213185437554}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.015, y: 0.072, z: 0.48}
+  m_LocalPosition: {x: -0.018, y: 0.098, z: 0.638}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1068,7 +1086,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6341279535078807120}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fff0960ef4ea6e04eac66b4a7fd2189d, type: 3}
   m_Name: 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -19,6 +20,17 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     private NetworkVariable<NetworkMovementState> _netMovement = new(writePerm: NetworkVariableWritePermission.Server);
 
+    // Serialized weapon data - populated from EnemyDefinitionSO by EnemyFactory on server
+    // These are available on clients since they're part of the prefab
+    [Header("Weapon Configuration (Set by EnemyFactory)")]
+    [SerializeField] private AttackExecutionType _executionType;
+    [SerializeField] private GameObject _projectilePrefab;
+    [SerializeField] private ParticleSystem _hitImpactParticlePrefab;
+    [SerializeField] private float _projectileSpeed = 10f;
+    [SerializeField] private float _projectileLifetime = 3f;
+    [SerializeField] private Vector3 _projectileSpawnOffset;
+    [SerializeField] private string _attackAnimationTrigger = "attack";
+
     private uint _currentTick;
 
     private Vector3 _previousPosition;
@@ -29,6 +41,130 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     private float _lerpProgress;
     private bool _isInitialized = false;
     private bool _firstTransformReceived = false;
+
+    // Public setters for EnemyFactory to configure weapon data
+    public void SetWeaponData(
+        AttackExecutionType executionType,
+        GameObject projectilePrefab,
+        ParticleSystem hitImpactPrefab,
+        float projectileSpeed,
+        float projectileLifetime,
+        Vector3 spawnOffset,
+        string attackTrigger
+    )
+    {
+        _executionType = executionType;
+        _projectilePrefab = projectilePrefab;
+        _hitImpactParticlePrefab = hitImpactPrefab;
+        _projectileSpeed = projectileSpeed;
+        _projectileLifetime = projectileLifetime;
+        _projectileSpawnOffset = spawnOffset;
+        _attackAnimationTrigger = attackTrigger;
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        
+        Debug.Log($"[EnemyNetworkSyncView] OnNetworkSpawn called - IsServer: {IsServer}, IsClient: {IsClient}");
+        
+        // On SERVER: Initialize is called by EnemyFactory after CreateEntity
+        // On CLIENT: We need to create the ECS entity here since EnemyFactory doesn't run
+        if (!IsServer && IsClient)
+        {
+            Debug.Log("[EnemyNetworkSyncView] Client-side spawn detected, calling CreateClientEntity()");
+            CreateClientEntity();
+        }
+        else
+        {
+            Debug.Log($"[EnemyNetworkSyncView] Skipping CreateClientEntity - IsServer: {IsServer}");
+        }
+    }
+
+
+    private void CreateClientEntity()
+    {
+        _world = WorldRunner.Instance?.World;
+        if (_world == null)
+        {
+            Debug.LogError("[EnemyNetworkSyncView] Client: World is null, cannot create entity");
+            return;
+        }
+
+        _entity = _world.CreateEntity();
+        
+        // Bind all EntityViews
+        foreach (EntityView view in GetComponentsInChildren<EntityView>(includeInactive: true))
+        {
+            view.Bind(_world, _entity);
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+            registry?.Register(view);
+        }
+
+        // Add essential client-side components
+        Vector3 pos = _netTransform.Value.Position;
+        Quaternion rot = _netTransform.Value.Rotation;
+        if (pos == Vector3.zero && rot == default)
+        {
+            pos = transform.position;
+            rot = transform.rotation;
+        }
+        
+        _previousPosition = pos;
+        _targetPosition = pos;
+        _previousRotation = rot == default ? Quaternion.identity : rot;
+        _targetRotation = _previousRotation;
+        
+        _world.Components.Add(_entity, new TransformComponent(pos, _previousRotation));
+        _world.Components.Add(_entity, new HealthDataComponent { 
+            CurrentHealth = _netHealth.Value.Current, 
+            MaxHealth = _netHealth.Value.Max 
+        });
+        _world.Components.Add(_entity, new MovementDataComponent { 
+            MoveSpeed = 3f, 
+            IsMoving = _netMovement.Value.IsMoving 
+        });
+        _world.Components.Add(_entity, new EnemyComponent { 
+            CurrentState = _netState.Value,
+            PatrolWaypoints = new List<Vector3>(),
+            Path = new List<Vector3>()
+        });
+        _world.Components.Add(_entity, new AnimationDataComponent {
+            IsMovingParam = "isMoving",
+            AttackTrigger = _attackAnimationTrigger
+        });
+        
+        // CRITICAL FIX: Add AttackDataComponent and WeaponDataComponent for client-side visuals
+        // These are needed by BroadcastAttackExecutionClientRpc to spawn enemy projectiles on clients
+        // Use the serialized fields that match the prefab's configuration
+        _world.Components.Add(_entity, new AttackDataComponent { 
+            IsPlayerControlled = false 
+        });
+        _world.Components.Add(_entity, new WeaponDataComponent {
+            WeaponName = "EnemyAttack",
+            ExecutionType = _executionType,
+            AttackAnimationTrigger = _attackAnimationTrigger,
+            TotalAttackAnimations = 1,
+            ProjectilePrefab = _projectilePrefab,
+            HitImpactParticlePrefab = _hitImpactParticlePrefab,
+            ProjectileSpeed = _projectileSpeed,
+            ProjectileLifetime = _projectileLifetime,
+            ProjectileSpawnOffset = _projectileSpawnOffset
+        });
+
+        // Subscribe to NetworkVariable changes
+        _netTransform.OnValueChanged += OnNetTransformChanged;
+        _netHealth.OnValueChanged += OnNetHealthChanged;
+        _netState.OnValueChanged += OnNetStateChanged;
+        _netHasTarget.OnValueChanged += OnNetHasTargetChanged;
+        _netMovement.OnValueChanged += OnNetMovementChanged;
+
+        _isInitialized = true;
+        _firstTransformReceived = true; // Already have initial position
+        
+        Debug.Log($"[EnemyNetworkSyncView] Client created ECS entity {_entity.Id} for enemy at {pos}");
+    }
+
 
     public void Initialize(World world, EntityId entity)
     {
@@ -85,11 +221,12 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             ServerUpdate();
         }
-        // else
-        // {
-        //     ClientInterpolation();
-        // }
+        else
+        {
+            ClientInterpolation();
+        }
     }
+
 
     private void FixedUpdate()
     {
@@ -221,6 +358,8 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
+        Debug.Log($"[EnemyNetworkSyncView] SyncAnimationClientRpc: entity {_entity.Id}, param: {paramName}, type: {type}");
+        
         object deserializeValue = DeserializeValue(type, value);
 
         _world.Events.Publish(new AnimationParameterEvent(_entity, paramName, type, deserializeValue));
@@ -243,32 +382,73 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        // Play VFX/Animation
-
         // Client-side: Execute visual-only attack
         if (!_world.Components.TryGet(_entity, out WeaponDataComponent weapon))
         {
+            Debug.LogWarning($"[EnemyNetworkSyncView] BroadcastAttackExecutionClientRpc: No WeaponDataComponent for entity {_entity.Id}");
             return;
         }
 
-        // Publish attack execution event for visual effects ONLY
-        // No damage calculation on client
+        // ANIMATION - Trigger attack animation on client
         _world.Events.Publish(
-            new AttackExecutionRequestEvent
-            {
-                Attacker = _entity,
-                Type = type,
-                Direction = direction,
-                Range = range,
-                Damage = 0f, // No damage on client
-                ImpactEffect = weapon.HitImpactParticlePrefab,
-                ProjectilePrefab = weapon.ProjectilePrefab,
-                ProjectileSpeed = projectileSpeed,
-                ProjectileLifetime = projectileLifetime,
-                SpawnOffset = spawnOffset,
-            }
+            new AnimationParameterEvent(_entity, weapon.AttackAnimationTrigger, AnimationParameterType.Trigger, null)
+        );
+
+        // PROJECTILE - Spawn visual-only projectile on client
+        if (type == AttackExecutionType.Projectile && weapon.ProjectilePrefab != null)
+        {
+            SpawnClientProjectile(direction, origin, projectileSpeed, projectileLifetime, spawnOffset, weapon);
+        }
+    }
+
+    /// <summary>
+    /// Spawns a visual-only projectile on the client for enemy attacks
+    /// </summary>
+    private void SpawnClientProjectile(Vector3 direction, Vector3 origin, float speed, float lifetime, Vector3 spawnOffset, WeaponDataComponent weapon)
+    {
+        // Calculate spawn position
+        Vector3 forwardDir = direction.sqrMagnitude < 0.0001f ? transform.forward : direction.normalized;
+        forwardDir.y = 0f;
+        forwardDir = forwardDir.normalized;
+        
+        // Apply spawn offset
+        Vector3 spawnPos = origin + new Vector3(0f, 1.0f, 0f); // Default height
+        if (spawnOffset.sqrMagnitude > 0.0001f)
+        {
+            spawnPos += Quaternion.LookRotation(forwardDir, Vector3.up) * spawnOffset;
+        }
+        
+        Quaternion spawnRot = Quaternion.LookRotation(forwardDir, Vector3.up);
+        
+        // Get projectile from pool
+        var pool = _world.Services.Resolve<ObjectPoolService>();
+        if (pool == null || weapon.ProjectilePrefab == null)
+        {
+            return;
+        }
+        
+        GameObject projectileGO = pool.Get(weapon.ProjectilePrefab, spawnPos, spawnRot);
+        
+        if (!projectileGO.TryGetComponent(out ProjectileView projectile))
+        {
+            projectile = projectileGO.AddComponent<ProjectileView>();
+        }
+        
+        // Initialize with 0 damage - visual only on client!
+        projectile.Initialize(
+            _world,
+            _entity,
+            0f, // NO DAMAGE on client
+            speed,
+            lifetime,
+            forwardDir,
+            weapon.HitImpactParticlePrefab,
+            weapon.ProjectilePrefab,
+            spawnPos,
+            spawnRot
         );
     }
+
 
     [ClientRpc]
     public void BroadcastDamageVisualClientRpc(float amount, Vector3 hitpoint)
@@ -412,7 +592,16 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         _targetRotation = current.Rotation;
 
         _lerpProgress = 0f;
+        
+        // CRITICAL FIX: Update ECS TransformComponent on EVERY position change
+        // EnemyMovementView reads from ECS to apply to Unity Transform with interpolation
+        if (_world.Components.TryGet(_entity, out TransformComponent transComponent))
+        {
+            transComponent.Position = current.Position;
+            transComponent.Rotation = current.Rotation;
+        }
     }
+
 
     private void OnAttackExecutionRequest(AttackExecutionRequestEvent @event)
     {

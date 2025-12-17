@@ -46,6 +46,7 @@ public class AttackExecutionView : EntityView
 
         if (!_registry.TryGet(@event.Attacker, out EntityView attackerView))
         {
+            Debug.LogWarning($"[AttackExecutionView] Could not find EntityView for attacker {EntityInstance.Id}");
             return;
         }
         Transform attackerTf = attackerView.transform;
