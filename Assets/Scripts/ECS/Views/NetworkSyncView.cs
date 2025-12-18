@@ -7,7 +7,7 @@ public class NetworkSyncView : NetworkBehaviour
 {
     private World _world;
     private EntityId _entity;
-    private bool _isServerInitialized = false; // Track if Initialize() was called on server
+    private bool _isServerInitialized = false;
 
     private PlayerRespawnUI respawnUI;
 
@@ -382,7 +382,7 @@ public class NetworkSyncView : NetworkBehaviour
             _inputHistory.Dequeue();
         }
 
-        // CRITICAL: Send to server EVERY frame for smooth movement
+        // Send to server EVERY frame for smooth movement
         // Previously only sent every other frame (_currentTick % 2 == 0)
         // This caused choppy movement on server
         SendInputToServerRpc(inputState);
@@ -403,7 +403,7 @@ public class NetworkSyncView : NetworkBehaviour
 
         _lerpProgress += Time.deltaTime * 10f;
 
-        // CRITICAL: Update ECS TransformComponent, TransformSyncSystem will apply to Unity Transform
+        // Update ECS TransformComponent, TransformSyncSystem will apply to Unity Transform
         // This prevents conflicts where both this method and TransformSyncSystem manipulate position
         if (_world.Components.TryGet(_entity, out TransformComponent trans))
         {
@@ -455,7 +455,7 @@ public class NetworkSyncView : NetworkBehaviour
     [ServerRpc]
     private void SendInputToServerRpc(ClientInputState input)
     {
-        // CRITICAL: Null check to prevent NullReferenceException
+        // Null check to prevent NullReferenceException
         if (_world == null || _entity.Equals(default))
         {
             Debug.LogError($"[NetworkSyncView] SendInputToServerRpc called but _world or _entity is null!");
@@ -483,7 +483,7 @@ public class NetworkSyncView : NetworkBehaviour
         {
             movement.InputDirection = input.MoveInput;
 
-            // CRITICAL: Also publish to server's EventBus so MovementSystem can process it
+            // Also publish to server's EventBus so MovementSystem can process it
             // Without this, the server's MovementSystem won't calculate MoveDirection
             if (input.MoveInput.sqrMagnitude > 0.01f)
             {
@@ -811,8 +811,11 @@ public class NetworkSyncView : NetworkBehaviour
         }
         else
         {
-            // On release, clear buffered skill so we don't fire stale selections
-            buffer.Skill = null;
+            // DON'T clear buffer.Skill here!
+            // The skill execution is triggered by mouse click (RequestSkillExecutionServerRpc),
+            // which may arrive AFTER the key is released. Clearing here causes a race condition
+            // where releasing the key before the execution RPC arrives cancels the skill.
+            // The buffer is cleared in HandleSkillHit after successful execution.
         }
 
         _world.Events.Publish(new SkillPressedInputEvent(_entity, skillIndex, isPressed));
@@ -904,6 +907,10 @@ public class NetworkSyncView : NetworkBehaviour
                 Direction = validatedDirection,
             }
         );
+
+        // Publish SkillConfirmExecutionEvent so skill executors actually execute
+        // This is what ExplosiveShotExecutorView, SniperShotExecutorView, etc. listen for
+        _world.Events.Publish(new SkillConfirmExecutionEvent(_entity, buffer.Skill, targetPoint, validatedDirection));
 
         BroadcastSkillExecutionClientRpc(targetPoint, validatedDirection);
     }
@@ -1119,7 +1126,7 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        // CRITICAL FIX: Check if World and entity are properly initialized
+        // Check if World and entity are properly initialized
         if (_world == null || _entity.Equals(default))
         {
             Debug.LogWarning($"[NetworkSyncView] SyncAnimationClientRpc: World or entity not initialized");
@@ -1192,7 +1199,7 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        // CRITICAL: ALL clients (including owner) need position updates from server
+        // ALL clients (including owner) need position updates from server
         // The owner client no longer moves CharacterController locally,
         // so it MUST receive server position to display movement
 
@@ -1283,7 +1290,7 @@ public class NetworkSyncView : NetworkBehaviour
         Vector3 attackDir = Vector3.zero;
         Vector3 playerPos = Vector3.zero;
 
-        // CRITICAL FIX: Use actual Unity transform position instead of ECS TransformComponent
+        // Use actual Unity transform position instead of ECS TransformComponent
         // TransformComponent may not be synced properly for client-owned entities on server
         var registry = _world.Services.Resolve<EntityViewRegistry>();
         if (registry.TryGet(_entity, out EntityView view))
@@ -1351,7 +1358,7 @@ public class NetworkSyncView : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestCharacterDataServerRpc()
     {
-        // CRITICAL: Null check to prevent NullReferenceException
+        // Null check to prevent NullReferenceException
         if (_world == null || _entity.Equals(default))
         {
             Debug.LogError($"[NetworkSyncView] SERVER RPC called but _world or _entity is null!");

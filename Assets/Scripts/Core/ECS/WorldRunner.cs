@@ -73,9 +73,11 @@ public class WorldRunner : NetworkBehaviour
         // Play game music when game starts
         PlayGameMusic();
 
-        // Only server handles spawning logic
+        // Register server-only systems HERE where IsServer is valid
+        // (not in Awake where network hasn't started yet)
         if (IsServer)
         {
+            InitServerSystems();
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             StartCoroutine(DelayedSpawnExistingPlayers());
         }
@@ -334,9 +336,7 @@ public class WorldRunner : NetworkBehaviour
 
     private void InitSystems()
     {
-        bool isServer = NetworkManager.Singleton?.IsServer == true;
-        
-        Debug.Log($"[WorldRunner] Initializing systems. IsServer: {isServer}");
+        Debug.Log($"[WorldRunner] Initializing CLIENT systems (for all)");
         
         // ===== SYSTEMS FOR ALL CLIENTS (Visual/Audio/Camera/Input) =====
         World.Systems.AddSystem(new CameraFollowSystem(), World);
@@ -344,47 +344,45 @@ public class WorldRunner : NetworkBehaviour
         World.Systems.AddSystem(new AudioSystem(), World);
         World.Systems.AddSystem(new AudioProfileSystem(), World);
         
-        // CRITICAL: InputSystem must run on ALL clients to handle local input
+        // InputSystem must run on ALL clients to handle local input
         // It sends RPCs to server (RequestAttackServerRpc, skill casts, etc.)
         World.Systems.AddSystem(new InputSystem(), World);
         
-        // ===== SERVER-ONLY SYSTEMS (Gameplay Logic) =====
-        if (isServer)
-        {
-            Debug.Log("[WorldRunner] Registering SERVER gameplay systems...");
-            
-            // Spawning
-            _spawnSystem = new SpawnSystem(spawnConfig);
-            World.Systems.AddSystem(_spawnSystem, World);
-            
-            // Core gameplay
-            World.Systems.AddSystem(new MovementSystem(), World);
-            World.Systems.AddSystem(new HealthSystem(), World);
-            World.Systems.AddSystem(new AttackSystem(), World);
-            World.Systems.AddSystem(new DamageSystem(), World);
-            World.Systems.AddSystem(new SkillSystem(), World);
-            World.Systems.AddSystem(new CombatStateSystem(), World);
-            
-            // Status effects
-            World.Systems.AddSystem(new StunSystem(), World);
-            World.Systems.AddSystem(new KnockbackSystem(), World);
-            World.Systems.AddSystem(new HealthRegenSystem(), World);
-            World.Systems.AddSystem(new PlayerRespawnSystem(), World);
-            
-            // Enemy AI
-            World.Systems.AddSystem(new EnemyVisionSystem(), World);
-            World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
-            World.Systems.AddSystem(new EnemyMovementSystem(), World);
-            World.Systems.AddSystem(new EnemyAISystem(), World);
-            
-            EnemyAIHelpers.RegisterDefaultStates();
-            
-            Debug.Log("[WorldRunner] Server systems registered successfully");
-        }
-        else
-        {
-            Debug.Log("[WorldRunner] Client-only mode - gameplay systems NOT registered");
-        }
+        // NOTE: Server-only systems are registered in InitServerSystems() called from OnNetworkSpawn()
+        // because IsServer is only valid after network starts
+    }
+
+    private void InitServerSystems()
+    {
+        Debug.Log("[WorldRunner] Registering SERVER gameplay systems...");
+        
+        // Spawning
+        _spawnSystem = new SpawnSystem(spawnConfig);
+        World.Systems.AddSystem(_spawnSystem, World);
+        
+        // Core gameplay
+        World.Systems.AddSystem(new MovementSystem(), World);
+        World.Systems.AddSystem(new HealthSystem(), World);
+        World.Systems.AddSystem(new AttackSystem(), World);
+        World.Systems.AddSystem(new DamageSystem(), World);
+        World.Systems.AddSystem(new SkillSystem(), World);
+        World.Systems.AddSystem(new CombatStateSystem(), World);
+        
+        // Status effects
+        World.Systems.AddSystem(new StunSystem(), World);
+        World.Systems.AddSystem(new KnockbackSystem(), World);
+        World.Systems.AddSystem(new HealthRegenSystem(), World);
+        World.Systems.AddSystem(new PlayerRespawnSystem(), World);
+        
+        // Enemy AI
+        World.Systems.AddSystem(new EnemyVisionSystem(), World);
+        World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
+        World.Systems.AddSystem(new EnemyMovementSystem(), World);
+        World.Systems.AddSystem(new EnemyAISystem(), World);
+        
+        EnemyAIHelpers.RegisterDefaultStates();
+        
+        Debug.Log("[WorldRunner] Server systems registered successfully");
     }
 
 }

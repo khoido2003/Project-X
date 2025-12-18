@@ -23,6 +23,8 @@ public class SniperShotExecutorView : SkillExecutorView
             return;
         }
 
+
+
         // Trigger aiming rig if enabled
         TriggerAimingRig(casterView, @event.TargetPoint, @event.Direction, skill);
 
@@ -95,41 +97,31 @@ public class SniperShotExecutorView : SkillExecutorView
 
         Quaternion spawnRot = Quaternion.LookRotation(shotDirection, Vector3.up);
 
-        ObjectPoolService pool = WorldInstance.Services.Resolve<ObjectPoolService>();
+
 
         if (skill.projectilePrefab != null)
         {
-            GameObject projectileGO = pool.Get(skill.projectilePrefab, spawnPos, spawnRot);
+            if (skill.projectilePrefab.GetComponent<NetworkObject>() == null)
+            {
+                Debug.LogError(
+                    $"[SniperShotExecutorView] Projectile prefab {skill.projectilePrefab.name} must have NetworkObject component!"
+                );
+                yield break;
+            }
+
+            GameObject projectileGO = NetworkObjectSpawner.SpawnNewNetworkObject(
+                skill.projectilePrefab,
+                spawnPos,
+                spawnRot,
+                true
+            );
 
             if (!projectileGO.TryGetComponent(out ProjectileView projectile))
             {
                 projectile = projectileGO.AddComponent<ProjectileView>();
             }
 
-            // Ensure the projectile has NetworkObject for networking
-            if (!projectileGO.TryGetComponent(out NetworkObject netObj))
-            {
-                netObj = projectileGO.AddComponent<NetworkObject>();
-            }
-
-            // Spawn on network if not already spawned
-            if (!netObj.IsSpawned)
-            {
-                netObj.Spawn();
-            }
-
-            // Add piercing component if enabled
-            if (skill.canPierce)
-            {
-                PiercingProjectileView piercingComp = projectileGO.GetComponent<PiercingProjectileView>();
-                if (piercingComp == null)
-                {
-                    piercingComp = projectileGO.AddComponent<PiercingProjectileView>();
-                }
-
-                piercingComp.Initialize(WorldInstance, EntityInstance, skill.maxPierceCount);
-            }
-
+            // Initialize projectile with high damage from skill (no piercing, simple single-target hit)
             projectile.Initialize(
                 WorldInstance,
                 EntityInstance,
@@ -147,7 +139,12 @@ public class SniperShotExecutorView : SkillExecutorView
         FinishSkill(skill);
     }
 
-    private void TriggerAimingRig(EntityView casterView, Vector3 targetPoint, Vector3 direction, SniperShotSkillSO skill)
+    private void TriggerAimingRig(
+        EntityView casterView,
+        Vector3 targetPoint,
+        Vector3 direction,
+        SniperShotSkillSO skill
+    )
     {
         AimingRigView aimingRig = casterView.GetComponent<AimingRigView>();
         if (aimingRig == null)
@@ -156,7 +153,12 @@ public class SniperShotExecutorView : SkillExecutorView
         }
 
         // Check if character has aiming rig enabled
-        if (WorldInstance.Components.TryGet(casterView.EntityInstance, out CharacterSelectionComponent characterSelection))
+        if (
+            WorldInstance.Components.TryGet(
+                casterView.EntityInstance,
+                out CharacterSelectionComponent characterSelection
+            )
+        )
         {
             if (characterSelection.CharacterData != null && characterSelection.CharacterData.useAimingRig)
             {

@@ -19,7 +19,7 @@ MonoBehaviour:
   characterSprite: {fileID: 21300000, guid: caef1cc0f6f1d0e41b51312e944c9e22, type: 3}
   weaponSprite: {fileID: 21300000, guid: ed7b42d3ef2157a41838269516ea1647, type: 3}
   maxHealth: 150
-  moveSpeed: 4
+  moveSpeed: 5
   forwardMultiplier: 1
   isMovingParam: isMoving
   moveXParam: moveX

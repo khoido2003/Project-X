@@ -304,6 +304,15 @@ public class EnemyMovementSystem : ISystem
             );
         }
 
+        // Sync ECS transform to Unity Transform
+        // Without this, enemies animate but don't actually move visually!
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(entity, out EntityView view))
+        {
+            view.transform.position = trans.Position;
+            view.transform.rotation = trans.Rotation;
+        }
+
         // Check if reached waypoint (horizontal distance only)
         float distToWaypoint = Vector3.Distance(
             new Vector3(trans.Position.x, 0, trans.Position.z),

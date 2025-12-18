@@ -478,7 +478,7 @@ public class WaveManager : MonoBehaviour
         // AI Behavior
         target.defaultState = source.defaultState;
 
-        // Audio - CRITICAL: This was missing!
+        // Audio
         target.audioProfile = source.audioProfile;
     }
 }

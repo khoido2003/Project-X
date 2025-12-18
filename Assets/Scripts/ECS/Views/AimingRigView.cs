@@ -38,6 +38,21 @@ public class AimingRigView : MonoBehaviour
     [SerializeField]
     private bool _continuousAiming = false;
 
+    [Header("Aim Offset Compensation")]
+    [Tooltip("Horizontal offset in degrees. Positive = aim more to the right, Negative = aim more to the left")]
+    [SerializeField]
+    [Range(-45f, 45f)]
+    private float _horizontalOffsetDegrees = 0f;
+
+    [Tooltip("Vertical offset in degrees. Positive = aim higher, Negative = aim lower")]
+    [SerializeField]
+    [Range(-30f, 30f)]
+    private float _verticalOffsetDegrees = 0f;
+
+    [Tooltip("Distance offset - move aim target further/closer. Positive = further away")]
+    [SerializeField]
+    private float _distanceOffset = 0f;
+
     private float _targetWeight = 0f;
     private float _aimDuration = 0f;
     private float _aimStartTime = 0f;
@@ -119,10 +134,8 @@ public class AimingRigView : MonoBehaviour
             Vector3 mousePos = _inputService.GetMouseWorldPosition();
             if (mousePos.sqrMagnitude > 0.001f)
             {
-                // Calculate aim target ahead of character at mouse height
-                Vector3 aimPos = mousePos;
-                aimPos.y = transform.position.y + 1.5f; // Aim at character chest height
-                _aimTarget.position = aimPos;
+                // Apply offset compensation and set aim target
+                _aimTarget.position = ApplyAimOffset(mousePos);
                 _targetWeight = _maxAimWeight;
             }
         }
@@ -164,9 +177,9 @@ public class AimingRigView : MonoBehaviour
             return;
         }
 
+        // Apply offset compensation and set aim target
         _currentAimTarget = targetPosition;
-        _currentAimTarget.y = transform.position.y + 1.5f; // Adjust to chest height
-        _aimTarget.position = _currentAimTarget;
+        _aimTarget.position = ApplyAimOffset(_currentAimTarget);
 
         _aimDuration = duration;
         _aimStartTime = Time.time;
@@ -193,9 +206,39 @@ public class AimingRigView : MonoBehaviour
         if (_aimTarget != null)
         {
             _currentAimTarget = targetPosition;
-            _currentAimTarget.y = transform.position.y + 1.5f;
-            _aimTarget.position = _currentAimTarget;
+            _aimTarget.position = ApplyAimOffset(_currentAimTarget);
         }
+    }
+
+    /// <summary>
+    /// Apply configured offset to compensate for model/animation aiming issues
+    /// </summary>
+    private Vector3 ApplyAimOffset(Vector3 worldTarget)
+    {
+        // Calculate direction from character to target
+        Vector3 toTarget = worldTarget - transform.position;
+        float distance = toTarget.magnitude;
+
+        if (distance < 0.1f)
+        {
+            return worldTarget;
+        }
+
+        // Apply angular offset
+        // Horizontal offset rotates around Y axis
+        // Vertical offset rotates around the right axis
+        Quaternion horizontalRotation = Quaternion.AngleAxis(_horizontalOffsetDegrees, Vector3.up);
+
+        Vector3 right = Vector3.Cross(Vector3.up, toTarget.normalized);
+        Quaternion verticalRotation = Quaternion.AngleAxis(_verticalOffsetDegrees, right);
+
+        // Apply rotations to the direction
+        Vector3 offsetDirection = verticalRotation * horizontalRotation * toTarget.normalized;
+
+        // Apply distance offset
+        float finalDistance = distance + _distanceOffset;
+
+        return transform.position + offsetDirection * finalDistance;
     }
 
     /// <summary>

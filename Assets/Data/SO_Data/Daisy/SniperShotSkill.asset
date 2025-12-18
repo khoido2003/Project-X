@@ -18,17 +18,15 @@ MonoBehaviour:
   isInstant: 0
   keyTrigger: Space
   damage: 120
-  castRange: 10
-  cooldown: 3
+  castRange: 8
+  cooldown: 2
   hitVfxPrefab: {fileID: 198104090543139058, guid: 4430919f14c50f84085d287cbcb2c30e, type: 3}
   skillVfxPrefab: {fileID: 198533653044838976, guid: b46264f9e12caed4cb53e7c2ad64aa54, type: 3}
   activateSound: {fileID: 8300000, guid: e8e15a6dc1992406e9bf9fd158199864, type: 3}
-  activationAnimationTrigger: attack
-  chargeDuration: 1
+  activationAnimationTrigger: skill2
+  chargeDuration: 0
   maxRange: 20
-  canPierce: 1
-  maxPierceCount: 3
-  projectilePrefab: {fileID: 7507264756160909461, guid: 3aca5c498e86d674a98774271a9fe9ed, type: 3}
+  projectilePrefab: {fileID: 7412084954217616309, guid: 834b1ec1f6cd30d4683e095560d6facc, type: 3}
   projectileSpeed: 30
   projectileLifetime: 5
-  chargeVfxPrefab: {fileID: 198742971877052672, guid: c445b201205907b4f90b242a07f4dbc9, type: 3}
+  chargeVfxPrefab: {fileID: 198936657434931562, guid: d599d264aedd3aa4684f39e078823d4e, type: 3}

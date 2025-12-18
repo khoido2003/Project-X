@@ -39,11 +39,19 @@ public class AnimationEventRelayView : EntityView
 
     private void HandleAttackHit()
     {
-        Debug.Log($"[AnimationEventRelayView] HandleAttackHit called for entity {_entityView?.EntityInstance.Id}");
-        
+        if (
+            _world.Components.TryGet(_entityView.EntityInstance, out CombatStateComponent combatState)
+            && combatState.CurrentState == CombatState.CastingSkill
+        )
+        {
+            return;
+        }
+
         if (!_world.Components.TryGet(_entityView.EntityInstance, out AttackDataComponent attack))
         {
-            Debug.LogError($"[AnimationEventRelayView] Missing AttackDataComponent for entity {_entityView?.EntityInstance.Id}");
+            Debug.LogError(
+                $"[AnimationEventRelayView] Missing AttackDataComponent for entity {_entityView?.EntityInstance.Id}"
+            );
             return;
         }
 
@@ -53,7 +61,6 @@ public class AnimationEventRelayView : EntityView
             return;
         }
 
-        // Play attack sound - simplified!
         // System automatically determines if this is Player or Enemy
         if (weapon.AttackSound != null)
         {
@@ -73,8 +80,10 @@ public class AnimationEventRelayView : EntityView
         }
 
         // Trigger attack execution
-        Debug.Log($"[AnimationEventRelayView] Publishing AttackExecutionRequestEvent for entity {_entityView.EntityInstance.Id}, Type: {weapon.ExecutionType}");
-        
+        Debug.Log(
+            $"[AnimationEventRelayView] Publishing AttackExecutionRequestEvent for entity {_entityView.EntityInstance.Id}, Type: {weapon.ExecutionType}"
+        );
+
         _world.Events.Publish(
             new AttackExecutionRequestEvent
             {

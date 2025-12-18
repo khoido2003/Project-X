@@ -103,8 +103,6 @@ public class EnemyFactory
             }
         );
 
-        // Audio profile - always add component, even if null, for better error tracking
-        // Debug: Check if audioProfile is null and log details
         if (enemyData.audioProfile == null)
         {
             Debug.LogWarning(
@@ -152,6 +150,17 @@ public class EnemyFactory
             enemy.PatrolWaypoints.AddRange(
                 GeneratePatrolPointsAround(spawnPosition, enemyData.patrolPointCount, enemyData.patrolRadius)
             );
+            Debug.Log(
+                $"[EnemyFactory] Entity {entity.Id}: Generated {enemy.PatrolWaypoints.Count} patrol waypoints (radius: {enemyData.patrolRadius})"
+            );
+        }
+        else
+        {
+            // FALLBACK: Always generate at least some patrol points so enemies aren't stuck in Idle
+            enemy.PatrolWaypoints.AddRange(GeneratePatrolPointsAround(spawnPosition, 4, 5f));
+            Debug.Log(
+                $"[EnemyFactory] Entity {entity.Id}: GeneratePatrolPoints=false, added fallback {enemy.PatrolWaypoints.Count} patrol waypoints"
+            );
         }
         _world.Components.Add(entity, enemy);
 
@@ -182,8 +191,6 @@ public class EnemyFactory
                 }
             );
 
-            // CRITICAL FIX: Set weapon data on EnemyNetworkSyncView for client-side projectile spawning
-            // This populates the serialized fields that clients will use when spawning visual projectiles
             networkSync.SetWeaponData(
                 attack.executionType,
                 attack.projectilePrefab,

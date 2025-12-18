@@ -61,6 +61,12 @@ public abstract class SkillExecutorView : EntityView
 
     protected virtual void OnSkillConfirmExecutionEvent(SkillConfirmExecutionEvent @event)
     {
+        // Only execute if this event is for this entity
+        if (@event.Caster != EntityInstance)
+        {
+            return;
+        }
+
         ExecuteSkill(@event);
     }
 
