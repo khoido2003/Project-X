@@ -36,7 +36,7 @@ public class EnemyVisionSystem : ISystem
 
             enemy.TimeSinceLastCheck = 0f;
 
-            // CRITICAL FIX: Use Unity transform position instead of ECS TransformComponent
+            // Use Unity transform position instead of ECS TransformComponent
             // ECS component may not reflect actual game object position
             var registry = _world.Services.Resolve<EntityViewRegistry>();
             Vector3 origin = trans.Position;

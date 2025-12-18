@@ -37,7 +37,7 @@ public class TransformSyncSystem : ISystem
                 // We apply it to the visual here
                 view.transform.position = trans.Position;
                 
-                // CRITICAL: Skip rotation for local player - LookAtMouseView handles it locally
+                // Skip rotation for local player - LookAtMouseView handles it locally
                 // for responsive mouse aiming
                 bool isLocalPlayer = _world.Components.TryGet(entity, out NetworkOwnerComponent owner) && owner.IsLocalPlayer;
                 if (!isLocalPlayer)

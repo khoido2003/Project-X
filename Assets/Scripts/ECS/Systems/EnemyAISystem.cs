@@ -39,6 +39,10 @@ public class EnemyAISystem : ISystem
                     Debug.LogException(ex);
                 }
             }
+            else
+            {
+                Debug.LogError($"[EnemyAISystem] Entity {entity.Id}: No state implementation for {ai.CurrentState}!");
+            }
         }
     }
 

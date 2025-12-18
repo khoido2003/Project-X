@@ -12,6 +12,9 @@ public class PiercingProjectileView : NetworkBehaviour
     private ProjectileView _projectileView;
     private float _spawnTime;
 
+    [SerializeField]
+    private LayerMask hitMask;
+
     public void Initialize(World world, EntityId attacker, int maxPierceCount)
     {
         _world = world;
@@ -29,18 +32,24 @@ public class PiercingProjectileView : NetworkBehaviour
         if (!NetworkManager.Singleton.IsServer)
             return;
 
-        // CRITICAL FIX: Spawn protection - ignore collisions briefly after spawn
+        // Spawn protection - ignore collisions briefly after spawn
         // This prevents projectile from hitting the shooter's gun/weapon parts
         float timeSinceSpawn = Time.time - _spawnTime;
         if (timeSinceSpawn < 0.05f)
             return;
+
+        // Check hitMask layer filtering
+        if (hitMask != 0 && !IsInHitMask(other.gameObject))
+        {
+            return;
+        }
 
         if (!other.TryGetComponent(out EntityView targetView))
         {
             // Hit obstacle - destroy projectile if max pierces reached
             if (_currentPierceCount >= _maxPierceCount)
             {
-                Destroy(gameObject);
+                DespawnOrDestroy();
             }
             return;
         }
@@ -71,8 +80,29 @@ public class PiercingProjectileView : NetworkBehaviour
             {
                 col.enabled = false;
             }
-            // Destroy after a tiny delay to ensure damage is processed
-            Destroy(gameObject, 0.1f);
+            // Despawn after a tiny delay to ensure damage is processed
+            Invoke(nameof(DespawnOrDestroy), 0.1f);
         }
+    }
+
+    private bool IsInHitMask(GameObject obj)
+    {
+        int objLayer = obj.layer;
+        return hitMask == (hitMask | (1 << objLayer));
+    }
+
+    private void DespawnOrDestroy()
+    {
+        // Check if this is a NetworkObject - properly despawn instead of just destroying
+        if (TryGetComponent(out NetworkObject netObj) && netObj.IsSpawned)
+        {
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+            {
+                netObj.Despawn(true);
+            }
+            return;
+        }
+
+        Destroy(gameObject);
     }
 }

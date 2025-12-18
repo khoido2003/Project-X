@@ -68,7 +68,7 @@ public class CharacterFactory
             $"[CharacterFactory] NetworkSyncView instance: {networkSync.GetInstanceID()}, NetworkObject: {netObj.GetInstanceID()}"
         );
 
-        // CRITICAL: Initialize BEFORE spawning the NetworkObject
+        // Initialize BEFORE spawning the NetworkObject
         // This must be called on the server BEFORE SpawnWithOwnership
         networkSync.Initialize(_world, entity);
         Debug.Log(
@@ -174,7 +174,7 @@ public class CharacterFactory
         _world.Components.Add(entity, new PlayerRespawnComponent { OriginalSpawnPosition = spawnPosition });
         _world.Components.Add(entity, new PlayerUpgradesComponent { });
 
-        // CRITICAL FIX: NOW spawn the NetworkObject and change ownership
+        // NOW spawn the NetworkObject and change ownership
         // This triggers OnNetworkSpawn, but Initialize() has already been called
         Debug.Log($"[CharacterFactory] About to spawn NetworkObject for entity {entity.Id}, client {clientId}");
         netObj.SpawnWithOwnership(clientId);

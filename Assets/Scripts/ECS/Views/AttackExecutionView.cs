@@ -147,22 +147,11 @@ public class AttackExecutionView : EntityView
             spawnTransform = spawnPosComponent.transform;
         }
 
-        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
-
-        // Ensure direction is normalized and has valid Y component (not zero)
-        // For horizontal projectiles, keep Y at 0, but ensure X and Z are valid
-        if (Mathf.Abs(forwardDir.y) < 0.001f)
-        {
-            forwardDir.y = 0f;
-        }
-        forwardDir = forwardDir.normalized;
-
-        // Spawn position - use spawn transform if found, otherwise use attacker transform with offset
+        // Calculate spawn position first
         Vector3 spawnPos;
         if (spawnPosComponent != null)
         {
             spawnPos = spawnTransform.position;
-
             // Apply offset relative to spawn transform
             spawnPos += spawnTransform.TransformDirection(@event.SpawnOffset);
         }
@@ -171,11 +160,45 @@ public class AttackExecutionView : EntityView
             // Default spawn position - use attacker position with height offset
             spawnPos = attackerTf.position + new Vector3(0f, 1.3f, 0f);
 
+            Vector3 tempDir =
+                @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
+            tempDir.y = 0f;
+            tempDir = tempDir.normalized;
+
             // Apply offset in world space relative to direction
             if (@event.SpawnOffset.sqrMagnitude > 0.0001f)
             {
-                spawnPos += Quaternion.LookRotation(forwardDir, Vector3.up) * @event.SpawnOffset;
+                spawnPos += Quaternion.LookRotation(tempDir, Vector3.up) * @event.SpawnOffset;
             }
+        }
+
+        //Calculate direction FROM spawn position TO target point
+        // The @event.Direction was calculated from character center, but we need direction from gun muzzle
+        // Use a large distance to minimize parallax error from spawn offset
+        Vector3 forwardDir;
+        if (@event.Direction.sqrMagnitude > 0.0001f)
+        {
+            // Calculate target point far in the aim direction
+            // Using a large distance (100f) makes the spawn offset negligible
+            Vector3 targetPoint = attackerTf.position + @event.Direction.normalized * 100f;
+            targetPoint.y = spawnPos.y; // Keep on same height as spawn
+
+            forwardDir = (targetPoint - spawnPos).normalized;
+            forwardDir.y = 0f;
+            forwardDir = forwardDir.normalized;
+        }
+        else
+        {
+            forwardDir = attackerTf.forward;
+            forwardDir.y = 0f;
+            forwardDir = forwardDir.normalized;
+        }
+
+        if (forwardDir.sqrMagnitude < 0.0001f)
+        {
+            forwardDir = attackerTf.forward;
+            forwardDir.y = 0f;
+            forwardDir = forwardDir.normalized;
         }
 
         Quaternion spawnRot = Quaternion.LookRotation(forwardDir, Vector3.up);

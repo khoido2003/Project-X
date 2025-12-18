@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 1987161284759936799}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -3.23, y: 0.79, z: -3.97}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -306,6 +306,9 @@ MonoBehaviour:
   _aimTransitionSpeed: 5
   _maxAimWeight: 1
   _continuousAiming: 1
+  _horizontalOffsetDegrees: 42
+  _verticalOffsetDegrees: 0
+  _distanceOffset: 0
 --- !u!1 &2972720399291164892
 GameObject:
   m_ObjectHideFlags: 0
@@ -332,7 +335,7 @@ Transform:
   m_GameObject: {fileID: 2972720399291164892}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
-  m_LocalPosition: {x: -28.366, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -400,7 +403,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.MultiAimConstraint
   m_Weight: 1
   m_Data:
-    m_ConstrainedObject: {fileID: 5364702304306347191}
+    m_ConstrainedObject: {fileID: 8519913834539927052}
     m_SourceObjects:
       m_Length: 1
       m_Item0:
@@ -430,7 +433,7 @@ MonoBehaviour:
     m_Offset: {x: 0, y: 0, z: 0}
     m_MinLimit: -180
     m_MaxLimit: 180
-    m_AimAxis: 2
+    m_AimAxis: 3
     m_UpAxis: 1
     m_WorldUpType: 0
     m_WorldUpObject: {fileID: 0}

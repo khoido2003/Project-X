@@ -94,7 +94,7 @@ public class ExplosiveProjectileView : NetworkBehaviour
             return;
         }
 
-        // CRITICAL FIX: Spawn protection - ignore collisions briefly after spawn
+        // Spawn protection - ignore collisions briefly after spawn
         // This prevents projectile from hitting the shooter's gun/weapon parts
         float timeSinceSpawn = Time.time - _spawnTime;
         if (timeSinceSpawn < 0.05f)

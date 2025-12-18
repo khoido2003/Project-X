@@ -14,21 +14,22 @@ public class InputSystem : ISystem
     }
 
     private bool _hasLoggedQuery = false;
-    
+
     public void Update(float dt)
     {
         if (!_hasLoggedQuery)
         {
             var count = 0;
-            foreach (var (entity, owner, sync) in _world.Components.Query<NetworkOwnerComponent, NetworkSyncComponent>())
+            foreach (
+                var (entity, owner, sync) in _world.Components.Query<NetworkOwnerComponent, NetworkSyncComponent>()
+            )
             {
                 count++;
                 Debug.Log($"[InputSystem] Found entity {entity.Id}, IsLocalPlayer: {owner.IsLocalPlayer}");
             }
-            Debug.Log($"[InputSystem] Query found {count} entities with NetworkOwnerComponent + NetworkSyncComponent");
             _hasLoggedQuery = true;
         }
-        
+
         foreach (var (entity, owner, sync) in _world.Components.Query<NetworkOwnerComponent, NetworkSyncComponent>())
         {
             // Only owner this client allow to control
@@ -54,24 +55,28 @@ public class InputSystem : ISystem
                 }
                 else
                 {
-                    // CRITICAL FIX: For HOST player, set attack direction BEFORE publishing attack event
+                    // For HOST player, set attack direction BEFORE publishing attack event
                     // This ensures the direction is available when animation fires HandleAttackHit
                     // For remote clients, the ServerRpc will set the direction on the server
                     if (NetworkManager.Singleton.IsServer && owner.IsLocalPlayer)
                     {
-                        if (_world.Components.TryGet(entity, out AttackDataComponent attack) &&
-                            _world.Components.TryGet(entity, out WeaponDataComponent weapon))
+                        if (
+                            _world.Components.TryGet(entity, out AttackDataComponent attack)
+                            && _world.Components.TryGet(entity, out WeaponDataComponent weapon)
+                        )
                         {
-                            // CRITICAL FIX: Don't overwrite direction if still in cooldown
+                            // Don't overwrite direction if still in cooldown
                             // This prevents subsequent clicks from changing direction mid-animation
                             // Check cooldown instead of IsAttacking since IsAttacking is set later in the frame
                             float timeSinceAttack = Time.time - attack.LastAttackTime;
                             if (timeSinceAttack < weapon.BaseCooldown)
                             {
-                                Debug.Log($"[InputSystem] Attack blocked - still in cooldown ({timeSinceAttack:F3}s / {weapon.BaseCooldown}s)");
+                                Debug.Log(
+                                    $"[InputSystem] Attack blocked - still in cooldown ({timeSinceAttack:F3}s / {weapon.BaseCooldown}s)"
+                                );
                                 continue; // Skip entire attack processing
                             }
-                            
+
                             Vector3 attackDir = mousePos;
                             if (_world.Components.TryGet(entity, out TransformComponent transform))
                             {
@@ -85,7 +90,7 @@ public class InputSystem : ISystem
                                     attackDir = mousePos - view.transform.position;
                                 }
                             }
-                            
+
                             attackDir.y = 0f;
                             if (attackDir.sqrMagnitude < 0.0001f)
                             {
@@ -103,9 +108,9 @@ public class InputSystem : ISystem
                             Debug.Log($"[InputSystem] Host set attack direction: {attack.AttackDirection}");
                         }
                     }
-                    
+
                     Debug.Log($"[InputSystem] Requesting attack RPC to server");
-                    // Local client will predict the action
+
                     _world.Events.Publish(new AttackPressedInputEvent(entity));
 
                     // Request Server validation

@@ -62,22 +62,29 @@ public class ProjectileView : NetworkBehaviour
 
         _impactEffect = impactEffect;
 
-        // CRITICAL: Set rotation based on direction, not spawnRotation
+        // Set rotation based on direction
+        // Force horizontal rotation - only rotate around Y axis
         if (_direction.sqrMagnitude > 0.0001f)
         {
-            transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
+            // Create a purely horizontal rotation by only using the Y euler angle
+            Quaternion lookRot = Quaternion.LookRotation(_direction, Vector3.up);
+            Vector3 euler = lookRot.eulerAngles;
+            euler.x = 0f; // No pitch
+            euler.z = 0f; // No roll
+            transform.rotation = Quaternion.Euler(euler);
         }
         else
         {
-            transform.rotation = spawnRotation;
+            transform.rotation = Quaternion.Euler(0f, spawnRotation.eulerAngles.y, 0f);
         }
 
         // Reset any internal movement history
         _spawnTime = Time.time;
 
-        // Pool setup
+        // Pool setup - NetworkObjects CANNOT be pooled (reparenting causes SpawnStateException)
+        bool isNetworkObject = TryGetComponent(out Unity.Netcode.NetworkObject _);
         _pool = world?.Services.Resolve<ObjectPoolService>();
-        _usePooling = _pool != null && _prefabRef != null;
+        _usePooling = _pool != null && _prefabRef != null && !isNetworkObject;
 
         var col = GetComponent<Collider>();
         if (col != null)
@@ -121,7 +128,7 @@ public class ProjectileView : NetworkBehaviour
             return;
         }
 
-        // CRITICAL FIX: Spawn protection - ignore collisions briefly after spawn
+        // Spawn protection - ignore collisions briefly after spawn
         // This prevents projectile from hitting the shooter's gun/weapon parts
         float timeSinceSpawn = Time.time - _spawnTime;
         if (timeSinceSpawn < 0.05f)
@@ -140,18 +147,19 @@ public class ProjectileView : NetworkBehaviour
             return;
         }
 
+
+
         if (!other.TryGetComponent(out EntityView targetView))
         {
-            // It's an obstacle or non-entity layer, just explode and return
             HitAndReturn();
             return;
         }
 
-        // Don't hit the shooter
         if (targetView.EntityInstance.Equals(_attacker))
+        {
             return;
+        }
 
-        // Only damage if has health
         if (_world.Components.Has<HealthDataComponent>(targetView.EntityInstance))
         {
             _world.Events.Publish(
@@ -163,6 +171,7 @@ public class ProjectileView : NetworkBehaviour
                 }
             );
         }
+
 
         Vector3 hitPos = other.ClosestPoint(transform.position);
 
@@ -191,6 +200,17 @@ public class ProjectileView : NetworkBehaviour
     private void ReturnOrDestroy()
     {
         _hasHit = false;
+
+        // Check if this is a NetworkObject - those can't be pooled normally
+        if (TryGetComponent(out Unity.Netcode.NetworkObject netObj) && netObj.IsSpawned)
+        {
+            // Despawn network object - this will destroy it on all clients
+            if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsServer)
+            {
+                netObj.Despawn(true);
+            }
+            return;
+        }
 
         if (_usePooling && _prefabRef != null)
         {
