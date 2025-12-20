@@ -185,6 +185,7 @@ GameObject:
   - component: {fileID: 8691176040074765533}
   - component: {fileID: 1286639236719617746}
   - component: {fileID: 9012428153168258716}
+  - component: {fileID: -2177068048118956759}
   m_Layer: 10
   m_Name: ECS_enemy
   m_TagString: Untagged
@@ -361,6 +362,26 @@ MonoBehaviour:
   PositionLerpSpeed: 10
   RotationLerpSpeed: 10
   SnapThreshold: 0.5
+--- !u!114 &-2177068048118956759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5191787420164104229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a77bc632f7a368240be2c56dff17b6be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSyncView
+  ShowTopMostFoldoutHeaderGroup: 1
+  _executionType: 0
+  _projectilePrefab: {fileID: 3093263165227071769, guid: 36341ae1e266f0e45b0a4e3fd8488bbf, type: 3}
+  _hitImpactParticlePrefab: {fileID: 198670200411678530, guid: 289ba3245c9c98c42aeb93d5f45a2248, type: 3}
+  _projectileSpeed: 10
+  _projectileLifetime: 3
+  _projectileSpawnOffset: {x: 0, y: 0, z: 0}
+  _attackAnimationTrigger: attack
 --- !u!1 &5463701898387434300
 GameObject:
   m_ObjectHideFlags: 0

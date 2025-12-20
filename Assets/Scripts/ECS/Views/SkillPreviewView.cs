@@ -34,6 +34,8 @@ public class SkillPreviewView : EntityView
     public override void Bind(World world, EntityId entity)
     {
         base.Bind(world, entity);
+        
+        Debug.Log($"[SkillPreviewView] Bind called for entity {entity.Id}");
 
         if (WorldInstance == null)
         {
@@ -46,6 +48,7 @@ public class SkillPreviewView : EntityView
             WorldInstance.Events.Subscribe<MouseWorldInputEvent>(OnMouseWorldInputEvent);
             WorldInstance.Events.Subscribe<SkillPreviewRequestEvent>(OnSkillPreviewRequestEvent);
             WorldInstance.Events.Subscribe<SkillExecutionRequestEvent>(OnSkillExecutionRequestEvent);
+            Debug.Log($"[SkillPreviewView] Successfully subscribed to events for entity {entity.Id}");
         }
         catch (System.Exception ex)
         {
@@ -82,8 +85,12 @@ public class SkillPreviewView : EntityView
         }
         if (!WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner) || !owner.IsLocalPlayer)
         {
+            Debug.Log($"[SkillPreviewView] Entity {@event.Entity.Id} is not local player - owner null: {owner == null}, IsLocalPlayer: {owner?.IsLocalPlayer}");
             return;
         }
+        
+        Debug.Log($"[SkillPreviewView] Processing preview for entity {@event.Entity.Id}, IsActive: {@event.IsActive}, Skill: {@event.Skill?.skillName}");
+        
         if (@event.IsActive)
         {
             ShowPreview(@event.Skill);
@@ -132,7 +139,9 @@ public class SkillPreviewView : EntityView
 
     private void HidePreview()
     {
-        selectedSkillIndex = -1;
+        // NOTE: Do NOT clear selectedSkillIndex here!
+        // The skill should remain selected until it's executed or another skill is chosen.
+        // Clearing here causes a race condition where releasing the key before clicking blocks the skill.
 
         if (indicatorRing)
         {
@@ -204,19 +213,24 @@ public class SkillPreviewView : EntityView
 
     private void TryCastSkill()
     {
+        Debug.Log($"[SkillPreviewView] TryCastSkill called for entity {EntityInstance.Id}, selectedSkillIndex: {selectedSkillIndex}");
+        
         if (!WorldInstance.Components.TryGet(EntityInstance, out CombatStateComponent state))
         {
+            Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - no CombatStateComponent");
             return;
         }
 
         if (state.CurrentState == CombatState.Attacking)
         {
+            Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - currently attacking");
             return;
         }
 
         SkillDefinitionSO skill = GetCurrentSkill();
         if (skill == null)
         {
+            Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - no current skill selected");
             return;
         }
 
@@ -259,9 +273,16 @@ public class SkillPreviewView : EntityView
 
         if (WorldInstance.Components.TryGet(EntityInstance, out NetworkSyncComponent sync))
         {
+            Debug.Log($"[SkillPreviewView] Sending RequestSkillExecutionServerRpc for skill: {skill.skillName}, target: {target}, direction: {direction}");
             sync.SyncView.RequestSkillExecutionServerRpc(target, direction);
         }
+        else
+        {
+            Debug.LogWarning($"[SkillPreviewView] TryCastSkill FAILED - no NetworkSyncComponent for entity {EntityInstance.Id}");
+        }
 
+        // Clear skill selection after execution
+        selectedSkillIndex = -1;
         HidePreview();
     }
 

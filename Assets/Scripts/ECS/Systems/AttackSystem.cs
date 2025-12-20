@@ -73,7 +73,6 @@ public class AttackSystem : ISystem
         // Check cooldown
         if (!attack.CanAttack(weapon.BaseCooldown))
         {
-            Debug.Log($"[AttackSystem] OnAttackRequest: Entity {@event.Entity.Id} blocked by cooldown - LastAttackTime: {attack.LastAttackTime}, BaseCooldown: {weapon.BaseCooldown}");
             return;
         }
 

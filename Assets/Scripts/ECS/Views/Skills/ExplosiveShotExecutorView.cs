@@ -142,4 +142,16 @@ public class ExplosiveShotExecutorView : SkillExecutorView
             }
         }
     }
+
+    /// <summary>
+    /// For ExplosiveShot, we DON'T spawn a client-side visual projectile.
+    /// The server spawns a NetworkObject that automatically syncs to clients.
+    /// When it explodes, ExplodeClientRpc() handles the explosion VFX on clients.
+    /// Spawning a separate visual here would cause duplicate projectiles.
+    /// </summary>
+    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
+    {
+        // Intentionally empty - ExplosiveProjectileView handles client sync via NetworkObject
+        // and explosion VFX via ExplodeClientRpc()
+    }
 }

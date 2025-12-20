@@ -79,19 +79,37 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        Debug.Log($"[EnemyNetworkSyncView] OnNetworkSpawn called - IsServer: {IsServer}, IsClient: {IsClient}");
-
         // On SERVER: Initialize is called by EnemyFactory after CreateEntity
         // On CLIENT: We need to create the ECS entity here since EnemyFactory doesn't run
         if (!IsServer && IsClient)
         {
             Debug.Log("[EnemyNetworkSyncView] Client-side spawn detected, calling CreateClientEntity()");
-            CreateClientEntity();
+            StartCoroutine(WaitForWorldAndCreateEntity());
         }
         else
         {
             Debug.Log($"[EnemyNetworkSyncView] Skipping CreateClientEntity - IsServer: {IsServer}");
         }
+    }
+
+    private System.Collections.IEnumerator WaitForWorldAndCreateEntity()
+    {
+        // Wait for World to be ready
+        float timeout = 5f;
+        float elapsed = 0f;
+        while (WorldRunner.Instance?.World == null && elapsed < timeout)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (WorldRunner.Instance?.World == null)
+        {
+            Debug.LogError("[EnemyNetworkSyncView] Client: World STILL null after timeout!");
+            yield break;
+        }
+
+        CreateClientEntity();
     }
 
     private void CreateClientEntity()
@@ -150,9 +168,8 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             new AnimationDataComponent { IsMovingParam = "isMoving", AttackTrigger = _attackAnimationTrigger }
         );
 
-        // Add AttackDataComponent and WeaponDataComponent for client-side visuals
-        // These are needed by BroadcastAttackExecutionClientRpc to spawn enemy projectiles on clients
-        // Use the serialized fields that match the prefab's configuration
+        // Add WeaponDataComponent for client-side projectile spawning
+        // Uses serialized fields configured on the enemy prefab in Unity inspector
         _world.Components.Add(_entity, new AttackDataComponent { IsPlayerControlled = false });
         _world.Components.Add(
             _entity,
@@ -179,6 +196,10 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
         _isInitialized = true;
         _firstTransformReceived = true; // Already have initial position
+
+        // CRITICAL: Apply current NetworkVariable values immediately!
+        // OnValueChanged doesn't fire for values already set before subscription
+        ApplyInitialNetworkValues();
 
         Debug.Log($"[EnemyNetworkSyncView] Client created ECS entity {_entity.Id} for enemy at {pos}");
     }
@@ -472,6 +493,61 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     ////////////////////////////////////////////////////////////////////////////////
 
+    #region Client Value Initialization
+
+    /// <summary>
+    /// Apply current NetworkVariable values to ECS components.
+    /// Called immediately after subscribing since OnValueChanged doesn't fire for already-set values.
+    /// </summary>
+    private void ApplyInitialNetworkValues()
+    {
+        Debug.Log($"[EnemyNetworkSyncView] ApplyInitialNetworkValues for entity {_entity.Id}");
+
+        // Apply transform
+        var transformState = _netTransform.Value;
+        if (_world.Components.TryGet(_entity, out TransformComponent trans))
+        {
+            trans.Position = transformState.Position;
+            trans.Rotation = transformState.Rotation;
+            Debug.Log($"[EnemyNetworkSyncView] Applied initial transform: pos={transformState.Position}");
+        }
+        transform.SetPositionAndRotation(transformState.Position, transformState.Rotation);
+        _targetPosition = transformState.Position;
+        _targetRotation = transformState.Rotation;
+        _previousPosition = transformState.Position;
+        _previousRotation = transformState.Rotation;
+
+        // Apply health
+        var healthState = _netHealth.Value;
+        if (_world.Components.TryGet(_entity, out HealthDataComponent health))
+        {
+            health.CurrentHealth = healthState.Current;
+            health.MaxHealth = healthState.Max;
+        }
+
+        // Apply enemy state
+        var state = _netState.Value;
+        if (_world.Components.TryGet(_entity, out EnemyComponent enemy))
+        {
+            enemy.CurrentState = state;
+        }
+
+        // Apply movement
+        var movementState = _netMovement.Value;
+        if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
+        {
+            movement.MoveDirection = movementState.MoveDirection;
+            movement.IsMoving = movementState.IsMoving;
+            movement.IsGrounded = movementState.IsGrounded;
+            movement.IsStunned = movementState.IsStunned;
+        }
+    }
+
+    #endregion
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+
     #region Callbacks
 
     private void OnNetHasTargetChanged(bool prev, bool current)
@@ -496,7 +572,18 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             enemy.CurrentState = current;
 
-            // Don't run full state logic on clients, just visual updates
+            // Spawn ragdoll on client when enemy dies
+            if (current == EnemyState.Dead && !enemy.RagdollSpawned)
+            {
+                var ragdollRef = GetComponentInChildren<RagdollReference>();
+                if (ragdollRef != null)
+                {
+                    RagdollUtility.ActivateRagdoll(ragdollRef.gameObject);
+                    Debug.Log($"[EnemyNetworkSync] Client spawned ragdoll for enemy {_entity.Id}");
+                }
+                enemy.RagdollSpawned = true;
+            }
+
             Debug.Log($"[EnemyNetworkSync] Enemy {_entity} state changed: {prev} -> {current}");
         }
     }

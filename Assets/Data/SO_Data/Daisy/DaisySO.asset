@@ -36,7 +36,7 @@ MonoBehaviour:
     range: 5
     animationTrigger: attack
     totalAnimations: 1
-    hitImpactVFX: {fileID: 4583144699886880120, guid: 0ffe88c3d58371140ae613c1a127d777, type: 3}
+    hitImpactVFX: {fileID: 198670200411678530, guid: 289ba3245c9c98c42aeb93d5f45a2248, type: 3}
     attackSound: {fileID: 0}
     projectilePrefab: {fileID: 7412084954217616309, guid: 834b1ec1f6cd30d4683e095560d6facc, type: 3}
     projectileSpeed: 20
@@ -50,7 +50,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a1520e4226922d04a833de1b05f932f4, type: 2}
   audioProfile: {fileID: 11400000, guid: 03e229b1384b22e4e940bd950f76ac59, type: 2}
   clientId: 0
-  playerId: 0
-  isSelected: 1
+  playerId: -1
+  isSelected: 0
   enemiesDestroyed: 0
   totalDamages: 0

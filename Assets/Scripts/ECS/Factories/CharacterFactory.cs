@@ -167,6 +167,7 @@ public class CharacterFactory
                     ProjectileSpeed = attack.projectileSpeed,
                 }
             );
+            // Note: Client-side weapon data comes from prefab's serialized fields
         }
 
         // Game State Component

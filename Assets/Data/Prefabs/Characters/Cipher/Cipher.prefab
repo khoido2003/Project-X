@@ -3149,6 +3149,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkSyncView
   ShowTopMostFoldoutHeaderGroup: 1
+  _executionType: 0
+  _projectilePrefab: {fileID: 0}
+  _hitImpactParticlePrefab: {fileID: 7089567446671028007, guid: a3015979818be2645a5a7a5907241fe8, type: 3}
+  _projectileSpeed: 15
+  _projectileLifetime: 5
+  _projectileSpawnOffset: {x: 0, y: 0, z: 0}
+  _attackAnimationTrigger: attack
+  _totalAttackAnimations: 2
+  _baseDamage: 50
+  _baseCooldown: 1.4
+  _baseRange: 1.2
+  _spawnConfig: {fileID: 11400000, guid: c6eb927b2f38bdf4c9a545a295432437, type: 2}
 --- !u!1 &5366373656294912020
 GameObject:
   m_ObjectHideFlags: 0

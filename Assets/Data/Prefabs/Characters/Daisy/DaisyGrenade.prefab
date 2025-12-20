@@ -183,3 +183,4 @@ MonoBehaviour:
   hitMask:
     serializedVersion: 2
     m_Bits: 1920
+  explosionVfxPrefab: {fileID: 198202731371243394, guid: 65932b7368590234d8163da03c2055d8, type: 3}

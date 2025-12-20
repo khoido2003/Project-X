@@ -32,6 +32,15 @@ public class EnemyFactory
             return null;
         }
 
+        // CRITICAL: EnemyNetworkSyncView MUST be on the prefab BEFORE spawning!
+        // NetworkBehaviours added after Spawn() are NOT replicated to clients.
+        if (enemyData.prefab.GetComponent<EnemyNetworkSyncView>() == null)
+        {
+            Debug.LogError($"[EnemyFactory] Prefab {enemyData.prefab.name} does not have EnemyNetworkSyncView component! " +
+                           "Add this component to the prefab in the Unity Editor. Enemies will not sync to clients without it.");
+            return null;
+        }
+
         GameObject enemyObj = NetworkObjectSpawner.SpawnNewNetworkObject(enemyData.prefab, spawnPosition, true);
         NetworkObject netObj = enemyObj.GetComponent<NetworkObject>();
         entity = _world.CreateEntity();
@@ -53,11 +62,8 @@ public class EnemyFactory
             Debug.Log($"[EnemyFactory] Added AttackExecutionView to enemy entity {entity.Id}");
         }
 
+        // Component is guaranteed to exist on prefab (validated above before spawn)
         var networkSync = enemyObj.GetComponent<EnemyNetworkSyncView>();
-        if (networkSync == null)
-        {
-            networkSync = enemyObj.AddComponent<EnemyNetworkSyncView>();
-        }
         networkSync.Initialize(_world, entity);
 
         // Note: EnemyNetworkSyncView doesn't inherit from NetworkSyncView

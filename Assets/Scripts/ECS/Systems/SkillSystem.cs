@@ -28,16 +28,19 @@ public class SkillSystem : ISystem
     {
         if (!_world.Components.TryGet(@event.Entity, out SkillSetComponent skillSet))
         {
+            Debug.LogWarning($"[SkillSystem] Entity {@event.Entity.Id} has no SkillSetComponent!");
             return;
         }
 
         int index = @event.SkillIndex - 1;
         if (index < 0 || index >= skillSet.Skills.Count)
         {
+            Debug.LogWarning($"[SkillSystem] Invalid skill index {index} for entity {@event.Entity.Id} (Skills.Count={skillSet.Skills.Count})");
             return;
         }
 
-        if (NetworkManager.Singleton.IsServer && Time.time < skillSet.CooldownUntil[index])
+        // Check cooldown on BOTH server and client - client has local cooldown tracking
+        if (Time.time < skillSet.CooldownUntil[index])
         {
             return;
         }
@@ -45,6 +48,7 @@ public class SkillSystem : ISystem
         SkillDefinitionSO skill = skillSet.Skills[index];
         if (skill == null)
         {
+            Debug.LogWarning($"[SkillSystem] Skill at index {index} is null for entity {@event.Entity.Id}");
             return;
         }
 
@@ -70,7 +74,42 @@ public class SkillSystem : ISystem
         {
             if (skill.isInstant)
             {
-                ExecuteSkill(@event.Entity, currentChosenSkill);
+                // For instant skills, set up the buffer with current direction and send RPC
+                if (!_world.Components.TryGet(@event.Entity, out SkillCastBufferComponent buffer))
+                {
+                    buffer = new SkillCastBufferComponent();
+                    _world.Components.Add(@event.Entity, buffer);
+                }
+                
+                buffer.Skill = skill;
+                
+                // Get mouse position for direction
+                Vector3 targetPoint = Vector3.zero;
+                Vector3 direction = Vector3.forward;
+                
+                var registry = _world.Services.Resolve<EntityViewRegistry>();
+                if (registry.TryGet(@event.Entity, out EntityView view))
+                {
+                    direction = view.transform.forward;
+                }
+                
+                buffer.TargetPoint = targetPoint;
+                buffer.Direction = direction;
+                
+                if (NetworkManager.Singleton.IsServer)
+                {
+                    // Server executes directly
+                    ExecuteSkill(@event.Entity, currentChosenSkill);
+                }
+                else
+                {
+                    // Client sends RPC to server for instant skills - include skill index to fix race condition
+                    if (_world.Components.TryGet(@event.Entity, out NetworkSyncComponent sync))
+                    {
+                        Debug.Log($"[SkillSystem] Client requesting instant skill {skill.skillName} execution via RPC (index: {index})");
+                        sync.SyncView.RequestSkillExecutionServerRpc(targetPoint, direction, index);
+                    }
+                }
             }
             else
             {
@@ -135,12 +174,7 @@ public class SkillSystem : ISystem
 
     private void OnSkillEffectTrigger(SkillEffectTriggerEvent @event)
     {
-        // Server applies cooldown
-        if (!NetworkManager.Singleton.IsServer)
-        {
-            return;
-        }
-
+        // Apply cooldown on BOTH server and client for proper local tracking
         if (_world.Components.TryGet(@event.Caster, out SkillSetComponent skillSet))
         {
             for (int i = 0; i < skillSet.Skills.Count; i++)
@@ -149,22 +183,17 @@ public class SkillSystem : ISystem
                 {
                     skillSet.CooldownUntil[i] = Time.time + @event.Skill.cooldown;
                     Debug.Log(
-                        $"[SkillSystem] Skill {@event.Skill.skillName} on cooldown until {skillSet.CooldownUntil[i]}"
+                        $"[SkillSystem] Skill {@event.Skill.skillName} on cooldown until {skillSet.CooldownUntil[i]} (IsServer: {NetworkManager.Singleton.IsServer})"
                     );
-
-                    // Broadcast skill effect to all clients
-                    if (_world.Components.TryGet(@event.Caster, out NetworkSyncComponent sync))
-                    {
-                        sync.SyncView.BroadcastSkillEffectClientRpc(
-                            @event.Skill.category,
-                            @event.TargetPoint,
-                            @event.Direction
-                        );
-                    }
-
                     break;
                 }
             }
+        }
+
+        // Server-only: additional state management
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
         }
 
         // Clear SkillPreview flag to allow attacks

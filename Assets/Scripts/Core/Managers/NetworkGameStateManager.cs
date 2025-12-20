@@ -596,7 +596,9 @@ public class NetworkGameStateManager : NetworkBehaviour
     private void OnPhaseChangedClient(GamePhase previousValue, GamePhase newValue)
     {
         Debug.Log($"[Client] Phase changed from {previousValue} to {newValue}");
-        OnPhaseChanged?.Invoke(newValue, _netCurrentRound.Value);
+        // NOTE: Do NOT invoke OnPhaseChanged here!
+        // BroadcastPhaseStartClientRpc already handles this with the correct round number.
+        // The NetworkVariable update may arrive after the RPC, overwriting the correct round with stale data.
     }
 
     #endregion

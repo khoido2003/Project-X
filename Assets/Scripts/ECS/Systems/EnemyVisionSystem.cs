@@ -53,17 +53,6 @@ public class EnemyVisionSystem : ISystem
                 QueryTriggerInteraction.Ignore
             );
 
-            if (hits == 0)
-            {
-                Debug.Log(
-                    $"[EnemyVisionSystem] Entity {entity.Id}: No hits at {origin}, range: {enemy.DetectionRange}, mask: {enemy.DetectionMask.value}"
-                );
-            }
-            else
-            {
-                Debug.Log($"[EnemyVisionSystem] Entity {entity.Id}: Found {hits} potential targets at {origin}");
-            }
-
             EntityId closest = default;
             float bestSqr = float.MaxValue;
 

@@ -19,6 +19,10 @@ public class ProjectileView : NetworkBehaviour
     [SerializeField]
     private LayerMask hitMask;
 
+    [Header("Impact VFX (for client sync)")]
+    [SerializeField]
+    private ParticleSystem impactEffectPrefab;
+
     public void Initialize(
         World world,
         EntityId attacker,
@@ -82,7 +86,7 @@ public class ProjectileView : NetworkBehaviour
         _spawnTime = Time.time;
 
         // Pool setup - NetworkObjects CANNOT be pooled (reparenting causes SpawnStateException)
-        bool isNetworkObject = TryGetComponent(out Unity.Netcode.NetworkObject _);
+        bool isNetworkObject = TryGetComponent(out Unity.Netcode.NetworkObject netObj);
         _pool = world?.Services.Resolve<ObjectPoolService>();
         _usePooling = _pool != null && _prefabRef != null && !isNetworkObject;
 
@@ -90,6 +94,42 @@ public class ProjectileView : NetworkBehaviour
         if (col != null)
         {
             col.enabled = true;
+        }
+
+        // For NetworkObjects, sync movement data to clients
+        if (isNetworkObject && netObj.IsSpawned && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            SyncMovementClientRpc(_speed, _direction, _lifetime, _attacker.Id);
+        }
+    }
+
+    [ClientRpc]
+    private void SyncMovementClientRpc(float speed, Vector3 direction, float lifetime, int attackerId)
+    {
+        // Server already has these values from Initialize()
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer) return;
+
+        _speed = speed;
+        _direction = direction;
+        _lifetime = lifetime;
+        _spawnTime = Time.time;
+        _hasHit = false;
+        _attacker = new EntityId(attackerId);
+
+        // Use serialized prefab as fallback for impact effect
+        if (_impactEffect == null && impactEffectPrefab != null)
+        {
+            _impactEffect = impactEffectPrefab;
+        }
+
+        // Set rotation to match direction
+        if (_direction.sqrMagnitude > 0.0001f)
+        {
+            Quaternion lookRot = Quaternion.LookRotation(_direction, Vector3.up);
+            Vector3 euler = lookRot.eulerAngles;
+            euler.x = 0f;
+            euler.z = 0f;
+            transform.rotation = Quaternion.Euler(euler);
         }
     }
 
@@ -136,18 +176,11 @@ public class ProjectileView : NetworkBehaviour
             return;
         }
 
-        if (!NetworkManager.Singleton.IsServer)
-        {
-            return;
-        }
-
         // layer detection (obstacle, player, enemy, etc)
         if (!IsInHitMask(other.gameObject))
         {
             return;
         }
-
-
 
         if (!other.TryGetComponent(out EntityView targetView))
         {
@@ -160,24 +193,31 @@ public class ProjectileView : NetworkBehaviour
             return;
         }
 
-        if (_world.Components.Has<HealthDataComponent>(targetView.EntityInstance))
+        // Only SERVER handles damage - clients just show visual effects
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            _world.Events.Publish(
-                new DamageEvent
-                {
-                    Attacker = _attacker,
-                    Target = targetView.EntityInstance,
-                    Amount = _damage,
-                }
-            );
+            if (_world != null && _world.Components.Has<HealthDataComponent>(targetView.EntityInstance))
+            {
+                _world.Events.Publish(
+                    new DamageEvent
+                    {
+                        Attacker = _attacker,
+                        Target = targetView.EntityInstance,
+                        Amount = _damage,
+                    }
+                );
+            }
+
+            Vector3 hitPos = other.ClosestPoint(transform.position);
+
+            // Play impact sound at hit position
+            if (_world != null)
+            {
+                _world.Events.Publish(new AudioCueEvent(_attacker, SoundType.Impact, hitPos));
+            }
         }
 
-
-        Vector3 hitPos = other.ClosestPoint(transform.position);
-
-        // Play impact sound at hit position
-        _world.Events.Publish(new AudioCueEvent(_attacker, SoundType.Impact, hitPos));
-
+        // BOTH server and client show visual impact effect
         HitAndReturn();
     }
 
@@ -225,6 +265,13 @@ public class ProjectileView : NetworkBehaviour
 
     private bool IsInHitMask(GameObject obj)
     {
+        // If hitMask is not set (0), accept all collisions
+        // This allows client visual-only projectiles to work without configured hitMask
+        if (hitMask == 0)
+        {
+            return true;
+        }
+
         int objLayer = obj.layer;
 
         // Convert each included layer of hitMask into readable names

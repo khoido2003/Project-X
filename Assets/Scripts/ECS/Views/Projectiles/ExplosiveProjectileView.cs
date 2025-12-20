@@ -19,6 +19,10 @@ public class ExplosiveProjectileView : NetworkBehaviour
     [SerializeField]
     private LayerMask hitMask;
 
+    [Header("Explosion VFX (for client sync)")]
+    [SerializeField]
+    private ParticleSystem explosionVfxPrefab;
+
     public void Initialize(
         World world,
         EntityId attacker,
@@ -62,23 +66,49 @@ public class ExplosiveProjectileView : NetworkBehaviour
         {
             _projectileCollider.enabled = true;
         }
+
+        // Sync movement data to clients so they can move projectile visually
+        SyncMovementClientRpc(_speed, _direction, _lifetime);
+    }
+
+    [ClientRpc]
+    private void SyncMovementClientRpc(float speed, Vector3 direction, float lifetime)
+    {
+        // Server already has these values from Initialize()
+        if (IsServer) return;
+
+        _speed = speed;
+        _direction = direction;
+        _lifetime = lifetime;
+        _spawnTime = Time.time;
+        _hasExploded = false;
+
+        // Set rotation to match direction
+        if (_direction.sqrMagnitude > 0.0001f)
+        {
+            transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
+        }
     }
 
     private void Update()
     {
-        // Only server handles movement and logic
-        if (!NetworkManager.Singleton.IsServer)
-        {
-            return;
-        }
-
         if (_hasExploded)
         {
             return;
         }
 
-        // Move projectile (rotation is set once in Initialize())
-        transform.position += _direction * _speed * Time.deltaTime;
+        // BOTH server and client move the projectile visually
+        // Server handles collision/explosion logic, client just moves for visual
+        if (_direction.sqrMagnitude > 0.0001f && _speed > 0)
+        {
+            transform.position += _direction * _speed * Time.deltaTime;
+        }
+
+        // Only SERVER handles collision detection and lifetime checks
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
 
         // Check lifetime
         if (Time.time - _spawnTime >= _lifetime)
@@ -210,13 +240,16 @@ public class ExplosiveProjectileView : NetworkBehaviour
         if (IsServer)
             return;
 
+        // Use _explosionVfx if set (from Initialize), otherwise use the serialized prefab
+        ParticleSystem vfxToUse = _explosionVfx != null ? _explosionVfx : explosionVfxPrefab;
+
         // Spawn explosion VFX on clients
-        if (_explosionVfx != null)
+        if (vfxToUse != null)
         {
             var pool = _world?.Services.Resolve<ObjectPoolService>();
             if (pool != null)
             {
-                var explosionGo = pool.Get(_explosionVfx.gameObject, explosionPos, Quaternion.identity);
+                var explosionGo = pool.Get(vfxToUse.gameObject, explosionPos, Quaternion.identity);
                 if (explosionGo.TryGetComponent(out ParticleSystem ps))
                 {
                     float duration = ps.main.duration + ps.main.startLifetime.constantMax;
@@ -225,7 +258,7 @@ public class ExplosiveProjectileView : NetworkBehaviour
             }
             else
             {
-                var explosionGo = Instantiate(_explosionVfx.gameObject, explosionPos, Quaternion.identity);
+                var explosionGo = Instantiate(vfxToUse.gameObject, explosionPos, Quaternion.identity);
                 Destroy(explosionGo, 2f);
             }
         }

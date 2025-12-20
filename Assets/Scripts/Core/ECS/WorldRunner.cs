@@ -348,6 +348,10 @@ public class WorldRunner : NetworkBehaviour
         // It sends RPCs to server (RequestAttackServerRpc, skill casts, etc.)
         World.Systems.AddSystem(new InputSystem(), World);
         
+        // SkillSystem must run on ALL clients for skill preview and local feedback
+        // Actual skill execution is validated by server, but preview runs locally
+        World.Systems.AddSystem(new SkillSystem(), World);
+        
         // NOTE: Server-only systems are registered in InitServerSystems() called from OnNetworkSpawn()
         // because IsServer is only valid after network starts
     }
@@ -360,12 +364,11 @@ public class WorldRunner : NetworkBehaviour
         _spawnSystem = new SpawnSystem(spawnConfig);
         World.Systems.AddSystem(_spawnSystem, World);
         
-        // Core gameplay
+        // Core gameplay (SkillSystem is initialized in InitSystems for all clients)
         World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new HealthSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);
-        World.Systems.AddSystem(new SkillSystem(), World);
         World.Systems.AddSystem(new CombatStateSystem(), World);
         
         // Status effects

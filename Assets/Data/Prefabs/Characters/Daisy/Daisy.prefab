@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1483859917
+  GlobalObjectIdHash: 2430068917
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -289,6 +289,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkSyncView
   ShowTopMostFoldoutHeaderGroup: 1
+  _executionType: 1
+  _projectilePrefab: {fileID: 7412084954217616309, guid: 834b1ec1f6cd30d4683e095560d6facc, type: 3}
+  _hitImpactParticlePrefab: {fileID: 198670200411678530, guid: 289ba3245c9c98c42aeb93d5f45a2248, type: 3}
+  _projectileSpeed: 15
+  _projectileLifetime: 5
+  _projectileSpawnOffset: {x: 0, y: 0, z: 0}
+  _attackAnimationTrigger: attack
+  _totalAttackAnimations: 1
+  _baseDamage: 20
+  _baseCooldown: 0.5
+  _baseRange: 5
+  _spawnConfig: {fileID: 11400000, guid: c6eb927b2f38bdf4c9a545a295432437, type: 2}
 --- !u!114 &8510749509602240122
 MonoBehaviour:
   m_ObjectHideFlags: 0
