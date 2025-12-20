@@ -18,8 +18,11 @@ public class EnemyVisionSystem : ISystem
             return;
         }
 
+        int enemyCount = 0;
         foreach (var (entity, enemy, trans) in _world.Components.Query<EnemyComponent, TransformComponent>())
         {
+            enemyCount++;
+
             if (enemy.CurrentState == EnemyState.Dead)
             {
                 continue;
@@ -33,7 +36,15 @@ public class EnemyVisionSystem : ISystem
 
             enemy.TimeSinceLastCheck = 0f;
 
+            // Use Unity transform position instead of ECS TransformComponent
+            // ECS component may not reflect actual game object position
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
             Vector3 origin = trans.Position;
+            if (registry.TryGet(entity, out EntityView view))
+            {
+                origin = view.transform.position;
+            }
+
             int hits = Physics.OverlapSphereNonAlloc(
                 origin,
                 enemy.DetectionRange,
@@ -48,18 +59,18 @@ public class EnemyVisionSystem : ISystem
             for (int i = 0; i < hits; i++)
             {
                 Collider col = _queryBuffer[i];
-                if (!col.TryGetComponent(out EntityView view))
+                if (!col.TryGetComponent(out EntityView foundView))
                 {
                     continue;
                 }
 
-                EntityId candidate = view.EntityInstance;
+                EntityId candidate = foundView.EntityInstance;
                 if (!_world.Components.Has<PlayerTagComponent>(candidate))
                 {
                     continue;
                 }
 
-                Vector3 candidatePos = view.transform.position;
+                Vector3 candidatePos = foundView.transform.position;
                 Vector3 dir = candidatePos - origin;
                 Vector3 dirFlat = new Vector3(dir.x, 0f, dir.z);
                 float dsq = dirFlat.sqrMagnitude;

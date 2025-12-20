@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 938a08c20e43f7d41b9013bbe5459b87, type: 3}
+  m_Name: ExplosiveShotSkill
+  m_EditorClassIdentifier: Assembly-CSharp::ExplosiveShotSkillSO
+  assetId: e4149f0c8851e2a428776cd8791bf163
+  skillName: ExplosiveShot
+  category: 4
+  isInstant: 0
+  keyTrigger: E
+  damage: 70
+  castRange: 5
+  cooldown: 2
+  hitVfxPrefab: {fileID: 198202731371243394, guid: 65932b7368590234d8163da03c2055d8, type: 3}
+  skillVfxPrefab: {fileID: 198958634261893940, guid: 4baff87aa850bb94fbaeecfbaaaa1ba1, type: 3}
+  activateSound: {fileID: 8300000, guid: e4fd63a576d0f468087e071e9ed6f04f, type: 3}
+  activationAnimationTrigger: skill2
+  explosionRadius: 3
+  explosionDamage: 40
+  projectilePrefab: {fileID: 7466126021747536713, guid: 4a1bffe11981ffb4499bd997d134aed5, type: 3}
+  projectileSpeed: 20
+  projectileLifetime: 5
+  explosionVfxPrefab: {fileID: 198202731371243394, guid: 65932b7368590234d8163da03c2055d8, type: 3}

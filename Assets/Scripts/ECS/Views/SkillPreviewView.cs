@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class SkillPreviewView : EntityView
@@ -36,15 +35,31 @@ public class SkillPreviewView : EntityView
     {
         base.Bind(world, entity);
 
-        WorldInstance.Events.Subscribe<MouseWorldInputEvent>(OnMouseWorldInputEvent);
+        if (WorldInstance == null)
+        {
+            Debug.LogWarning("[SkillPreviewView] WorldInstance is null during Bind, subscriptions will be deferred");
+            return;
+        }
 
-        WorldInstance.Events.Subscribe<SkillPreviewRequestEvent>(OnSkillPreviewRequestEvent);
-
-        WorldInstance.Events.Subscribe<SkillExecutionRequestEvent>(OnSkillExecutionRequestEvent);
+        try
+        {
+            WorldInstance.Events.Subscribe<MouseWorldInputEvent>(OnMouseWorldInputEvent);
+            WorldInstance.Events.Subscribe<SkillPreviewRequestEvent>(OnSkillPreviewRequestEvent);
+            WorldInstance.Events.Subscribe<SkillExecutionRequestEvent>(OnSkillExecutionRequestEvent);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[SkillPreviewView] Failed to subscribe to events during Bind: {ex.Message}");
+        }
     }
 
     private void Update()
     {
+        if (WorldInstance == null || EntityInstance.Id == 0)
+        {
+            return;
+        }
+
         // Only local player shows preview
         if (!WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner) || !owner.IsLocalPlayer)
         {
@@ -69,6 +84,7 @@ public class SkillPreviewView : EntityView
         {
             return;
         }
+        
         if (@event.IsActive)
         {
             ShowPreview(@event.Skill);
@@ -88,6 +104,12 @@ public class SkillPreviewView : EntityView
 
     private void OnSkillExecutionRequestEvent(SkillExecutionRequestEvent @event)
     {
+        // Clear SkillPreview flag when skill is executed
+        if (WorldInstance.Components.TryGet(EntityInstance, out ActionFlagComponent flags))
+        {
+            flags.Set(ActionFlag.SkillPreview, false);
+        }
+
         TryCastSkill();
         HideSkillVfxEffect();
     }
@@ -111,7 +133,9 @@ public class SkillPreviewView : EntityView
 
     private void HidePreview()
     {
-        selectedSkillIndex = -1;
+        // NOTE: Do NOT clear selectedSkillIndex here!
+        // The skill should remain selected until it's executed or another skill is chosen.
+        // Clearing here causes a race condition where releasing the key before clicking blocks the skill.
 
         if (indicatorRing)
         {
@@ -183,19 +207,24 @@ public class SkillPreviewView : EntityView
 
     private void TryCastSkill()
     {
+        Debug.Log($"[SkillPreviewView] TryCastSkill called for entity {EntityInstance.Id}, selectedSkillIndex: {selectedSkillIndex}");
+        
         if (!WorldInstance.Components.TryGet(EntityInstance, out CombatStateComponent state))
         {
+            Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - no CombatStateComponent");
             return;
         }
 
         if (state.CurrentState == CombatState.Attacking)
         {
+            Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - currently attacking");
             return;
         }
 
         SkillDefinitionSO skill = GetCurrentSkill();
         if (skill == null)
         {
+            Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - no current skill selected");
             return;
         }
 
@@ -238,9 +267,16 @@ public class SkillPreviewView : EntityView
 
         if (WorldInstance.Components.TryGet(EntityInstance, out NetworkSyncComponent sync))
         {
+            Debug.Log($"[SkillPreviewView] Sending RequestSkillExecutionServerRpc for skill: {skill.skillName}, target: {target}, direction: {direction}");
             sync.SyncView.RequestSkillExecutionServerRpc(target, direction);
         }
+        else
+        {
+            Debug.LogWarning($"[SkillPreviewView] TryCastSkill FAILED - no NetworkSyncComponent for entity {EntityInstance.Id}");
+        }
 
+        // Clear skill selection after execution
+        selectedSkillIndex = -1;
         HidePreview();
     }
 

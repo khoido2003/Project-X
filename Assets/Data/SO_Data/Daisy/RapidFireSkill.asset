@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d37923bbdd703ca47b4c736b68653dec, type: 3}
+  m_Name: RapidFireSkill
+  m_EditorClassIdentifier: Assembly-CSharp::RapidFireSkillSO
+  assetId: db101c2f6e3a9064fa6c2533fbcaea46
+  skillName: Rapid Fire
+  category: 3
+  isInstant: 1
+  keyTrigger: Q
+  damage: 20
+  castRange: 5
+  cooldown: 2
+  hitVfxPrefab: {fileID: 198011925041146442, guid: 57e18706e2792ff4bb5561ed74b796e2, type: 3}
+  skillVfxPrefab: {fileID: 198533653044838976, guid: b46264f9e12caed4cb53e7c2ad64aa54, type: 3}
+  activateSound: {fileID: 8300000, guid: 78db9d561d1134f1c91be2940e267353, type: 3}
+  activationAnimationTrigger: skill2
+  projectileCount: 5
+  timeBetweenShots: 0.2
+  spreadAngle: 3
+  projectilePrefab: {fileID: 7412084954217616309, guid: 834b1ec1f6cd30d4683e095560d6facc, type: 3}
+  projectileSpeed: 20
+  projectileLifetime: 3

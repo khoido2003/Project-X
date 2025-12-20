@@ -19,11 +19,13 @@ public class EnemyMovementView : EntityView
     {
         if (WorldInstance == null || EntityInstance.Equals(default))
         {
+            Debug.LogWarning($"[EnemyMovementView] Not bound - WorldInstance null: {WorldInstance == null}, EntityInstance default: {EntityInstance.Equals(default)}");
             return;
         }
 
         if (!WorldInstance.Components.TryGet(EntityInstance, out TransformComponent tf))
         {
+            Debug.LogWarning($"[EnemyMovementView] No TransformComponent for entity {EntityInstance.Id}");
             return;
         }
 

@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -12,6 +13,11 @@ public class MovementView : EntityView
 
     private void Update()
     {
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
         World world = WorldInstance;
         EntityId entity = EntityInstance;
 

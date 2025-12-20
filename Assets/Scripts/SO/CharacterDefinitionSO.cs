@@ -26,11 +26,21 @@ public class CharacterDefinitionSO : NetworkSO
     public string attackAnimationTrigger = "attack";
     public int totalAttackAnimations = 4;
 
+    [Header("Aiming Rig Settings")]
+    [Tooltip("Enable aiming rig for ranged characters. Melee characters should leave this disabled.")]
+    public bool useAimingRig = false;
+
+    [Tooltip("Speed at which the character rotates to aim (degrees per second).")]
+    public float aimRotationSpeed = 360f;
+
     [Header("Attacks")]
     public List<AttackDefinition> attacks = new();
 
     [Header("Skills")]
     public List<SkillDefinitionSO> skills = new();
+
+    [Header("Audio")]
+    public AudioProfileSO audioProfile;
 
     [Header("Client Info")]
     public ulong clientId;
@@ -63,12 +73,14 @@ public class CharacterDefinitionSO : NetworkSO
         if (prefab != null)
         {
             var netObj = prefab.GetComponent<NetworkObject>();
+
             if (netObj == null)
             {
                 Debug.LogError($"{characterName}: Prefab must have Network Object component!", this);
             }
 
             var entityView = prefab.GetComponent<EntityView>();
+
             if (entityView == null)
             {
                 Debug.LogError($"{characterName}: Prefab must have EntityView component!", this);

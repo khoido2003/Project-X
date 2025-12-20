@@ -18,10 +18,15 @@ public class UpgradeCardContainerUI : MonoBehaviour
     [SerializeField]
     private Slider timerFillBar;
 
+    [Header("Audio")]
+    [SerializeField]
+    private UISoundConfig uiSoundConfig;
+
     private UpgradeOption[] _currentOptions;
     private bool _isShowing;
     private float _timeRemaining;
     private bool _hasSelected;
+    private float _displayTimer;
 
     private void Awake()
     {
@@ -40,6 +45,8 @@ public class UpgradeCardContainerUI : MonoBehaviour
             return;
         }
 
+        _displayTimer += Time.deltaTime;
+
         float timeRemaining = NetworkGameStateManager.Instance.PhaseTimeRemaining;
 
         if (timeText != null)
@@ -53,14 +60,30 @@ public class UpgradeCardContainerUI : MonoBehaviour
             timerFillBar.value = timeRemaining / maxTime;
         }
 
-        // Auto-select only when timer actually runs out
-        if (timeRemaining <= 0.1f && _currentOptions != null && _currentOptions.Length > 0 && !_hasSelected)
+        // Only auto-select after minimum display time
+        // This prevents immediate auto-select due to NetworkVariable sync timing
+        // RPC with options can arrive before PhaseTimeRemaining is synced
+        const float MIN_DISPLAY_TIME = 2.0f;
+        if (
+            timeRemaining <= 0.1f
+            && _displayTimer >= MIN_DISPLAY_TIME
+            && _currentOptions != null
+            && _currentOptions.Length > 0
+            && !_hasSelected
+        )
         {
             Debug.Log("[UpgradeCardUI] Time expired, auto-selecting first upgrade");
             SelectUpgrade(0);
         }
 
-        if (NetworkGameStateManager.Instance.CurrentPhase != GamePhase.UpgradePhase && _isShowing)
+        // Only check phase after grace period
+        // NetworkVariable sync can lag behind RPC, causing immediate hide
+        const float PHASE_CHECK_GRACE_PERIOD = 1.0f;
+        if (
+            _displayTimer >= PHASE_CHECK_GRACE_PERIOD
+            && NetworkGameStateManager.Instance.CurrentPhase != GamePhase.UpgradePhase
+            && _isShowing
+        )
         {
             Debug.Log("[UpgradeCardUI] Phase changed, hiding upgrade panel");
             HideUpgradeOptions();
@@ -78,6 +101,7 @@ public class UpgradeCardContainerUI : MonoBehaviour
         _currentOptions = options;
         _isShowing = true;
         _hasSelected = false;
+        _displayTimer = 0f;
 
         if (upgradePanel != null)
         {
@@ -100,6 +124,12 @@ public class UpgradeCardContainerUI : MonoBehaviour
             {
                 upgradeCards[i].gameObject.SetActive(false);
             }
+        }
+
+        // Play card appear sound
+        if (uiSoundConfig != null && uiSoundConfig.upgradeCardAppear != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(uiSoundConfig.upgradeCardAppear, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
         }
 
         Debug.Log($"[UpgradeCardUI] Showing {options.Length} upgrade options");
@@ -132,6 +162,12 @@ public class UpgradeCardContainerUI : MonoBehaviour
 
         var selectedUpgrade = _currentOptions[cardIndex];
         Debug.Log($"[UpgradeCardUI] Selected upgrade: {selectedUpgrade.Name}");
+
+        // Play selection sound
+        if (uiSoundConfig != null && uiSoundConfig.upgradeSelected != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(uiSoundConfig.upgradeSelected, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
+        }
 
         if (NetworkUpgradeSystem.Instance != null)
         {

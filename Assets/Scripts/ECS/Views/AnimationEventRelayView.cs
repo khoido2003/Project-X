@@ -25,27 +25,33 @@ public class AnimationEventRelayView : EntityView
             case AnimationEventRelayType.ATTACK_HIT:
                 HandleAttackHit();
                 break;
-
             case AnimationEventRelayType.SKILL_HIT:
                 HandleSkillHit();
                 break;
-
             case AnimationEventRelayType.ATTACK_END:
                 HandleAttackEnd();
                 break;
             case AnimationEventRelayType.SKILL_END:
                 HandleSkillEnd();
                 break;
-            default:
-                break;
         }
     }
 
     private void HandleAttackHit()
     {
+        if (
+            _world.Components.TryGet(_entityView.EntityInstance, out CombatStateComponent combatState)
+            && combatState.CurrentState == CombatState.CastingSkill
+        )
+        {
+            return;
+        }
+
         if (!_world.Components.TryGet(_entityView.EntityInstance, out AttackDataComponent attack))
         {
-            Debug.LogError("Missing AttackDataComponent");
+            Debug.LogError(
+                $"[AnimationEventRelayView] Missing AttackDataComponent for entity {_entityView?.EntityInstance.Id}"
+            );
             return;
         }
 
@@ -55,6 +61,25 @@ public class AnimationEventRelayView : EntityView
             return;
         }
 
+        // System automatically determines if this is Player or Enemy
+        if (weapon.AttackSound != null)
+        {
+            // Direct sound play with automatic category detection
+            var category = _world.Components.Has<PlayerTagComponent>(_entityView.EntityInstance)
+                ? AudioCategory.Player
+                : AudioCategory.Enemy;
+
+            AudioHelper.PlaySound3D(_world, weapon.AttackSound, category, _entityView.transform.position);
+        }
+        else
+        {
+            // Fallback to profile-based sound
+            _world.Events.Publish(
+                new AudioCueEvent(_entityView.EntityInstance, SoundType.Attack, _entityView.transform.position)
+            );
+        }
+
+        // Trigger attack execution
         _world.Events.Publish(
             new AttackExecutionRequestEvent
             {
@@ -64,8 +89,6 @@ public class AnimationEventRelayView : EntityView
                 Range = weapon.BaseRange,
                 Damage = weapon.BaseDamage,
                 ImpactEffect = weapon.HitImpactParticlePrefab,
-
-                // Ranged / AoE support
                 ProjectilePrefab = weapon.ProjectilePrefab,
                 ProjectileSpeed = weapon.ProjectileSpeed,
                 ProjectileLifetime = weapon.ProjectileLifetime,
@@ -105,6 +128,17 @@ public class AnimationEventRelayView : EntityView
             attack.IsAttacking = false;
         }
 
+        // Reset combat state to Idle on BOTH client and server
+        // This is critical for client-side state sync since AttackSystem only runs on server
+        if (_world.Components.TryGet(_entityView.EntityInstance, out CombatStateComponent state))
+        {
+            if (state.CurrentState == CombatState.Attacking)
+            {
+                state.CurrentState = CombatState.Idle;
+                state.LastActionTime = Time.time;
+            }
+        }
+
         _world.Events.Publish(
             new AnimationEventRelayEvent(_entityView.EntityInstance, AnimationEventRelayType.ATTACK_END)
         );
@@ -114,6 +148,19 @@ public class AnimationEventRelayView : EntityView
     {
         _world.Events.Publish(
             new AnimationEventRelayEvent(_entityView.EntityInstance, AnimationEventRelayType.SKILL_END)
+        );
+    }
+
+    public void OnFootstep()
+    {
+        if (_world == null)
+        {
+            return;
+        }
+
+        // Simple footstep event - system handles Player vs Enemy automatically
+        _world.Events.Publish(
+            new AudioCueEvent(_entityView.EntityInstance, SoundType.Footstep, _entityView.transform.position)
         );
     }
 }

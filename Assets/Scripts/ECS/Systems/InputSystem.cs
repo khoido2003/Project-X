@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class InputSystem : ISystem
@@ -11,8 +12,11 @@ public class InputSystem : ISystem
         _input = world.Services.Resolve<IInputService>();
     }
 
+    private bool _hasLoggedQuery = false;
+
     public void Update(float dt)
     {
+
         foreach (var (entity, owner, sync) in _world.Components.Query<NetworkOwnerComponent, NetworkSyncComponent>())
         {
             // Only owner this client allow to control
@@ -28,17 +32,68 @@ public class InputSystem : ISystem
             // LeftMouse clicked
             if (_input.IsLeftMouseDown() && _world.Components.TryGet(entity, out ActionFlagComponent flags))
             {
+                Vector3 mousePos = _input.GetMouseWorldPosition();
+
                 if (flags.Get(ActionFlag.SkillPreview))
                 {
                     _world.Events.Publish(new SkillExecutionRequestEvent(entity));
                 }
                 else
                 {
-                    // Local client will predict the action
+                    // For HOST player, set attack direction BEFORE publishing attack event
+                    // This ensures the direction is available when animation fires HandleAttackHit
+                    // For remote clients, the ServerRpc will set the direction on the server
+                    if (NetworkManager.Singleton.IsServer && owner.IsLocalPlayer)
+                    {
+                        if (
+                            _world.Components.TryGet(entity, out AttackDataComponent attack)
+                            && _world.Components.TryGet(entity, out WeaponDataComponent weapon)
+                        )
+                        {
+                            // Don't overwrite direction if still in cooldown
+                            // This prevents subsequent clicks from changing direction mid-animation
+                            // Check cooldown instead of IsAttacking since IsAttacking is set later in the frame
+                            float timeSinceAttack = Time.time - attack.LastAttackTime;
+                            if (timeSinceAttack < weapon.BaseCooldown)
+                            {
+                                continue; // Skip entire attack processing
+                            }
+
+                            Vector3 attackDir = mousePos;
+                            if (_world.Components.TryGet(entity, out TransformComponent transform))
+                            {
+                                attackDir = mousePos - transform.Position;
+                            }
+                            else
+                            {
+                                var registry = _world.Services.Resolve<EntityViewRegistry>();
+                                if (registry.TryGet(entity, out EntityView view))
+                                {
+                                    attackDir = mousePos - view.transform.position;
+                                }
+                            }
+
+                            attackDir.y = 0f;
+                            if (attackDir.sqrMagnitude < 0.0001f)
+                            {
+                                var registry = _world.Services.Resolve<EntityViewRegistry>();
+                                if (registry.TryGet(entity, out EntityView view))
+                                {
+                                    attackDir = view.transform.forward;
+                                }
+                                else
+                                {
+                                    attackDir = Vector3.forward;
+                                }
+                            }
+                            attack.AttackDirection = attackDir.normalized;
+                        }
+                    }
+
                     _world.Events.Publish(new AttackPressedInputEvent(entity));
 
                     // Request Server validation
-                    sync.SyncView.RequestAttackServerRpc();
+                    sync.SyncView.RequestAttackServerRpc(mousePos);
                 }
             }
 
@@ -48,8 +103,6 @@ public class InputSystem : ISystem
                 if (_input.IsSkillDown(i))
                 {
                     Vector3 mousePos = _input.GetMouseWorldPosition();
-
-                    // Client predict preview immediately
                     _world.Events.Publish(new SkillPressedInputEvent(entity, i, true));
 
                     // Request server validation

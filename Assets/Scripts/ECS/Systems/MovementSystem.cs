@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MovementSystem : ISystem
 {
     private const float GRAVITY = 9.81f;
+    private const float FOOTSTEP_INTERVAL = 0.4f; // Time between footsteps
     private World _world;
+    private readonly Dictionary<EntityId, float> _lastFootstepTime = new();
 
     public void Initialize(World world)
     {
@@ -58,6 +61,29 @@ public class MovementSystem : ISystem
                 new AnimationParameterEvent(entity, "isMoving", AnimationParameterType.Bool, movement.IsMoving)
             );
 
+            // Play footstep sound when moving and grounded
+            if (movement.IsMoving && movement.IsGrounded)
+            {
+                float currentTime = Time.time;
+                if (
+                    !_lastFootstepTime.TryGetValue(entity, out float lastTime)
+                    || currentTime - lastTime >= FOOTSTEP_INTERVAL
+                )
+                {
+                    _lastFootstepTime[entity] = currentTime;
+                    if (_world.Components.TryGet(entity, out TransformComponent trans))
+                    {
+                        _world.Events.Publish(new AudioCueEvent(entity, SoundType.Footstep, trans.Position));
+                    }
+                }
+            }
+            else
+            {
+                // Stop footstep sound when not moving
+                var audioService = _world.Services.Resolve<IAudioService>();
+                audioService?.StopFootstepForEntity(entity);
+            }
+
             if (movement.IsMoving)
             {
                 Vector3 forward = Vector3.forward;
@@ -96,5 +122,6 @@ public class MovementSystem : ISystem
     public void Shutdown()
     {
         _world.Events.Unsubscribe<MovePressedInputEvent>(OnMoveInput);
+        _lastFootstepTime.Clear();
     }
 }

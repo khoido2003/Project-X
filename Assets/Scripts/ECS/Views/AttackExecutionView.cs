@@ -46,6 +46,7 @@ public class AttackExecutionView : EntityView
 
         if (!_registry.TryGet(@event.Attacker, out EntityView attackerView))
         {
+            Debug.LogWarning($"[AttackExecutionView] Could not find EntityView for attacker {EntityInstance.Id}");
             return;
         }
         Transform attackerTf = attackerView.transform;
@@ -114,10 +115,23 @@ public class AttackExecutionView : EntityView
                 }
             );
 
+            Vector3 impactPos = hit.ClosestPoint(origin);
+            Vector3 impactNormal = (origin - impactPos).normalized;
+
+            // Server spawns impact effect locally
             if (@event.ImpactEffect)
             {
-                Instantiate(@event.ImpactEffect, hit.ClosestPoint(origin), Quaternion.identity);
+                Instantiate(@event.ImpactEffect, impactPos, Quaternion.identity);
             }
+
+            // Broadcast to all clients to spawn impact effect
+            if (_world.Components.TryGet(@event.Attacker, out NetworkSyncComponent sync) && sync.SyncView != null)
+            {
+                sync.SyncView.BroadcastMeleeHitClientRpc(impactPos, impactNormal);
+            }
+
+            // Play impact sound at hit position
+            _world.Events.Publish(new AudioCueEvent(@event.Attacker, SoundType.Impact, impactPos));
         }
     }
 
@@ -129,36 +143,75 @@ public class AttackExecutionView : EntityView
             return;
         }
 
+        // Trigger aiming rig for ranged attacks
+        TriggerAimingRigForAttack(@event, attackerTf);
+
         // Try to find ProjectileSpawnPos component on attacker or its children
         Transform spawnTransform = attackerTf;
         ProjectileSpawnPos spawnPosComponent = attackerTf.GetComponentInChildren<ProjectileSpawnPos>();
-        
+
         if (spawnPosComponent != null)
         {
             spawnTransform = spawnPosComponent.transform;
         }
 
-        // Spawn position - use spawn transform if found, otherwise use attacker transform with offset
-        Vector3 spawnPos = spawnTransform.position;
-        if (spawnPosComponent == null)
+        // Calculate spawn position first
+        Vector3 spawnPos;
+        if (spawnPosComponent != null)
         {
-            spawnPos = attackerTf.position + new Vector3(0f, 1.3f, 0f) + attackerTf.TransformDirection(@event.SpawnOffset);
+            spawnPos = spawnTransform.position;
+            // Apply offset relative to spawn transform
+            spawnPos += spawnTransform.TransformDirection(@event.SpawnOffset);
         }
         else
         {
-            // If using ProjectileSpawnPos, still apply the offset relative to spawn transform
-            spawnPos += spawnTransform.TransformDirection(@event.SpawnOffset);
+            // Default spawn position - use attacker position with height offset
+            spawnPos = attackerTf.position + new Vector3(0f, 1.3f, 0f);
+
+            Vector3 tempDir =
+                @event.Direction.sqrMagnitude < 0.0001f ? attackerTf.forward : @event.Direction.normalized;
+            tempDir.y = 0f;
+            tempDir = tempDir.normalized;
+
+            // Apply offset in world space relative to direction
+            if (@event.SpawnOffset.sqrMagnitude > 0.0001f)
+            {
+                spawnPos += Quaternion.LookRotation(tempDir, Vector3.up) * @event.SpawnOffset;
+            }
         }
 
-        // Direction
-        Vector3 forwardDir = @event.Direction.sqrMagnitude < 0.0001f ? spawnTransform.forward : @event.Direction.normalized;
+        //Calculate direction FROM spawn position TO target point
+        // The @event.Direction was calculated from character center, but we need direction from gun muzzle
+        // Use a large distance to minimize parallax error from spawn offset
+        Vector3 forwardDir;
+        if (@event.Direction.sqrMagnitude > 0.0001f)
+        {
+            // Calculate target point far in the aim direction
+            // Using a large distance (100f) makes the spawn offset negligible
+            Vector3 targetPoint = attackerTf.position + @event.Direction.normalized * 100f;
+            targetPoint.y = spawnPos.y; // Keep on same height as spawn
 
-        // Spawn rotation - align with direction
+            forwardDir = (targetPoint - spawnPos).normalized;
+            forwardDir.y = 0f;
+            forwardDir = forwardDir.normalized;
+        }
+        else
+        {
+            forwardDir = attackerTf.forward;
+            forwardDir.y = 0f;
+            forwardDir = forwardDir.normalized;
+        }
+
+        if (forwardDir.sqrMagnitude < 0.0001f)
+        {
+            forwardDir = attackerTf.forward;
+            forwardDir.y = 0f;
+            forwardDir = forwardDir.normalized;
+        }
+
         Quaternion spawnRot = Quaternion.LookRotation(forwardDir, Vector3.up);
-
         var pool = _world.Services.Resolve<ObjectPoolService>();
 
-        // Use spawnRot instead of attackerTf.rotation to ensure correct initial rotation
         GameObject projectileGO = pool.Get(@event.ProjectilePrefab, spawnPos, spawnRot);
 
         if (!projectileGO.TryGetComponent(out ProjectileView projectile))
@@ -192,6 +245,36 @@ public class AttackExecutionView : EntityView
         if (@event.EventType == AnimationEventRelayType.ATTACK_END)
         {
             _attackHitCache.Remove(@event.Entity);
+        }
+    }
+
+    private void TriggerAimingRigForAttack(AttackExecutionRequestEvent @event, Transform attackerTf)
+    {
+        if (!_registry.TryGet(@event.Attacker, out EntityView attackerView))
+        {
+            return;
+        }
+
+        AimingRigView aimingRig = attackerView.GetComponent<AimingRigView>();
+        if (aimingRig == null)
+        {
+            return;
+        }
+
+        // Check if character has aiming rig enabled
+        if (_world.Components.TryGet(@event.Attacker, out CharacterSelectionComponent characterSelection))
+        {
+            if (characterSelection.CharacterData != null && characterSelection.CharacterData.useAimingRig)
+            {
+                Vector3 aimTarget = attackerTf.position + @event.Direction.normalized * @event.Range;
+                if (@event.Direction.sqrMagnitude < 0.001f)
+                {
+                    aimTarget = attackerTf.position + attackerTf.forward * @event.Range;
+                }
+
+                // Aim for the attack duration (typically 0.5-1 second)
+                aimingRig.StartAiming(aimTarget, 1f);
+            }
         }
     }
 

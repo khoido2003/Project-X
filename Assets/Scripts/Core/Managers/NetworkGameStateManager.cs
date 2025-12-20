@@ -22,6 +22,10 @@ public class NetworkGameStateManager : NetworkBehaviour
     [SerializeField]
     private GameResultsUI resultsUI;
 
+    [Header("Audio Configuration")]
+    [SerializeField]
+    private VoiceoverConfig voiceoverConfig;
+
     private NetworkVariable<GamePhase> _netCurrentPhase = new(
         GamePhase.Lobby,
         NetworkVariableReadPermission.Everyone,
@@ -53,6 +57,7 @@ public class NetworkGameStateManager : NetworkBehaviour
 
     private float _phaseTimer;
     private bool _isInitialized = false;
+    private int _lastCountdownPlayed = -1; // Track last countdown number played
 
     public static NetworkGameStateManager Instance { get; private set; }
 
@@ -174,10 +179,9 @@ public class NetworkGameStateManager : NetworkBehaviour
 
         _netCurrentPhase.Value = newPhase;
         _phaseTimer = 0f;
+        _lastCountdownPlayed = -1; // Reset countdown when phase changes
 
         _netPhaseTimeRemaining.Value = GetPhaseDuration();
-
-        Debug.Log($"NetworkGameState: Transitioning to {newPhase}, Round {_netCurrentPhase.Value + 1}");
 
         switch (newPhase)
         {
@@ -201,6 +205,8 @@ public class NetworkGameStateManager : NetworkBehaviour
                 break;
 
             case GamePhase.GameEnd:
+                // Destroy all enemies and players when match ends
+                DestroyAllEntities();
                 CalculateAndBroadcastResults();
                 BroadcastPhaseStartClientRpc(newPhase, _netCurrentRound.Value + 1, upgradePhaseDuration);
                 break;
@@ -227,9 +233,49 @@ public class NetworkGameStateManager : NetworkBehaviour
     [ClientRpc]
     private void BroadcastPhaseStartClientRpc(GamePhase newPhase, int round, float duration)
     {
-        Debug.Log($"[Client] Phase changed to {newPhase}, Round {round}");
         OnPhaseChanged?.Invoke(newPhase, round);
         OnPhaseTimerUpdate?.Invoke(duration);
+
+        // Play phase voiceover
+        PlayPhaseVoiceover(newPhase, round);
+    }
+
+    private void PlayPhaseVoiceover(GamePhase phase, int round)
+    {
+        if (voiceoverConfig == null || AudioService.Instance == null)
+        {
+            return;
+        }
+
+        AudioClip clip = null;
+        switch (phase)
+        {
+            case GamePhase.UpgradePhase:
+                clip = voiceoverConfig.upgradePhase;
+                break;
+            case GamePhase.CombatPhase:
+                // Only play round announcement, not combatPhase (to avoid overlap)
+                if (voiceoverConfig.roundAnnouncement != null && round > 0)
+                {
+                    clip = voiceoverConfig.roundAnnouncement;
+                }
+                else
+                {
+                    clip = voiceoverConfig.combatPhase;
+                }
+                break;
+            case GamePhase.BossPhase:
+                clip = voiceoverConfig.bossFight;
+                break;
+            case GamePhase.GameEnd:
+                // Don't play gameOver here - it will be played in results
+                return;
+        }
+
+        if (clip != null)
+        {
+            AudioHelper.PlaySound(clip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+        }
     }
 
     [ClientRpc]
@@ -246,7 +292,12 @@ public class NetworkGameStateManager : NetworkBehaviour
     {
         Debug.Log($"[CLient] Received game results with {results.Length} players");
 
-        // TODO: update UI here
+        // Play victory/defeat voiceover based on results with a delay to avoid overlap with final round announcement
+        if (voiceoverConfig != null && AudioService.Instance != null)
+        {
+            StartCoroutine(PlayGameEndVoiceoverDelayed(results));
+        }
+
         if (resultsUI != null)
         {
             resultsUI.DisplayResults(results);
@@ -254,6 +305,36 @@ public class NetworkGameStateManager : NetworkBehaviour
         else
         {
             Debug.LogError("[Client] GameResultsUI not found!");
+        }
+    }
+
+    private IEnumerator PlayGameEndVoiceoverDelayed(PlayerResult[] results)
+    {
+        // Wait a bit to ensure any final round announcements have finished
+        yield return new WaitForSeconds(2f);
+
+        // Determine if local player won (simplified - check if they're in top 3)
+        // You can customize this logic based on your game rules
+        bool isVictory = false;
+        if (results.Length > 0)
+        {
+            // Check if local player is first (or in top positions)
+            ulong localClientId = NetworkManager.Singleton.LocalClientId;
+            for (int i = 0; i < Mathf.Min(3, results.Length); i++)
+            {
+                if (results[i].ClientId == localClientId)
+                {
+                    isVictory = true;
+                    break;
+                }
+            }
+        }
+
+        // Only play victory or defeat, not gameOver (to avoid overlap)
+        AudioClip resultClip = isVictory ? voiceoverConfig.victory : voiceoverConfig.defeat;
+        if (resultClip != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(resultClip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
         }
     }
 
@@ -314,9 +395,29 @@ public class NetworkGameStateManager : NetworkBehaviour
     {
         int enemyCount = CountAliveEnemies();
 
+        // Check if this is the final round before boss phase
+        bool isFinalRound = _netCurrentRound.Value + 1 >= maxRounds;
+
+        // Play countdown voiceover when phase is ending (but skip if it's the final round to avoid overlap with game end)
+        float timeRemaining = combatPhaseDuration - _phaseTimer;
+        if (timeRemaining <= 3f && timeRemaining > 0f && !isFinalRound)
+        {
+            int countdownNumber = Mathf.CeilToInt(timeRemaining);
+            if (countdownNumber != _lastCountdownPlayed && voiceoverConfig != null)
+            {
+                _lastCountdownPlayed = countdownNumber;
+                AudioClip countdownClip = voiceoverConfig.GetCountdownClip(countdownNumber);
+                if (countdownClip != null && AudioService.Instance != null)
+                {
+                    AudioHelper.PlaySound(countdownClip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+                }
+            }
+        }
+
         // Phase ends when time runs out OR all enemies dead
         if (_phaseTimer >= combatPhaseDuration || enemyCount == 0)
         {
+            _lastCountdownPlayed = -1; // Reset countdown
             _netCurrentRound.Value++;
 
             if (_netCurrentRound.Value >= maxRounds)
@@ -332,8 +433,25 @@ public class NetworkGameStateManager : NetworkBehaviour
 
     private void UpdateUpgradePhase()
     {
+        // Play countdown voiceover when phase is ending
+        float timeRemaining = upgradePhaseDuration - _phaseTimer;
+        if (timeRemaining <= 3f && timeRemaining > 0f)
+        {
+            int countdownNumber = Mathf.CeilToInt(timeRemaining);
+            if (countdownNumber != _lastCountdownPlayed && voiceoverConfig != null)
+            {
+                _lastCountdownPlayed = countdownNumber;
+                AudioClip countdownClip = voiceoverConfig.GetCountdownClip(countdownNumber);
+                if (countdownClip != null && AudioService.Instance != null)
+                {
+                    AudioHelper.PlaySound(countdownClip, AudioCategory.UI, voiceoverConfig.voiceoverVolume);
+                }
+            }
+        }
+
         if (_phaseTimer >= upgradePhaseDuration)
         {
+            _lastCountdownPlayed = -1; // Reset countdown
             TransitionToPhase(GamePhase.CombatPhase);
         }
     }
@@ -475,7 +593,9 @@ public class NetworkGameStateManager : NetworkBehaviour
     private void OnPhaseChangedClient(GamePhase previousValue, GamePhase newValue)
     {
         Debug.Log($"[Client] Phase changed from {previousValue} to {newValue}");
-        OnPhaseChanged?.Invoke(newValue, _netCurrentRound.Value);
+        // NOTE: Do NOT invoke OnPhaseChanged here!
+        // BroadcastPhaseStartClientRpc already handles this with the correct round number.
+        // The NetworkVariable update may arrive after the RPC, overwriting the correct round with stale data.
     }
 
     #endregion
@@ -521,6 +641,58 @@ public class NetworkGameStateManager : NetworkBehaviour
             }
         }
         return count;
+    }
+
+    #endregion
+
+    //////////////////////////////////////////////////////////////////
+
+    #region Entity Cleanup
+
+    private void DestroyAllEntities()
+    {
+        if (!IsServer || _world == null)
+        {
+            return;
+        }
+
+        // Destroy all enemies
+        List<EntityId> enemiesToDestroy = new();
+        foreach (var (entity, enemy) in _world.Components.Query<EnemyComponent>())
+        {
+            enemiesToDestroy.Add(entity);
+        }
+
+        foreach (var entity in enemiesToDestroy)
+        {
+            if (_world.Components.TryGet(entity, out NetworkObjectComponent netObj))
+            {
+                if (netObj.NetworkObject != null && netObj.NetworkObject.IsSpawned)
+                {
+                    netObj.NetworkObject.Despawn(true);
+                }
+            }
+        }
+
+        // Destroy all players
+        List<EntityId> playersToDestroy = new();
+        foreach (var (entity, player) in _world.Components.Query<PlayerTagComponent>())
+        {
+            playersToDestroy.Add(entity);
+        }
+
+        foreach (var entity in playersToDestroy)
+        {
+            if (_world.Components.TryGet(entity, out NetworkObjectComponent netObj))
+            {
+                if (netObj.NetworkObject != null && netObj.NetworkObject.IsSpawned)
+                {
+                    netObj.NetworkObject.Despawn(true);
+                }
+            }
+        }
+
+        Debug.Log("[NetworkGameStateManager] Destroyed all enemies and players on match end");
     }
 
     #endregion

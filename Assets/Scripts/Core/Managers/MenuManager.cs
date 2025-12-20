@@ -29,10 +29,10 @@ public class MenuManager : MonoBehaviour
     [SerializeField]
     private Button m_quickGameBtn;
 
-    private void Awake()
-    {
-        Debug.Log("MenuManager Awake");
-    }
+    [SerializeField]
+    private UISoundConfig uiSoundConfig;
+
+    private void Awake() { }
 
     private IEnumerator Start()
     {
@@ -75,19 +75,35 @@ public class MenuManager : MonoBehaviour
 
     public void OnClickHost()
     {
+        PlayButtonClickSound();
         NetworkManager.Singleton.StartHost();
         LoadingSceneManager.Instance.LoadScene(nextScene);
-        Debug.Log("Host clicked");
+
     }
 
     public void OnClickJoin()
     {
+        PlayButtonClickSound();
         StartCoroutine(Join());
     }
 
     public void OnClickQuit()
     {
+        PlayButtonClickSound();
         Application.Quit();
+    }
+
+    private void PlayButtonClickSound()
+    {
+        if (uiSoundConfig != null && uiSoundConfig.buttonClick != null && AudioService.Instance != null)
+        {
+            AudioHelper.PlaySound(uiSoundConfig.buttonClick, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
+        }
+        else if (m_confirmClip != null && AudioService.Instance != null)
+        {
+            // Fallback to legacy clip
+            AudioHelper.PlaySound(m_confirmClip, AudioCategory.UI);
+        }
     }
 
     private void ClearAllCharactersData()
@@ -113,6 +129,50 @@ public class MenuManager : MonoBehaviour
 
         yield return new WaitUntil(() => LoadingFadeEffect.s_canLoad);
 
+        // Subscribe to connection/disconnection events
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+
         NetworkManager.Singleton.StartClient();
+
+        // Wait a bit to see if connection succeeds
+        yield return new WaitForSeconds(5f);
+
+        // If still not connected, show error and return to menu
+        if (!NetworkManager.Singleton.IsConnectedClient)
+        {
+            Debug.LogWarning("Failed to connect to host. Returning to menu.");
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.Shutdown();
+            LoadingFadeEffect.Instance.FadeOut();
+        }
+    }
+
+    private void OnClientConnected(ulong clientId)
+    {
+        // Connection successful, unsubscribe from events
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        // Only handle if we're the disconnected client (not server disconnecting us)
+        if (NetworkManager.Singleton != null && !NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogWarning("Disconnected from host. Returning to menu.");
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+
+            // Shutdown and return to menu
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.Shutdown();
+            }
+
+            LoadingFadeEffect.Instance.FadeOut();
+            LoadingSceneManager.Instance.LoadScene(SceneName.Menu, false);
+        }
     }
 }

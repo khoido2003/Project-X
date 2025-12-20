@@ -17,15 +17,12 @@ public class CharacterFactory
         out EntityId entity
     )
     {
-        GameObject playerObj = NetworkObjectSpawner.SpawnNewNetworkObjectChangeOwnershipToClient(
-            characterData.prefab,
-            spawnPosition,
-            clientId,
-            true
-        );
+        GameObject playerObj = Object.Instantiate(characterData.prefab, spawnPosition, Quaternion.identity);
 
+        // Create entity in World
         entity = _world.CreateEntity();
 
+        // Bind all views
         foreach (EntityView view in playerObj.GetComponentsInChildren<EntityView>(includeInactive: true))
         {
             view.Bind(_world, entity);
@@ -33,19 +30,45 @@ public class CharacterFactory
             registry.Register(view);
         }
 
+        var attackExecView = playerObj.GetComponent<AttackExecutionView>();
+        if (attackExecView == null)
+        {
+            attackExecView = playerObj.AddComponent<AttackExecutionView>();
+            attackExecView.Bind(_world, entity);
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+            registry.Register(attackExecView);
+        }
+
+        // Get or add NetworkSyncView
         var networkSync = playerObj.GetComponent<NetworkSyncView>();
         if (networkSync == null)
         {
-            networkSync = playerObj.AddComponent<NetworkSyncView>();
+            Debug.LogError(
+                $"[CharacterFactory] Prefab {characterData.characterName} is missing NetworkSyncView component!"
+            );
+            Object.Destroy(playerObj);
+            entity = default;
+            return null;
         }
 
+        // Get NetworkObject component
+        NetworkObject netObj = playerObj.GetComponent<NetworkObject>();
+        if (netObj == null)
+        {
+            Debug.LogError(
+                $"[CharacterFactory] Prefab {characterData.characterName} is missing NetworkObject component!"
+            );
+            Object.Destroy(playerObj);
+            entity = default;
+            return null;
+        }
+
+        // Initialize BEFORE spawning the NetworkObject
+        // This must be called on the server BEFORE SpawnWithOwnership
         networkSync.Initialize(_world, entity);
 
-        // Network component
-        NetworkObject netObj = playerObj.GetComponent<NetworkObject>();
-
+        // Add network components
         _world.Components.Add(entity, new NetworkSyncComponent { SyncView = networkSync });
-
         _world.Components.Add(entity, new NetworkObjectComponent { NetworkObject = netObj });
 
         _world.Components.Add(
@@ -94,6 +117,16 @@ public class CharacterFactory
             }
         );
 
+        // Audio profile - always add component, even if null, for better error tracking
+        _world.Components.Add(entity, new AudioProfileComponent { Profile = characterData.audioProfile });
+
+        if (characterData.audioProfile == null)
+        {
+            Debug.LogWarning(
+                $"[CharacterFactory] Character '{characterData.characterName}' (Entity {entity.Id}) does not have an AudioProfile assigned in CharacterDefinitionSO. Audio cues will not play."
+            );
+        }
+
         // Skills
         _world.Components.Add(entity, new SkillSetComponent(characterData.skills));
         _world.Components.Add(entity, new SkillCastBufferComponent());
@@ -120,14 +153,23 @@ public class CharacterFactory
                     AttackAnimationTrigger = attack.animationTrigger,
                     TotalAttackAnimations = attack.totalAnimations,
                     AttackSound = attack.attackSound,
+                    ProjectilePrefab = attack.projectilePrefab,
+                    ProjectileLifetime = attack.projectileLifetime,
+                    ProjectileSpawnOffset = attack.projectileSpawnOffset,
+                    ProjectileSpeed = attack.projectileSpeed,
                 }
             );
+            // Note: Client-side weapon data comes from prefab's serialized fields
         }
 
         // Game State Component
         _world.Components.Add(entity, new PlayerScoreComponent { });
         _world.Components.Add(entity, new PlayerRespawnComponent { OriginalSpawnPosition = spawnPosition });
         _world.Components.Add(entity, new PlayerUpgradesComponent { });
+
+        // NOW spawn the NetworkObject and change ownership
+        // This triggers OnNetworkSpawn, but Initialize() has already been called
+        netObj.SpawnWithOwnership(clientId);
 
         return playerObj;
     }
@@ -186,6 +228,16 @@ public class CharacterFactory
                 MoveYParam = data.moveYParam,
             }
         );
+
+        // Audio profile - always add component, even if null, for better error tracking
+        _world.Components.Add(entity, new AudioProfileComponent { Profile = data.audioProfile });
+
+        if (data.audioProfile == null)
+        {
+            Debug.LogWarning(
+                $"[CharacterFactory] Character '{data.characterName}' (Entity {entity.Id}) does not have an AudioProfile assigned in CharacterDefinitionSO. Audio cues will not play."
+            );
+        }
 
         // Skills
         _world.Components.Add(entity, new SkillSetComponent(data.skills));

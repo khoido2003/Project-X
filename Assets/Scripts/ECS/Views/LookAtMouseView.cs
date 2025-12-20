@@ -20,7 +20,11 @@ public class LookAtMouseView : EntityView
     {
         if (!_isLocalPlayer)
         {
-            return;
+            CheckIfLocalPlayer();
+            if (!_isLocalPlayer)
+            {
+                return;
+            }
         }
 
         if (_inputService == null)
@@ -37,12 +41,13 @@ public class LookAtMouseView : EntityView
 
         aimDir.y = 0;
 
-        if (aimDir.sqrMagnitude < 0.01f)
+        if (aimDir.sqrMagnitude < 0.1f)
         {
             return;
         }
 
         Quaternion targetRotation = Quaternion.LookRotation(aimDir);
+        Quaternion previousRotation = _transform.rotation;
         _transform.rotation = Quaternion.RotateTowards(
             _transform.rotation,
             targetRotation,

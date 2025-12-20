@@ -85,8 +85,7 @@ public class SpawnSystem : ISystem
 
         // Publish spawn event (for camera to follow if local player)
         _world.Events.Publish(new PlayerSpawnEvent(entity, playerObj, playerObj.transform));
-
-        Debug.Log($"Spawned player for client {clientId} at {spawnPosition}");
+        _world.Events.Publish(new AudioCueEvent(entity, SoundType.Spawn));
     }
 
     public void SpawnNetworkEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPosition)
@@ -103,11 +102,11 @@ public class SpawnSystem : ISystem
             return;
         }
 
-        GameObject enemyObj = _enemyFactory.CreateNetworkEnemy(enemyData, spawnPosition);
+        GameObject enemyObj = _enemyFactory.CreateNetworkEnemy(enemyData, spawnPosition, out EntityId entity);
 
         if (enemyObj != null)
         {
-            Debug.Log($"[SpawnSystem] Spawn network enemy {enemyData.enemyName} at {spawnPosition}");
+            _world.Events.Publish(new AudioCueEvent(entity, SoundType.Spawn));
         }
     }
 
@@ -169,6 +168,7 @@ public class SpawnSystem : ISystem
 
             // Publish events
             _world.Events.Publish(new PlayerSpawnEvent(view.EntityInstance, playerObj, playerObj.transform));
+            _world.Events.Publish(new AudioCueEvent(view.EntityInstance, SoundType.Spawn));
         }
     }
 
@@ -194,7 +194,8 @@ public class SpawnSystem : ISystem
             EnemyDefinitionSO data = _config.possibleEnemies[i];
             SpawnPoint spawn = shuffleSpawns[i];
 
-            GameObject enemyObj = _enemyFactory.CreateEnemy(data, spawn.transform.position);
+            GameObject enemyObj = _enemyFactory.CreateEnemy(data, spawn.transform.position, out EntityId entity);
+            _world.Events.Publish(new AudioCueEvent(entity, SoundType.Spawn));
         }
     }
 

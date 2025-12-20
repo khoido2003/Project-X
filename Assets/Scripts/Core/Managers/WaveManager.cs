@@ -9,7 +9,7 @@ public class WaveManager : MonoBehaviour
     [Header("Wave Configuration")]
     [Header("Limits")]
     [SerializeField]
-    private int maxConcurrentEnemies = 12;
+    private int maxConcurrentEnemies = 15;
 
     private bool _deathEventSubscribed = false;
 
@@ -50,15 +50,19 @@ public class WaveManager : MonoBehaviour
     {
         _world = WorldRunner.Instance.World;
 
-        var field = typeof(WorldRunner).GetField(
-            "_spawnSystem",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
-        );
-        _spawnSystem = field?.GetValue(WorldRunner.Instance) as SpawnSystem;
-
-        if (_spawnSystem == null)
+        // Only get SpawnSystem on server (it's server-only now)
+        if (NetworkManager.Singleton?.IsServer == true)
         {
-            Debug.LogError("[Wave Manager] Failed to get SpawnSystem");
+            var field = typeof(WorldRunner).GetField(
+                "_spawnSystem",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
+            );
+            _spawnSystem = field?.GetValue(WorldRunner.Instance) as SpawnSystem;
+
+            if (_spawnSystem == null)
+            {
+                Debug.LogError("[Wave Manager] Failed to get SpawnSystem");
+            }
         }
 
         // Subscribe to death events once
@@ -68,21 +72,10 @@ public class WaveManager : MonoBehaviour
             _deathEventSubscribed = true;
         }
 
-        // ⭐ FIX: Validate spawn points
+        // Validate spawn points
         if (enemySpawnPoints == null || enemySpawnPoints.Length == 0)
         {
             Debug.LogError("[WaveManager] No enemy spawn points assigned!");
-        }
-        else
-        {
-            Debug.Log($"[WaveManager] Found {enemySpawnPoints.Length} enemy spawn points");
-            for (int i = 0; i < enemySpawnPoints.Length; i++)
-            {
-                if (enemySpawnPoints[i] != null)
-                {
-                    Debug.Log($"[WaveManager] Spawn point {i}: {enemySpawnPoints[i].position}");
-                }
-            }
         }
     }
 
@@ -100,8 +93,6 @@ public class WaveManager : MonoBehaviour
             Debug.LogWarning($"[WaveManager]: No configuration for round {round}");
             return;
         }
-
-        Debug.Log($"[WaveManager] Spawning wave for round {round}: {configuration.enemyCount}");
 
         if (_continuousSpawnCoroutine != null)
         {
@@ -122,8 +113,10 @@ public class WaveManager : MonoBehaviour
         {
             // Check enemy count before spawning
             int currentCount = GetCurrentEnemyCount();
+
             if (currentCount >= maxConcurrentEnemies)
             {
+                Debug.Log($"[WaveManager] Max enemies reached, waiting for enemies to die...");
                 // Wait until enemies die before continuing
                 while (GetCurrentEnemyCount() >= maxConcurrentEnemies)
                 {
@@ -132,7 +125,6 @@ public class WaveManager : MonoBehaviour
             }
 
             Vector3 spawnPos = GetSpawnPosition();
-
             EnemyDefinitionSO enemyData = config.enemyTypes[UnityEngine.Random.Range(0, config.enemyTypes.Count)];
 
             SpawnEnemy(enemyData, spawnPos, config);
@@ -150,7 +142,8 @@ public class WaveManager : MonoBehaviour
             int currentCount = GetCurrentEnemyCount();
             if (currentCount < maxConcurrentEnemies)
             {
-                int spawnCount = UnityEngine.Random.Range(1, 4);
+                // Reduce spawn count to prevent overflow - spawn 1-2 at a time instead of 1-4
+                int spawnCount = UnityEngine.Random.Range(1, 3); // Reduced from 1-4
                 int remainingSlots = maxConcurrentEnemies - currentCount;
                 spawnCount = Mathf.Min(spawnCount, remainingSlots);
 
@@ -167,10 +160,11 @@ public class WaveManager : MonoBehaviour
                         UnityEngine.Random.Range(0, config.enemyTypes.Count)
                     ];
                     SpawnEnemy(enemyData, spawnPos, config);
-                    yield return new WaitForSeconds(0.2f);
+                    yield return new WaitForSeconds(0.5f);
                 }
             }
-            yield return new WaitForSeconds(continuousSpawnInterval);
+            // Increase interval between spawn waves to reduce pressure
+            yield return new WaitForSeconds(continuousSpawnInterval * 1.5f);
         }
     }
 
@@ -224,7 +218,7 @@ public class WaveManager : MonoBehaviour
         // This is just for logging/debugging - actual count is queried dynamically
         if (_world.Components.Has<EnemyComponent>(@event.Entity))
         {
-            Debug.Log($"[WaveManager] Enemy died. Current count: {GetCurrentEnemyCount()}");
+            // Enemy death counted
         }
     }
 
@@ -242,7 +236,6 @@ public class WaveManager : MonoBehaviour
         {
             int index = UnityEngine.Random.Range(0, enemySpawnPoints.Length);
             Vector3 pos = enemySpawnPoints[index].position;
-            Debug.Log($"[WaveManager] Using spawn point {index}: {pos}");
             return pos;
         }
 
@@ -254,7 +247,6 @@ public class WaveManager : MonoBehaviour
         {
             int fallbackIndex = UnityEngine.Random.Range(0, enemySpawnPoints.Length);
             Vector3 fallbackPos = enemySpawnPoints[fallbackIndex].position;
-            Debug.Log($"[WaveManager] No valid player position, using fallback spawn point: {fallbackPos}");
             return fallbackPos;
         }
 
@@ -275,13 +267,11 @@ public class WaveManager : MonoBehaviour
             {
                 gridPos = grid.FindNearestWalkable(gridPos);
                 spawnPos = grid.GetWorldPosition(gridPos);
-                Debug.Log($"[WaveManager] Spawning near player at grid-validated position: {spawnPos}");
             }
             else
             {
                 // Grid position invalid, use closest spawn point
                 spawnPos = GetClosestSpawnPoint(playerPos);
-                Debug.Log($"[WaveManager] Grid invalid, using closest spawn point: {spawnPos}");
             }
         }
         else
@@ -318,11 +308,12 @@ public class WaveManager : MonoBehaviour
         return closest;
     }
 
+    /// <summary>
+    /// Gets a random alive player's position for spawning enemies near.
+    /// </summary>
     private Vector3 FindNearestPlayerPosition()
     {
-        Vector3 nearestPos = Vector3.zero;
-        float nearestDist = float.MaxValue;
-        bool foundPlayer = false;
+        List<Vector3> alivePlayerPositions = new();
 
         foreach (
             var (entity, player, trans, health) in _world.Components.Query<
@@ -337,17 +328,17 @@ public class WaveManager : MonoBehaviour
                 continue;
             }
 
-            Vector3 playerPos = trans.Position;
-
-            if (!foundPlayer)
-            {
-                nearestPos = playerPos;
-                nearestDist = 0f;
-                foundPlayer = true;
-            }
+            alivePlayerPositions.Add(trans.Position);
         }
 
-        return nearestPos;
+        if (alivePlayerPositions.Count == 0)
+        {
+            return Vector3.zero;
+        }
+
+        // Randomly select one of the alive players to spawn enemies near
+        int randomIndex = UnityEngine.Random.Range(0, alivePlayerPositions.Count);
+        return alivePlayerPositions[randomIndex];
     }
 
     public void SpawnBoss()
@@ -418,11 +409,18 @@ public class WaveManager : MonoBehaviour
             return waveConfigs[round - 1];
         }
 
+        // Cap enemy count growth after round 2 to prevent overflow and lag
+        // Use a more conservative scaling that caps at a reasonable maximum
+        int baseEnemyCount = 5;
+        int scaledEnemyCount = baseEnemyCount + (round * 3); // Reduced from * 5
+        int maxEnemyCount = 25; // Cap at 25 enemies per wave (below maxConcurrentEnemies of 20)
+        int enemyCount = Mathf.Min(scaledEnemyCount, maxEnemyCount);
+
         return new WaveConfiguration
         {
             round = round,
-            enemyCount = 5 + (round * 5),
-            spawnInterval = Mathf.Max(0.2f, 0.5f - (round * 0.1f)),
+            enemyCount = enemyCount,
+            spawnInterval = Mathf.Max(0.3f, 0.5f - (round * 0.05f)), // Slower spawn rate
             healthMultiplier = 1f + (round * 0.4f),
             damageMultiplier = 1f + (round * 0.3f),
             speedMultiplier = 1f + (round * 0.15f),
@@ -446,6 +444,26 @@ public class WaveManager : MonoBehaviour
         target.checkInterval = source.checkInterval;
         target.detectionMask = source.detectionMask;
         target.attacks = new List<AttackDefinition>(source.attacks);
+
+        // Animation parameters
+        target.isMovingParam = source.isMovingParam;
+        target.isRunningParam = source.isRunningParam;
+        target.moveXParam = source.moveXParam;
+        target.moveYParam = source.moveYParam;
+        target.totalAttackAnimations = source.totalAttackAnimations;
+        target.attackAnimationTrigger = source.attackAnimationTrigger;
+        target.takeCoverParam = source.takeCoverParam;
+
+        // Patrol settings
+        target.generatePatrolPoints = source.generatePatrolPoints;
+        target.patrolPointCount = source.patrolPointCount;
+        target.patrolRadius = source.patrolRadius;
+
+        // AI Behavior
+        target.defaultState = source.defaultState;
+
+        // Audio
+        target.audioProfile = source.audioProfile;
     }
 }
 

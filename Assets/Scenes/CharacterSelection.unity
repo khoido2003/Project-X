@@ -539,7 +539,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 450}
+  m_AnchoredPosition: {x: -179, y: 450}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &136559377
@@ -562,7 +562,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Select Your Hero
+  m_text: CHOOSE YOUR CHARACTER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5ad3bd70008689c418483dba1db4c2c2, type: 2}
   m_sharedMaterial: {fileID: 4299220722095240433, guid: 5ad3bd70008689c418483dba1db4c2c2, type: 2}
@@ -571,8 +571,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278255602
-  m_fontColor: {r: 0.9483681, g: 1, b: 0, a: 1}
+    rgba: 4288951595
+  m_fontColor: {r: 0.16743796, g: 0.20973453, b: 0.6415094, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -3699,8 +3699,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 8.971619, y: 19.43872}
-  m_SizeDelta: {x: -209.3396, y: -379.8009}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &833807139
 GameObject:
@@ -5185,7 +5185,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.20291914, g: 0.39104912, b: 0.6792453, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -8076,6 +8076,81 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1895875734}
   m_CullTransparentMesh: 1
+--- !u!1 &1919180897
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1919180898}
+  - component: {fileID: 1919180900}
+  - component: {fileID: 1919180899}
+  m_Layer: 5
+  m_Name: BG
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1919180898
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1919180897}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2097028202}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1919180899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1919180897}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: c0efb2e648da1b343af9fa3ede9c3f94, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1919180900
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1919180897}
+  m_CullTransparentMesh: 1
 --- !u!1 &1927168598
 GameObject:
   m_ObjectHideFlags: 0
@@ -9293,6 +9368,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1919180898}
   - {fileID: 1784774371}
   - {fileID: 817570503}
   m_Father: {fileID: 0}
@@ -9450,6 +9526,18 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 981893846}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: m_cancelClip
+      value: 
+      objectReference: {fileID: 8300000, guid: e53dae01e1d851a478019a464fe59a53, type: 3}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: m_confirmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 4bef7ebada0d04544a46a1bf6567cc2d, type: 3}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: uiSoundConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: df6cb09220640b247a5ad87e824f4116, type: 2}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_clientColor.a
       value: 1
       objectReference: {fileID: 0}
@@ -9486,13 +9574,25 @@ PrefabInstance:
       value: 0.19000277
       objectReference: {fileID: 0}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: voiceoverConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: ec9f5ed23eba8d44da541160302bc08e, type: 2}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_timeToStartGame
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_countdownContainer
       value: 
       objectReference: {fileID: 817570502}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: characterData.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: 'characterData.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 80f3a4406a07fe147ac777daaeb9de33, type: 2}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_playerStates.Array.data[0].playerState
       value: 1

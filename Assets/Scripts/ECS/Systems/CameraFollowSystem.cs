@@ -45,7 +45,13 @@ public class CameraFollowSystem : ISystem
 
     private void OnPlayerSpawned(PlayerSpawnEvent @event)
     {
-        if (_cameraService == null || _hasSetCamera)
+        if (_cameraService == null)
+        {
+            Debug.LogWarning("[CameraFollowSystem] CameraService is null!");
+            return;
+        }
+
+        if (_hasSetCamera)
         {
             return;
         }
@@ -56,12 +62,11 @@ public class CameraFollowSystem : ISystem
             {
                 _cameraService.Follow(@event.Transform);
                 _hasSetCamera = true;
-                Debug.Log($"Camera now  following local player  entity {@event.Entity.Id}");
             }
         }
         else
         {
-            Debug.LogWarning($"Entity {@event.Entity.Id} has no NetworkOwnerComponent!");
+            Debug.LogWarning($"[CameraFollowSystem] Entity {@event.Entity.Id} has no NetworkOwnerComponent!");
         }
     }
 
@@ -76,11 +81,7 @@ public class CameraFollowSystem : ISystem
                 if (registry.TryGet(entity, out EntityView view))
                 {
                     _cameraService.Follow(view.transform);
-
                     _hasSetCamera = true;
-
-                    Debug.Log($"Camera set to local player  entity {entity.Id}");
-
                     return;
                 }
             }

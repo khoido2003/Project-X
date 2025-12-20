@@ -19,6 +19,13 @@ public class WorldRunner : NetworkBehaviour
     private CinemachineCameraService cameraService;
 
     [SerializeField]
+    private AudioService audioService;
+
+    [Header("Audio Configuration")]
+    [SerializeField]
+    private SceneAudioConfig sceneAudioConfig;
+
+    [SerializeField]
     private CharacterDefinitionSO[] characterData;
 
     [Header("Spawned Points")]
@@ -44,33 +51,58 @@ public class WorldRunner : NetworkBehaviour
         }
 
         Instance = this;
+
+        World = new World();
+        InitServices();
+        InitSystems();
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
-        World = new World();
+        // Play game music when game starts
+        PlayGameMusic();
 
-        InitServices();
-        InitSystems();
-
+        // Register server-only systems HERE where IsServer is valid
+        // (not in Awake where network hasn't started yet)
         if (IsServer)
         {
+            InitServerSystems();
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-
             StartCoroutine(DelayedSpawnExistingPlayers());
+        }
+    }
+
+    private void PlayGameMusic()
+    {
+        if (sceneAudioConfig == null || audioService == null)
+        {
+            return;
+        }
+
+        // Get current scene name
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (System.Enum.TryParse<SceneName>(sceneName, out SceneName sceneEnum))
+        {
+            AudioClip music = sceneAudioConfig.GetMusicForScene(sceneEnum);
+            if (music != null)
+            {
+                AudioHelper.PlayMusic(World, music, sceneAudioConfig.musicFadeInTime);
+            }
         }
     }
 
     private void Update()
     {
+        // All clients run Update
         var time = World.Services.Resolve<ITimeService>();
         World.Systems.UpdateAll(time.DeltaTime);
     }
 
     private void FixedUpdate()
     {
+        // All clients run FixedUpdate
         var time = World.Services.Resolve<ITimeService>();
         World.Systems.FixedUpdateAll(time.FixedDeltaTime);
     }
@@ -89,7 +121,7 @@ public class WorldRunner : NetworkBehaviour
 
     private void OnDestroy()
     {
-        World.Systems.ShutdownAll();
+        World?.Systems.ShutdownAll();
 
         if (Instance == this)
         {
@@ -106,8 +138,6 @@ public class WorldRunner : NetworkBehaviour
 
         if (HasSpawnedPlayer(clientId))
         {
-            Debug.Log($"Client {clientId} already has a spawned player, skipping spawn!");
-
             return;
         }
 
@@ -131,10 +161,6 @@ public class WorldRunner : NetworkBehaviour
             return;
         }
 
-        Debug.Log(
-            $"Spawningng existing players. Connected Clients: {NetworkManager.Singleton.ConnectedClientsIds.Count}"
-        );
-
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             SpawnPlayerForClient(clientId);
@@ -147,7 +173,7 @@ public class WorldRunner : NetworkBehaviour
 
         if (characterData == null)
         {
-            Debug.LogError($"No character data found for client  {clientId}");
+            Debug.LogError($"No character data found for client {clientId}");
             return;
         }
 
@@ -175,13 +201,11 @@ public class WorldRunner : NetworkBehaviour
         {
             if (character.isSelected && character.clientId == clientId)
             {
-                Debug.Log(character.name);
                 return character;
             }
         }
 
         Debug.LogError($"No character selected for client {clientId}");
-
         return null;
     }
 
@@ -216,7 +240,6 @@ public class WorldRunner : NetworkBehaviour
         }
 
         int randomIndex = availableIndices[UnityEngine.Random.Range(0, availableIndices.Count)];
-
         _spawnPointsUsed[randomIndex] = true;
 
         return playerSpawnPoints[randomIndex].position;
@@ -253,7 +276,6 @@ public class WorldRunner : NetworkBehaviour
             Debug.LogError("No InputService found!");
             return;
         }
-
         World.Services.Register<IInputService>(inputService);
 
         // EntityView Registry
@@ -267,34 +289,82 @@ public class WorldRunner : NetworkBehaviour
         // Object pool
         var poolService = new ObjectPoolService();
         World.Services.Register(poolService);
+
+        // Audio Service
+        if (audioService == null)
+        {
+            audioService = AudioService.Instance;
+
+            if (audioService == null)
+            {
+                audioService = FindFirstObjectByType<AudioService>();
+            }
+
+            if (audioService == null)
+            {
+                Debug.LogWarning("No AudioService found in scene - instantiating one.");
+                var go = new GameObject("AudioService");
+                audioService = go.AddComponent<AudioService>();
+            }
+        }
+        else if (AudioService.Instance != null && AudioService.Instance != audioService)
+        {
+            Debug.LogWarning("AudioService reference set but singleton already exists; using singleton.");
+            audioService = AudioService.Instance;
+        }
+
+        if (audioService != null)
+        {
+            World.Services.Register<IAudioService>(audioService);
+        }
     }
 
     private void InitSystems()
     {
-        _spawnSystem = new SpawnSystem(spawnConfig);
-        World.Systems.AddSystem(_spawnSystem, World);
-
-        World.Systems.AddSystem(new InputSystem(), World);
+        // ===== SYSTEMS FOR ALL CLIENTS (Visual/Audio/Camera/Input) =====
         World.Systems.AddSystem(new CameraFollowSystem(), World);
         World.Systems.AddSystem(new TransformSyncSystem(), World);
+        World.Systems.AddSystem(new AudioSystem(), World);
+        World.Systems.AddSystem(new AudioProfileSystem(), World);
+        
+        // InputSystem must run on ALL clients to handle local input
+        // It sends RPCs to server (RequestAttackServerRpc, skill casts, etc.)
+        World.Systems.AddSystem(new InputSystem(), World);
+        
+        // SkillSystem must run on ALL clients for skill preview and local feedback
+        // Actual skill execution is validated by server, but preview runs locally
+        World.Systems.AddSystem(new SkillSystem(), World);
+        
+        // NOTE: Server-only systems are registered in InitServerSystems() called from OnNetworkSpawn()
+        // because IsServer is only valid after network starts
+    }
 
-        World.Systems.AddSystem(new HealthSystem(), World);
+    private void InitServerSystems()
+    {
+        // Spawning
+        _spawnSystem = new SpawnSystem(spawnConfig);
+        World.Systems.AddSystem(_spawnSystem, World);
+        
+        // Core gameplay (SkillSystem is initialized in InitSystems for all clients)
         World.Systems.AddSystem(new MovementSystem(), World);
+        World.Systems.AddSystem(new HealthSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);
-        World.Systems.AddSystem(new SkillSystem(), World);
         World.Systems.AddSystem(new CombatStateSystem(), World);
-
+        
+        // Status effects
         World.Systems.AddSystem(new StunSystem(), World);
         World.Systems.AddSystem(new KnockbackSystem(), World);
         World.Systems.AddSystem(new HealthRegenSystem(), World);
         World.Systems.AddSystem(new PlayerRespawnSystem(), World);
-
+        
+        // Enemy AI
         World.Systems.AddSystem(new EnemyVisionSystem(), World);
         World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
         World.Systems.AddSystem(new EnemyMovementSystem(), World);
         World.Systems.AddSystem(new EnemyAISystem(), World);
-
+        
         EnemyAIHelpers.RegisterDefaultStates();
     }
+
 }

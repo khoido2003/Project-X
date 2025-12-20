@@ -22,6 +22,17 @@ public class GameResultsUI : MonoBehaviour
     [SerializeField]
     private Button returnToLobbyButton;
 
+    [Header("Audio")]
+    [SerializeField]
+    private AudioClip victoryMusic;
+
+    [SerializeField]
+    private AudioClip defeatMusic;
+
+    [SerializeField]
+    [Range(0f, 2f)]
+    private float musicFadeIn = 1f;
+
     private void Awake()
     {
         if (resultsPanel != null)
@@ -53,6 +64,9 @@ public class GameResultsUI : MonoBehaviour
         {
             winnerText.text = $"WINNER: {results[0].PlayerName}";
         }
+
+        // Play victory/defeat music based on local player placement
+        PlayResultMusic(results);
 
         // Display all results
         for (int i = 0; i < results.Length; i++)
@@ -92,6 +106,35 @@ public class GameResultsUI : MonoBehaviour
         if (resultsPanel != null)
         {
             resultsPanel.SetActive(false);
+        }
+    }
+
+    private void PlayResultMusic(PlayerResult[] results)
+    {
+        if (AudioService.Instance == null)
+        {
+            return;
+        }
+
+        bool isVictory = false;
+        if (results != null && results.Length > 0)
+        {
+            ulong localId = NetworkManager.Singleton != null ? NetworkManager.Singleton.LocalClientId : 0;
+            // Consider victory if local player is in the top 1 (or top 3 if you prefer)
+            for (int i = 0; i < Mathf.Min(3, results.Length); i++)
+            {
+                if (results[i].ClientId == localId)
+                {
+                    isVictory = true;
+                    break;
+                }
+            }
+        }
+
+        AudioClip clip = isVictory ? victoryMusic : defeatMusic;
+        if (clip != null)
+        {
+            AudioHelper.PlayMusic(clip, musicFadeIn);
         }
     }
 }

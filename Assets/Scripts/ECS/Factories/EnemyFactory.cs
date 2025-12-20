@@ -11,8 +11,9 @@ public class EnemyFactory
         _world = world;
     }
 
-    public GameObject CreateNetworkEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPosition)
+    public GameObject CreateNetworkEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPosition, out EntityId entity)
     {
+        entity = default;
         if (!NetworkManager.Singleton.IsServer)
         {
             Debug.LogError("[EnemyFactory]: Only server can spawn enemies");
@@ -31,9 +32,18 @@ public class EnemyFactory
             return null;
         }
 
+        // CRITICAL: EnemyNetworkSyncView MUST be on the prefab BEFORE spawning!
+        // NetworkBehaviours added after Spawn() are NOT replicated to clients.
+        if (enemyData.prefab.GetComponent<EnemyNetworkSyncView>() == null)
+        {
+            Debug.LogError($"[EnemyFactory] Prefab {enemyData.prefab.name} does not have EnemyNetworkSyncView component! " +
+                           "Add this component to the prefab in the Unity Editor. Enemies will not sync to clients without it.");
+            return null;
+        }
+
         GameObject enemyObj = NetworkObjectSpawner.SpawnNewNetworkObject(enemyData.prefab, spawnPosition, true);
         NetworkObject netObj = enemyObj.GetComponent<NetworkObject>();
-        EntityId entity = _world.CreateEntity();
+        entity = _world.CreateEntity();
 
         foreach (EntityView view in enemyObj.GetComponentsInChildren<EntityView>(includeInactive: true))
         {
@@ -42,11 +52,18 @@ public class EnemyFactory
             registry.Register(view);
         }
 
-        var networkSync = enemyObj.GetComponent<EnemyNetworkSyncView>();
-        if (networkSync == null)
+        var attackExecView = enemyObj.GetComponent<AttackExecutionView>();
+        if (attackExecView == null)
         {
-            networkSync = enemyObj.AddComponent<EnemyNetworkSyncView>();
+            attackExecView = enemyObj.AddComponent<AttackExecutionView>();
+            attackExecView.Bind(_world, entity);
+            var registry = _world.Services.Resolve<EntityViewRegistry>();
+            registry.Register(attackExecView);
+            Debug.Log($"[EnemyFactory] Added AttackExecutionView to enemy entity {entity.Id}");
         }
+
+        // Component is guaranteed to exist on prefab (validated above before spawn)
+        var networkSync = enemyObj.GetComponent<EnemyNetworkSyncView>();
         networkSync.Initialize(_world, entity);
 
         // Note: EnemyNetworkSyncView doesn't inherit from NetworkSyncView
@@ -92,6 +109,20 @@ public class EnemyFactory
             }
         );
 
+        if (enemyData.audioProfile == null)
+        {
+            Debug.LogWarning(
+                $"[EnemyFactory] Enemy '{enemyData.enemyName}' (Entity {entity.Id}) does not have an AudioProfile assigned in EnemyDefinitionSO. "
+                    + $"EnemyDefinitionSO name: '{enemyData.name}', Asset path: Check the Inspector to verify the audioProfile field is assigned. Audio cues will not play."
+            );
+        }
+        else
+        {
+            // AudioProfile assigned
+        }
+
+        _world.Components.Add(entity, new AudioProfileComponent { Profile = enemyData.audioProfile });
+
         // Enemy AI Component
         EnemyComponent enemy = new EnemyComponent
         {
@@ -124,6 +155,11 @@ public class EnemyFactory
                 GeneratePatrolPointsAround(spawnPosition, enemyData.patrolPointCount, enemyData.patrolRadius)
             );
         }
+        else
+        {
+            // FALLBACK: Always generate at least some patrol points so enemies aren't stuck in Idle
+            enemy.PatrolWaypoints.AddRange(GeneratePatrolPointsAround(spawnPosition, 4, 5f));
+        }
         _world.Components.Add(entity, enemy);
 
         // Attack & Weapon
@@ -152,11 +188,19 @@ public class EnemyFactory
                     ProjectileSpawnOffset = attack.projectileSpawnOffset,
                 }
             );
+
+            networkSync.SetWeaponData(
+                attack.executionType,
+                attack.projectilePrefab,
+                attack.hitImpactVFX,
+                attack.projectileSpeed,
+                attack.projectileLifetime,
+                attack.projectileSpawnOffset,
+                attack.animationTrigger
+            );
         }
 
         enemyObj.name = $"{enemyData.enemyName}_Entity{entity.Id}";
-
-        Debug.Log($"[EnemyFactory] Spawned network enemy {enemyData.enemyName} at {spawnPosition}");
 
         return enemyObj;
     }
@@ -164,11 +208,11 @@ public class EnemyFactory
     // ============================
     // ENEMY CREATION TEST MODE
     // ============================
-    public GameObject CreateEnemy(EnemyDefinitionSO data, Vector3 spawnPos)
+    public GameObject CreateEnemy(EnemyDefinitionSO data, Vector3 spawnPos, out EntityId entity)
     {
         GameObject instance = Object.Instantiate(data.prefab, spawnPos, Quaternion.identity);
 
-        EntityId entity = _world.CreateEntity();
+        entity = _world.CreateEntity();
 
         foreach (EntityView view in instance.GetComponentsInChildren<EntityView>(includeInactive: true))
         {
@@ -202,6 +246,16 @@ public class EnemyFactory
                 TakeCoverParam = data.takeCoverParam,
             }
         );
+
+        // Audio profile - always add component, even if null, for better error tracking
+        _world.Components.Add(entity, new AudioProfileComponent { Profile = data.audioProfile });
+
+        if (data.audioProfile == null)
+        {
+            Debug.LogWarning(
+                $"[EnemyFactory] Enemy '{data.enemyName}' (Entity {entity.Id}) does not have an AudioProfile assigned in EnemyDefinitionSO. Audio cues will not play."
+            );
+        }
 
         // --- Attack Data (needed for AnimationEventRelayView) ---
         _world.Components.Add(
