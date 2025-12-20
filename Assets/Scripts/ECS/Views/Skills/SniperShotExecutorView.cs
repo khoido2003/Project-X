@@ -175,4 +175,15 @@ public class SniperShotExecutorView : SkillExecutorView
             }
         }
     }
+
+    /// <summary>
+    /// For SniperShot, we DON'T spawn a client-side visual projectile.
+    /// The server spawns a NetworkObject that automatically syncs to clients.
+    /// Spawning a separate visual here would cause duplicate projectiles.
+    /// </summary>
+    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
+    {
+        // Intentionally empty - NetworkObject projectile syncs to clients automatically
+        // Impact VFX is handled by ProjectileView.HitAndReturn on the networked object
+    }
 }

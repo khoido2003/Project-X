@@ -22,12 +22,78 @@ public class HomerunSwingExecutorView : SkillExecutorView
         {
             return;
         }
-        StartCoroutine(ChargeAndSwing(casterView, skill, @event.Direction));
+
+        // Find skill index for broadcasting hit VFX
+        int skillIndex = GetSkillIndex(skill);
+        StartCoroutine(ChargeAndSwing(casterView, skill, @event.Direction, skillIndex));
 
         base.ExecuteSkill(@event);
     }
 
-    private IEnumerator ChargeAndSwing(EntityView casterView, HomerunSwingSkillSO skill, Vector3 direction)
+    /// <summary>
+    /// Called on CLIENT to spawn visual effects for the swing
+    /// </summary>
+    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
+    {
+        if (@event.Skill is not HomerunSwingSkillSO skill)
+        {
+            return;
+        }
+
+        if (!WorldInstance.Services.Resolve<EntityViewRegistry>().TryGet(@event.Caster, out EntityView casterView))
+        {
+            return;
+        }
+
+        // Spawn swing VFX on client
+        StartCoroutine(ClientSwingVisualRoutine(casterView, skill, @event.Direction));
+    }
+
+    private int GetSkillIndex(SkillDefinitionSO skill)
+    {
+        if (!WorldInstance.Components.TryGet(EntityInstance, out SkillSetComponent skillSet))
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < skillSet.Skills.Count; i++)
+        {
+            if (skillSet.Skills[i] == skill)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private IEnumerator ClientSwingVisualRoutine(EntityView casterView, HomerunSwingSkillSO skill, Vector3 direction)
+    {
+        // Wait for charge duration before showing swing VFX
+        yield return new WaitForSeconds(skill.chargeDuration);
+
+        Transform ownerTransform = casterView.transform;
+        Vector3 origin = ownerTransform.position;
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude < 0.001f)
+        {
+            direction = ownerTransform.forward;
+        }
+
+        // Spawn swing VFX
+        if (skill.swingVfxPrefab != null)
+        {
+            var swingFx = Instantiate(skill.swingVfxPrefab, origin, Quaternion.LookRotation(direction));
+            Destroy(swingFx.gameObject, 2f);
+        }
+    }
+
+    private IEnumerator ChargeAndSwing(
+        EntityView casterView,
+        HomerunSwingSkillSO skill,
+        Vector3 direction,
+        int skillIndex
+    )
     {
         yield return new WaitForSeconds(skill.chargeDuration);
 
@@ -92,10 +158,23 @@ public class HomerunSwingExecutorView : SkillExecutorView
                 new StunEvent { Target = targetView.EntityInstance, Duration = skill.stunDuration }
             );
 
+            Vector3 hitPoint = hit.ClosestPoint(origin);
+
+            // Spawn hit VFX on server
             if (skill.hitVfxPrefab)
             {
-                Vector3 hitPoint = hit.ClosestPoint(origin);
-                Instantiate(skill.hitVfxPrefab, hitPoint, Quaternion.identity);
+                var hitVfx = Instantiate(skill.hitVfxPrefab, hitPoint, Quaternion.identity);
+                Destroy(hitVfx.gameObject, 2f);
+            }
+
+            // Broadcast hit VFX to clients
+            if (
+                skillIndex >= 0
+                && WorldInstance.Components.TryGet(EntityInstance, out NetworkSyncComponent sync)
+                && sync.SyncView != null
+            )
+            {
+                sync.SyncView.BroadcastSkillHitVfxClientRpc(hitPoint, skillIndex);
             }
 
             break;
@@ -104,7 +183,6 @@ public class HomerunSwingExecutorView : SkillExecutorView
         if (skill.swingVfxPrefab)
         {
             var swingFx = Instantiate(skill.swingVfxPrefab, origin, Quaternion.LookRotation(direction));
-
             Destroy(swingFx.gameObject, 2f);
         }
 

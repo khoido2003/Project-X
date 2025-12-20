@@ -60,17 +60,24 @@ public class GameHUD : MonoBehaviour
 
         _world = WorldRunner.Instance.World;
 
-        if (NetworkGameStateManager.Instance != null)
+        // Also wait for NetworkGameStateManager to be ready
+        while (NetworkGameStateManager.Instance == null)
         {
-            NetworkGameStateManager.Instance.OnPhaseChanged += OnPhaseChanged;
+            yield return null;
         }
+
+        NetworkGameStateManager.Instance.OnPhaseChanged += OnPhaseChanged;
+        
+        // Immediately display current phase/round in case event fired before we subscribed
+        OnPhaseChanged(
+            NetworkGameStateManager.Instance.CurrentPhase, 
+            NetworkGameStateManager.Instance.CurrentRound + 1
+        );
 
         _world.Events.Subscribe<HealthChangedEvent>(OnHealthChanged);
 
         FindLocalPlayerEntity();
         _isInitialized = true;
-
-        Debug.Log("[GameHUD] Initialized successfully");
     }
 
     private void OnDestroy()

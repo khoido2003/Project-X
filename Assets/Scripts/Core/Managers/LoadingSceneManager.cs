@@ -123,12 +123,17 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
 
     private void OnLoadComplete(ulong clientId, string sceneName, LoadSceneMode loadSceneMode)
     {
+        Enum.TryParse(sceneName, out m_sceneActive);
+
+        // Play scene music for BOTH client and server when scene loads
+        // NOTE: LoadingSceneManager is NOT a NetworkBehaviour, so ClientRpc doesn't work.
+        // Each client plays music when their own scene load completes.
+        PlaySceneMusic(m_sceneActive);
+
         if (!NetworkManager.Singleton.IsServer)
         {
             return;
         }
-
-        Enum.TryParse(sceneName, out m_sceneActive);
 
         if (!ClientConnection.Instance.CanClientConnect(clientId))
         {
@@ -159,16 +164,7 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
                 break;
         }
 
-        // Play scene music on all clients
-        PlaySceneMusicClientRpc(m_sceneActive);
-
         OnLoadingFinished?.Invoke();
-    }
-
-    [ClientRpc]
-    private void PlaySceneMusicClientRpc(SceneName sceneName)
-    {
-        PlaySceneMusic(sceneName);
     }
 
     private void PlaySceneMusic(SceneName sceneName)

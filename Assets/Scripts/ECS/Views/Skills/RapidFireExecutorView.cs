@@ -136,4 +136,98 @@ public class RapidFireExecutorView : SkillExecutorView
             }
         }
     }
+
+    /// <summary>
+    /// Spawns visual-only rapid fire projectiles on client (no damage)
+    /// </summary>
+    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
+    {
+        if (@event.Skill is not RapidFireSkillSO skill)
+        {
+            return;
+        }
+
+        if (skill.projectilePrefab == null)
+        {
+            return;
+        }
+
+        var registry = WorldInstance.Services.Resolve<EntityViewRegistry>();
+        if (!registry.TryGet(EntityInstance, out EntityView casterView))
+        {
+            return;
+        }
+
+        StartCoroutine(ClientRapidFireRoutine(casterView, skill, @event.Direction, @event.TargetPoint));
+    }
+
+    private IEnumerator ClientRapidFireRoutine(
+        EntityView casterView,
+        RapidFireSkillSO skill,
+        Vector3 direction,
+        Vector3 targetPoint
+    )
+    {
+        Transform casterTransform = casterView.transform;
+        Vector3 baseDirection = direction;
+
+        if (baseDirection.sqrMagnitude < 0.001f)
+        {
+            baseDirection = casterTransform.forward;
+        }
+        baseDirection.y = 0f;
+        baseDirection = baseDirection.normalized;
+
+        Transform spawnTransform = casterTransform;
+        ProjectileSpawnPos spawnPosComponent = casterTransform.GetComponentInChildren<ProjectileSpawnPos>();
+        if (spawnPosComponent != null)
+        {
+            spawnTransform = spawnPosComponent.transform;
+        }
+
+        ObjectPoolService pool = WorldInstance.Services.Resolve<ObjectPoolService>();
+        if (pool == null)
+        {
+            yield break;
+        }
+
+        for (int i = 0; i < skill.projectileCount; i++)
+        {
+            float spread = Random.Range(-skill.spreadAngle, skill.spreadAngle);
+            Quaternion spreadRotation = Quaternion.Euler(0, spread, 0);
+            Vector3 shotDirection = spreadRotation * baseDirection;
+
+            Vector3 spawnPos = spawnPosComponent != null 
+                ? spawnTransform.position 
+                : casterTransform.position + new Vector3(0f, 1.3f, 0f);
+
+            Quaternion spawnRot = Quaternion.LookRotation(shotDirection, Vector3.up);
+
+            GameObject projectileGO = pool.Get(skill.projectilePrefab, spawnPos, spawnRot);
+
+            if (!projectileGO.TryGetComponent(out ProjectileView projectile))
+            {
+                projectile = projectileGO.AddComponent<ProjectileView>();
+            }
+
+            // Initialize with 0 DAMAGE - visual only on client!
+            projectile.Initialize(
+                WorldInstance,
+                EntityInstance,
+                0f, // NO DAMAGE
+                skill.projectileSpeed,
+                skill.projectileLifetime,
+                shotDirection,
+                skill.hitVfxPrefab,
+                skill.projectilePrefab,
+                spawnPos,
+                spawnRot
+            );
+
+            if (i < skill.projectileCount - 1)
+            {
+                yield return new WaitForSeconds(skill.timeBetweenShots);
+            }
+        }
+    }
 }

@@ -125,6 +125,8 @@ public class InputSystem : ISystem
                 {
                     Vector3 mousePos = _input.GetMouseWorldPosition();
 
+                    Debug.Log($"[InputSystem] Skill {i} pressed for entity {entity.Id} at {mousePos}");
+
                     // Client predict preview immediately
                     _world.Events.Publish(new SkillPressedInputEvent(entity, i, true));
 
@@ -133,6 +135,8 @@ public class InputSystem : ISystem
                 }
                 else if (_input.IsSkillUp(i))
                 {
+                    Debug.Log($"[InputSystem] Skill {i} released for entity {entity.Id}");
+                    
                     _world.Events.Publish(new SkillPressedInputEvent(entity, i, false));
 
                     sync.SyncView.RequestSkillServerRpc(i, false, Vector3.zero);

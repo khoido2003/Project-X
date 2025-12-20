@@ -116,10 +116,18 @@ public class AttackExecutionView : EntityView
             );
 
             Vector3 impactPos = hit.ClosestPoint(origin);
+            Vector3 impactNormal = (origin - impactPos).normalized;
 
+            // Server spawns impact effect locally
             if (@event.ImpactEffect)
             {
                 Instantiate(@event.ImpactEffect, impactPos, Quaternion.identity);
+            }
+
+            // Broadcast to all clients to spawn impact effect
+            if (_world.Components.TryGet(@event.Attacker, out NetworkSyncComponent sync) && sync.SyncView != null)
+            {
+                sync.SyncView.BroadcastMeleeHitClientRpc(impactPos, impactNormal);
             }
 
             // Play impact sound at hit position

@@ -47,7 +47,7 @@ MonoBehaviour:
     range: 5
     animationTrigger: attack
     totalAnimations: 1
-    hitImpactVFX: {fileID: 4583144699886880120, guid: 0ffe88c3d58371140ae613c1a127d777, type: 3}
+    hitImpactVFX: {fileID: 198670200411678530, guid: 289ba3245c9c98c42aeb93d5f45a2248, type: 3}
     attackSound: {fileID: 0}
     projectilePrefab: {fileID: 3093263165227071769, guid: 36341ae1e266f0e45b0a4e3fd8488bbf, type: 3}
     projectileSpeed: 25

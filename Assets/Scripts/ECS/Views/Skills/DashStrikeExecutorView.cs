@@ -32,6 +32,45 @@ public class DashStrikeExecutorView : SkillExecutorView
         base.ExecuteSkill(@event);
     }
 
+    /// <summary>
+    /// Called on CLIENT to spawn visual effects for the dash
+    /// </summary>
+    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
+    {
+        if (@event.Skill is not DashStrikeSkillSO skill)
+        {
+            return;
+        }
+
+        EntityViewRegistry registry = WorldInstance.Services.Resolve<EntityViewRegistry>();
+        if (!registry.TryGet(@event.Caster, out EntityView view))
+        {
+            return;
+        }
+
+        // Spawn dash trail effect on client
+        StartCoroutine(ClientDashVisualRoutine(view.gameObject, skill, @event.TargetPoint));
+    }
+
+    private IEnumerator ClientDashVisualRoutine(GameObject owner, DashStrikeSkillSO skill, Vector3 targetPoint)
+    {
+        TrailRenderer trail = null;
+        if (skill.dashTrailPrefab != null)
+        {
+            trail = Instantiate(skill.dashTrailPrefab, owner.transform);
+        }
+
+        // Wait for dash duration
+        yield return new WaitForSeconds(skill.dashDuration);
+
+        // Clean up trail
+        if (trail != null)
+        {
+            trail.transform.SetParent(null);
+            Destroy(trail.gameObject, 1f);
+        }
+    }
+
     private IEnumerator DashRoutine(GameObject owner, DashStrikeSkillSO skill, Vector3 targetPoint)
     {
         CharacterController controller = owner.GetComponent<CharacterController>();
@@ -109,8 +148,10 @@ public class DashStrikeExecutorView : SkillExecutorView
 
             if (skill.hitVfxPrefab)
             {
-                Instantiate(skill.hitVfxPrefab, hit.ClosestPoint(hitPoint), Quaternion.identity);
+                var hitVfx = Instantiate(skill.hitVfxPrefab, hit.ClosestPoint(hitPoint), Quaternion.identity);
+                Destroy(hitVfx.gameObject, 2f); // Ensure VFX is destroyed
             }
         }
     }
 }
+

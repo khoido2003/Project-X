@@ -21,6 +21,48 @@ public class NetworkSyncView : NetworkBehaviour
 
     private NetworkVariable<NetworkMovementState> _netMovement = new(writePerm: NetworkVariableWritePermission.Server);
 
+    private NetworkVariable<NetworkScoreState> _netScore = new(writePerm: NetworkVariableWritePermission.Server);
+
+    // Weapon configuration - configured directly on each character prefab
+    // Same approach as EnemyNetworkSyncView for consistency
+    [Header("Weapon Configuration (Configure on Prefab)")]
+    [SerializeField]
+    private AttackExecutionType _executionType;
+
+    [SerializeField]
+    private GameObject _projectilePrefab;
+
+    [SerializeField]
+    private ParticleSystem _hitImpactParticlePrefab;
+
+    [SerializeField]
+    private float _projectileSpeed = 15f;
+
+    [SerializeField]
+    private float _projectileLifetime = 5f;
+
+    [SerializeField]
+    private Vector3 _projectileSpawnOffset;
+
+    [SerializeField]
+    private string _attackAnimationTrigger = "attack";
+
+    [SerializeField]
+    private int _totalAttackAnimations = 1;
+
+    [SerializeField]
+    private float _baseDamage = 10f;
+
+    [SerializeField]
+    private float _baseCooldown = 1.2f;
+
+    [SerializeField]
+    private float _baseRange = 2f;
+
+    [Header("Character Lookup (Required for skill sync)")]
+    [SerializeField]
+    private SpawnConfigSO _spawnConfig;
+
     private uint _currentTick;
     private readonly Queue<ClientInputState> _inputHistory = new(60);
 
@@ -138,7 +180,25 @@ public class NetworkSyncView : NetworkBehaviour
         world.Components.Add(clientEntity, new HealthDataComponent { MaxHealth = 100, CurrentHealth = 100 });
         world.Components.Add(clientEntity, new CombatStateComponent());
         world.Components.Add(clientEntity, new AttackDataComponent { IsPlayerControlled = isLocalPlayer });
-        world.Components.Add(clientEntity, new WeaponDataComponent());
+
+        // Use serialized weapon fields configured on the character prefab
+        world.Components.Add(
+            clientEntity,
+            new WeaponDataComponent
+            {
+                ExecutionType = _executionType,
+                ProjectilePrefab = _projectilePrefab,
+                HitImpactParticlePrefab = _hitImpactParticlePrefab,
+                ProjectileSpeed = _projectileSpeed,
+                ProjectileLifetime = _projectileLifetime,
+                ProjectileSpawnOffset = _projectileSpawnOffset,
+                AttackAnimationTrigger = _attackAnimationTrigger,
+                TotalAttackAnimations = _totalAttackAnimations,
+                BaseDamage = _baseDamage,
+                BaseCooldown = _baseCooldown,
+                BaseRange = _baseRange,
+            }
+        );
         world.Components.Add(
             clientEntity,
             new SkillSetComponent(new System.Collections.Generic.List<SkillDefinitionSO>())
@@ -150,6 +210,10 @@ public class NetworkSyncView : NetworkBehaviour
         // Add game state components
         world.Components.Add(clientEntity, new PlayerScoreComponent());
         world.Components.Add(clientEntity, new PlayerRespawnComponent { OriginalSpawnPosition = transform.position });
+
+        // Subscribe to NetworkVariable changes on client
+        _netHealth.OnValueChanged += OnNetHealthChanged;
+        _netScore.OnValueChanged += OnNetScoreChanged;
         world.Components.Add(clientEntity, new PlayerUpgradesComponent());
 
         Debug.Log($"[NetworkSyncView] Client entity {clientEntity.Id} components added, requesting character data...");
@@ -294,6 +358,28 @@ public class NetworkSyncView : NetworkBehaviour
     {
         SyncTransform();
         SyncMovement();
+        SyncScore();
+    }
+
+    private void SyncScore()
+    {
+        if (_world.Components.TryGet(_entity, out PlayerScoreComponent score))
+        {
+            var newState = new NetworkScoreState
+            {
+                TotalScore = score.TotalScore,
+                PlayerKills = score.PlayerKills,
+                EnemyKills = score.EnemyKills,
+            };
+
+            // Only update if changed
+            if (_netScore.Value.TotalScore != newState.TotalScore ||
+                _netScore.Value.PlayerKills != newState.PlayerKills ||
+                _netScore.Value.EnemyKills != newState.EnemyKills)
+            {
+                _netScore.Value = newState;
+            }
+        }
     }
 
     private void SyncTransform()
@@ -654,16 +740,25 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        // ANIMATION - ALL clients (including owner) get animation
-        int randomIndex = UnityEngine.Random.Range(0, weapon.TotalAttackAnimations);
+        // ANIMATION - Only for NON-OWNER clients
+        // Owner already predicted and played animation locally, so skip to avoid double-trigger/reset
+        if (!IsOwner)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, weapon.TotalAttackAnimations);
 
-        _world.Events.Publish(
-            new AnimationParameterEvent(_entity, "attackIndex", AnimationParameterType.Float, randomIndex)
-        );
+            _world.Events.Publish(
+                new AnimationParameterEvent(_entity, "attackIndex", AnimationParameterType.Float, randomIndex)
+            );
 
-        _world.Events.Publish(
-            new AnimationParameterEvent(_entity, weapon.AttackAnimationTrigger, AnimationParameterType.Trigger, null)
-        );
+            _world.Events.Publish(
+                new AnimationParameterEvent(
+                    _entity,
+                    weapon.AttackAnimationTrigger,
+                    AnimationParameterType.Trigger,
+                    null
+                )
+            );
+        }
 
         // PROJECTILE - Spawn visual-only projectile on ALL clients
         if (type == AttackExecutionType.Projectile && weapon.ProjectilePrefab != null)
@@ -757,6 +852,75 @@ public class NetworkSyncView : NetworkBehaviour
         Debug.Log($"Client received damage visual: {amount} at {hitPoint}");
     }
 
+    /// <summary>
+    /// Broadcasts melee hit impact effects to all clients
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastMeleeHitClientRpc(Vector3 hitPoint, Vector3 hitNormal)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        // Spawn melee impact effect on client
+        if (!_world.Components.TryGet(_entity, out WeaponDataComponent weapon))
+        {
+            return;
+        }
+
+        if (weapon.HitImpactParticlePrefab != null)
+        {
+            var rotation = hitNormal.sqrMagnitude > 0.001f ? Quaternion.LookRotation(hitNormal) : Quaternion.identity;
+            var impactGo = Instantiate(weapon.HitImpactParticlePrefab.gameObject, hitPoint, rotation);
+            Destroy(impactGo, 2f);
+        }
+    }
+
+    /// <summary>
+    /// Broadcasts skill hit VFX to all clients.
+    /// Used for melee skills that have hit detection on server.
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastSkillHitVfxClientRpc(Vector3 hitPoint, int skillIndex)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        // Get skill from entity's skill set
+        if (!_world.Components.TryGet(_entity, out SkillSetComponent skillSet))
+        {
+            return;
+        }
+
+        if (skillIndex < 0 || skillIndex >= skillSet.Skills.Count)
+        {
+            return;
+        }
+
+        var skill = skillSet.Skills[skillIndex];
+
+        // Try to get hit VFX from different skill types
+        ParticleSystem hitVfxPrefab = null;
+
+        if (skill is HomerunSwingSkillSO homerunSkill && homerunSkill.hitVfxPrefab != null)
+        {
+            hitVfxPrefab = homerunSkill.hitVfxPrefab;
+        }
+        else if (skill is DashStrikeSkillSO dashSkill && dashSkill.hitVfxPrefab != null)
+        {
+            hitVfxPrefab = dashSkill.hitVfxPrefab;
+        }
+
+        if (hitVfxPrefab != null)
+        {
+            var hitVfx = Instantiate(hitVfxPrefab, hitPoint, Quaternion.identity);
+            Destroy(hitVfx, 2f);
+        }
+    }
+
     // -----------------------------------------------------------
 
     //  SKIlLS
@@ -835,17 +999,45 @@ public class NetworkSyncView : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void RequestSkillExecutionServerRpc(Vector3 targetPoint, Vector3 direction)
+    public void RequestSkillExecutionServerRpc(Vector3 targetPoint, Vector3 direction, int skillIndex = -1)
     {
+        Debug.Log(
+            $"[NetworkSyncView] RequestSkillExecutionServerRpc received for entity {_entity.Id}, target: {targetPoint}, direction: {direction}, skillIndex: {skillIndex}"
+        );
+
         if (!_world.Components.TryGet(_entity, out SkillCastBufferComponent buffer))
         {
-            return;
+            buffer = new SkillCastBufferComponent();
+            _world.Components.Add(_entity, buffer);
+        }
+
+        // For instant skills, the buffer might not be set yet due to RPC race condition
+        // Use the skillIndex to set it directly
+        if (buffer.Skill == null && skillIndex >= 0)
+        {
+            if (_world.Components.TryGet(_entity, out SkillSetComponent skillSetBuffer))
+            {
+                if (skillIndex < skillSetBuffer.Skills.Count)
+                {
+                    buffer.Skill = skillSetBuffer.Skills[skillIndex];
+                    buffer.TargetPoint = targetPoint;
+                    buffer.Direction = direction;
+                    Debug.Log(
+                        $"[NetworkSyncView] Set buffer.Skill from skillIndex {skillIndex}: {buffer.Skill?.skillName}"
+                    );
+                }
+            }
         }
 
         if (buffer.Skill == null)
         {
+            Debug.LogWarning(
+                $"[NetworkSyncView] RequestSkillExecutionServerRpc FAILED - buffer.Skill is null for entity {_entity.Id}"
+            );
             return;
         }
+
+        Debug.Log($"[NetworkSyncView] Processing skill execution for {buffer.Skill.skillName}");
 
         if (_world.Components.TryGet(_entity, out SkillSetComponent skillSet))
         {
@@ -918,15 +1110,35 @@ public class NetworkSyncView : NetworkBehaviour
     [ClientRpc]
     private void BroadcastSkillExecutionClientRpc(Vector3 targetPoint, Vector3 direction)
     {
-        if (IsOwner)
+        Debug.Log(
+            $"[NetworkSyncView] BroadcastSkillExecutionClientRpc called, Entity: {_entity.Id}, IsServer: {IsServer}"
+        );
+
+        // Server already processed this in the RPC caller context
+        if (IsServer)
         {
             return;
         }
 
         if (!_world.Components.TryGet(_entity, out SkillCastBufferComponent buffer))
         {
+            Debug.LogWarning(
+                $"[NetworkSyncView] BroadcastSkillExecutionClientRpc: SkillCastBufferComponent not found for entity {_entity.Id}"
+            );
             return;
         }
+
+        if (buffer.Skill == null)
+        {
+            Debug.LogWarning(
+                $"[NetworkSyncView] BroadcastSkillExecutionClientRpc: buffer.Skill is null for entity {_entity.Id}"
+            );
+            return;
+        }
+
+        Debug.Log(
+            $"[NetworkSyncView] Publishing SkillEffectTriggerEvent for skill: {buffer.Skill.skillName}, category: {buffer.Skill.category}"
+        );
 
         _world.Events.Publish(
             new SkillEffectTriggerEvent
@@ -1048,6 +1260,12 @@ public class NetworkSyncView : NetworkBehaviour
     [ClientRpc]
     public void BroadcastRespawnTimerClientRpc(float respawnDelay)
     {
+        // Only show respawn UI to the owning player
+        if (!IsOwner)
+        {
+            return;
+        }
+
         Debug.Log($"[Client] Player will respawn in {respawnDelay}");
 
         if (respawnUI == null)
@@ -1188,6 +1406,21 @@ public class NetworkSyncView : NetworkBehaviour
             health.MaxHealth = current.Max;
 
             _world.Events.Publish(new HealthChangedEvent(_entity, current.Current, current.Max));
+        }
+    }
+
+    private void OnNetScoreChanged(NetworkScoreState prev, NetworkScoreState current)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        if (_world.Components.TryGet(_entity, out PlayerScoreComponent score))
+        {
+            score.TotalScore = current.TotalScore;
+            score.PlayerKills = current.PlayerKills;
+            score.EnemyKills = current.EnemyKills;
         }
     }
 
@@ -1397,6 +1630,7 @@ public class NetworkSyncView : NetworkBehaviour
             transform.position, // Send actual spawn position
             transform.rotation // Send actual spawn rotation
         );
+        // Note: Weapon data comes from prefab's serialized fields - no need to sync via RPC
     }
 
     [ClientRpc]
@@ -1459,6 +1693,69 @@ public class NetworkSyncView : NetworkBehaviour
             anim.IsMovingParam = isMovingParam;
             anim.MoveXParam = moveXParam;
             anim.MoveYParam = moveYParam;
+        }
+
+        // Look up full CharacterData by name and populate skills
+        CharacterDefinitionSO characterData = null;
+        if (_spawnConfig == null)
+        {
+            Debug.LogError(
+                $"[NetworkSyncView] _spawnConfig is NULL! Skills will not sync. Assign SpawnConfig to NetworkSyncView on player prefab."
+            );
+        }
+        else if (_spawnConfig.possiblePlayers == null)
+        {
+            Debug.LogError($"[NetworkSyncView] _spawnConfig.possiblePlayers is NULL!");
+        }
+        else
+        {
+            Debug.Log(
+                $"[NetworkSyncView] Looking for character '{characterName}' in {_spawnConfig.possiblePlayers.Length} possible players..."
+            );
+            foreach (var data in _spawnConfig.possiblePlayers)
+            {
+                if (data != null && data.characterName == characterName)
+                {
+                    characterData = data;
+                    Debug.Log($"[NetworkSyncView] Found matching CharacterData for '{characterName}'");
+                    break;
+                }
+            }
+        }
+
+        if (characterData != null)
+        {
+            // Update CharacterSelectionComponent with full CharacterData
+            if (_world.Components.TryGet(_entity, out CharacterSelectionComponent charSel))
+            {
+                charSel.CharacterData = characterData;
+                Debug.Log($"[NetworkSyncView] Client set CharacterData for {characterName}");
+            }
+
+            // Populate SkillSetComponent with skills from CharacterData
+            if (_world.Components.TryGet(_entity, out SkillSetComponent skillSet))
+            {
+                skillSet.Skills.Clear();
+                foreach (var skill in characterData.skills)
+                {
+                    skillSet.Skills.Add(skill);
+                }
+                // Also reset cooldowns
+                skillSet.CooldownUntil = new float[characterData.skills.Count];
+                Debug.Log($"[NetworkSyncView] Client synced {skillSet.Skills.Count} skills for {characterName}");
+            }
+
+            // Also populate AudioProfileComponent if available
+            if (_world.Components.TryGet(_entity, out AudioProfileComponent audioProfile))
+            {
+                audioProfile.Profile = characterData.audioProfile;
+            }
+        }
+        else
+        {
+            Debug.LogWarning(
+                $"[NetworkSyncView] Could not find CharacterData for '{characterName}' in SpawnConfig. Skills will not work!"
+            );
         }
 
         // NOW publish spawn event after all data is synced

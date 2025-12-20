@@ -67,3 +67,19 @@ public struct ClientInputState : INetworkSerializable
         serializer.SerializeValue(ref MouseWorldPos);
     }
 }
+
+public struct NetworkScoreState : INetworkSerializable
+{
+    public int TotalScore;
+    public int PlayerKills;
+    public int EnemyKills;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer)
+        where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref TotalScore);
+        serializer.SerializeValue(ref PlayerKills);
+        serializer.SerializeValue(ref EnemyKills);
+    }
+}
+

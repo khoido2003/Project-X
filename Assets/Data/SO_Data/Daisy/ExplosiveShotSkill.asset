@@ -29,4 +29,4 @@ MonoBehaviour:
   projectilePrefab: {fileID: 7466126021747536713, guid: 4a1bffe11981ffb4499bd997d134aed5, type: 3}
   projectileSpeed: 20
   projectileLifetime: 5
-  explosionVfxPrefab: {fileID: 198104383770926042, guid: a1a36200a3c61b34b9abfaed1373f4cc, type: 3}
+  explosionVfxPrefab: {fileID: 198202731371243394, guid: 65932b7368590234d8163da03c2055d8, type: 3}

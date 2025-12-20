@@ -132,6 +132,17 @@ public class AnimationEventRelayView : EntityView
             attack.IsAttacking = false;
         }
 
+        // Reset combat state to Idle on BOTH client and server
+        // This is critical for client-side state sync since AttackSystem only runs on server
+        if (_world.Components.TryGet(_entityView.EntityInstance, out CombatStateComponent state))
+        {
+            if (state.CurrentState == CombatState.Attacking)
+            {
+                state.CurrentState = CombatState.Idle;
+                state.LastActionTime = Time.time;
+            }
+        }
+
         _world.Events.Publish(
             new AnimationEventRelayEvent(_entityView.EntityInstance, AnimationEventRelayType.ATTACK_END)
         );
