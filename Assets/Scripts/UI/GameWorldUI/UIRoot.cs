@@ -62,16 +62,13 @@ public class UIRoot : MonoBehaviour
         if (healthHUD != null)
         {
             healthHUD.Bind(world);
-            Debug.Log("[GameUIManager] HealthHUD initialized");
         }
 
         if (skillBarUI != null)
         {
             skillBarUI.Bind(world);
-            Debug.Log("[GameUIManager] SkillBarUI initialized");
         }
 
         _isInitialized = true;
-        Debug.Log("[GameUIManager] All UI components initialized successfully");
     }
 }

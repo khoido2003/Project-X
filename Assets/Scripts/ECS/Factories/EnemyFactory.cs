@@ -118,9 +118,7 @@ public class EnemyFactory
         }
         else
         {
-            Debug.Log(
-                $"[EnemyFactory] Enemy '{enemyData.enemyName}' (Entity {entity.Id}) has AudioProfile: '{enemyData.audioProfile.name}'"
-            );
+            // AudioProfile assigned
         }
 
         _world.Components.Add(entity, new AudioProfileComponent { Profile = enemyData.audioProfile });
@@ -156,17 +154,11 @@ public class EnemyFactory
             enemy.PatrolWaypoints.AddRange(
                 GeneratePatrolPointsAround(spawnPosition, enemyData.patrolPointCount, enemyData.patrolRadius)
             );
-            Debug.Log(
-                $"[EnemyFactory] Entity {entity.Id}: Generated {enemy.PatrolWaypoints.Count} patrol waypoints (radius: {enemyData.patrolRadius})"
-            );
         }
         else
         {
             // FALLBACK: Always generate at least some patrol points so enemies aren't stuck in Idle
             enemy.PatrolWaypoints.AddRange(GeneratePatrolPointsAround(spawnPosition, 4, 5f));
-            Debug.Log(
-                $"[EnemyFactory] Entity {entity.Id}: GeneratePatrolPoints=false, added fallback {enemy.PatrolWaypoints.Count} patrol waypoints"
-            );
         }
         _world.Components.Add(entity, enemy);
 
@@ -209,8 +201,6 @@ public class EnemyFactory
         }
 
         enemyObj.name = $"{enemyData.enemyName}_Entity{entity.Id}";
-
-        Debug.Log($"[EnemyFactory] Spawned network enemy {enemyData.enemyName} at {spawnPosition}");
 
         return enemyObj;
     }

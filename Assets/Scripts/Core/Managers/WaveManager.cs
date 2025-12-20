@@ -9,7 +9,7 @@ public class WaveManager : MonoBehaviour
     [Header("Wave Configuration")]
     [Header("Limits")]
     [SerializeField]
-    private int maxConcurrentEnemies = 12;
+    private int maxConcurrentEnemies = 15;
 
     private bool _deathEventSubscribed = false;
 
@@ -77,17 +77,6 @@ public class WaveManager : MonoBehaviour
         {
             Debug.LogError("[WaveManager] No enemy spawn points assigned!");
         }
-        else
-        {
-            Debug.Log($"[WaveManager] Found {enemySpawnPoints.Length} enemy spawn points");
-            for (int i = 0; i < enemySpawnPoints.Length; i++)
-            {
-                if (enemySpawnPoints[i] != null)
-                {
-                    Debug.Log($"[WaveManager] Spawn point {i}: {enemySpawnPoints[i].position}");
-                }
-            }
-        }
     }
 
     public void SpawnWave(int round)
@@ -104,8 +93,6 @@ public class WaveManager : MonoBehaviour
             Debug.LogWarning($"[WaveManager]: No configuration for round {round}");
             return;
         }
-
-        Debug.Log($"[WaveManager] Spawning wave for round {round}: {configuration.enemyCount}");
 
         if (_continuousSpawnCoroutine != null)
         {
@@ -231,7 +218,7 @@ public class WaveManager : MonoBehaviour
         // This is just for logging/debugging - actual count is queried dynamically
         if (_world.Components.Has<EnemyComponent>(@event.Entity))
         {
-            Debug.Log($"[WaveManager] Enemy died. Current count: {GetCurrentEnemyCount()}");
+            // Enemy death counted
         }
     }
 
@@ -249,7 +236,6 @@ public class WaveManager : MonoBehaviour
         {
             int index = UnityEngine.Random.Range(0, enemySpawnPoints.Length);
             Vector3 pos = enemySpawnPoints[index].position;
-            Debug.Log($"[WaveManager] Using spawn point {index}: {pos}");
             return pos;
         }
 
@@ -261,7 +247,6 @@ public class WaveManager : MonoBehaviour
         {
             int fallbackIndex = UnityEngine.Random.Range(0, enemySpawnPoints.Length);
             Vector3 fallbackPos = enemySpawnPoints[fallbackIndex].position;
-            Debug.Log($"[WaveManager] No valid player position, using fallback spawn point: {fallbackPos}");
             return fallbackPos;
         }
 
@@ -282,13 +267,11 @@ public class WaveManager : MonoBehaviour
             {
                 gridPos = grid.FindNearestWalkable(gridPos);
                 spawnPos = grid.GetWorldPosition(gridPos);
-                Debug.Log($"[WaveManager] Spawning near player at grid-validated position: {spawnPos}");
             }
             else
             {
                 // Grid position invalid, use closest spawn point
                 spawnPos = GetClosestSpawnPoint(playerPos);
-                Debug.Log($"[WaveManager] Grid invalid, using closest spawn point: {spawnPos}");
             }
         }
         else
@@ -325,11 +308,12 @@ public class WaveManager : MonoBehaviour
         return closest;
     }
 
+    /// <summary>
+    /// Gets a random alive player's position for spawning enemies near.
+    /// </summary>
     private Vector3 FindNearestPlayerPosition()
     {
-        Vector3 nearestPos = Vector3.zero;
-        float nearestDist = float.MaxValue;
-        bool foundPlayer = false;
+        List<Vector3> alivePlayerPositions = new();
 
         foreach (
             var (entity, player, trans, health) in _world.Components.Query<
@@ -344,17 +328,17 @@ public class WaveManager : MonoBehaviour
                 continue;
             }
 
-            Vector3 playerPos = trans.Position;
-
-            if (!foundPlayer)
-            {
-                nearestPos = playerPos;
-                nearestDist = 0f;
-                foundPlayer = true;
-            }
+            alivePlayerPositions.Add(trans.Position);
         }
 
-        return nearestPos;
+        if (alivePlayerPositions.Count == 0)
+        {
+            return Vector3.zero;
+        }
+
+        // Randomly select one of the alive players to spawn enemies near
+        int randomIndex = UnityEngine.Random.Range(0, alivePlayerPositions.Count);
+        return alivePlayerPositions[randomIndex];
     }
 
     public void SpawnBoss()

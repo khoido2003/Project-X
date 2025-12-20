@@ -62,8 +62,6 @@ public class MapSelectionManager : SingletonNetwork<MapSelectionManager>
 
         m_selectedMapIndex.Value = mapIndex;
         SelectedMapScene = randomMap.sceneName;
-
-        Debug.Log($"[Server] Selected random map: {randomMap.mapName} (Scene: {SelectedMapScene})");
     }
 
     /// <summary>
@@ -108,17 +106,11 @@ public class MapSelectionManager : SingletonNetwork<MapSelectionManager>
 
         MapConfigSO.MapData selectedMap = mapConfig.availableMaps[mapIndex];
         SelectedMapScene = selectedMap.sceneName;
-
-        Debug.Log($"Client {NetworkManager.Singleton.LocalClientId}: Map selected {selectedMap.mapName}");
-
         NotifyMapSelectionClientRpc(selectedMap.mapName);
     }
 
     [ClientRpc]
-    private void NotifyMapSelectionClientRpc(string mapName)
-    {
-        Debug.Log($"Playing on map: {mapName}");
-    }
+    private void NotifyMapSelectionClientRpc(string mapName) { }
 
     public string GetCurrentMapName()
     {

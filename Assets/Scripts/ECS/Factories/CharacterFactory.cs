@@ -37,7 +37,6 @@ public class CharacterFactory
             attackExecView.Bind(_world, entity);
             var registry = _world.Services.Resolve<EntityViewRegistry>();
             registry.Register(attackExecView);
-            Debug.Log($"[CharacterFactory] Added AttackExecutionView to entity {entity.Id}");
         }
 
         // Get or add NetworkSyncView
@@ -64,16 +63,9 @@ public class CharacterFactory
             return null;
         }
 
-        Debug.Log(
-            $"[CharacterFactory] NetworkSyncView instance: {networkSync.GetInstanceID()}, NetworkObject: {netObj.GetInstanceID()}"
-        );
-
         // Initialize BEFORE spawning the NetworkObject
         // This must be called on the server BEFORE SpawnWithOwnership
         networkSync.Initialize(_world, entity);
-        Debug.Log(
-            $"[CharacterFactory] Called Initialize() on NetworkSyncView for entity {entity.Id}, client {clientId}"
-        );
 
         // Add network components
         _world.Components.Add(entity, new NetworkSyncComponent { SyncView = networkSync });
@@ -177,11 +169,7 @@ public class CharacterFactory
 
         // NOW spawn the NetworkObject and change ownership
         // This triggers OnNetworkSpawn, but Initialize() has already been called
-        Debug.Log($"[CharacterFactory] About to spawn NetworkObject for entity {entity.Id}, client {clientId}");
         netObj.SpawnWithOwnership(clientId);
-        Debug.Log(
-            $"[CharacterFactory] Successfully spawned NetworkObject {netObj.NetworkObjectId} for entity {entity.Id}, client {clientId}"
-        );
 
         return playerObj;
     }

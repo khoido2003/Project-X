@@ -185,8 +185,6 @@ public class AimingRigView : MonoBehaviour
         _aimStartTime = Time.time;
         _isAiming = true;
         _targetWeight = _maxAimWeight;
-
-        Debug.Log($"[AimingRigView] StartAiming to {_currentAimTarget} for {duration}s");
     }
 
     /// <summary>

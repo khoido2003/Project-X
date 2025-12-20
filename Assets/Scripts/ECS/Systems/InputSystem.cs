@@ -10,25 +10,12 @@ public class InputSystem : ISystem
     {
         _world = world;
         _input = world.Services.Resolve<IInputService>();
-        Debug.Log("[InputSystem] Initialized on client");
     }
 
     private bool _hasLoggedQuery = false;
 
     public void Update(float dt)
     {
-        if (!_hasLoggedQuery)
-        {
-            var count = 0;
-            foreach (
-                var (entity, owner, sync) in _world.Components.Query<NetworkOwnerComponent, NetworkSyncComponent>()
-            )
-            {
-                count++;
-                Debug.Log($"[InputSystem] Found entity {entity.Id}, IsLocalPlayer: {owner.IsLocalPlayer}");
-            }
-            _hasLoggedQuery = true;
-        }
 
         foreach (var (entity, owner, sync) in _world.Components.Query<NetworkOwnerComponent, NetworkSyncComponent>())
         {
@@ -46,11 +33,9 @@ public class InputSystem : ISystem
             if (_input.IsLeftMouseDown() && _world.Components.TryGet(entity, out ActionFlagComponent flags))
             {
                 Vector3 mousePos = _input.GetMouseWorldPosition();
-                Debug.Log($"[InputSystem] Left mouse clicked for entity {entity.Id} at {mousePos}");
 
                 if (flags.Get(ActionFlag.SkillPreview))
                 {
-                    Debug.Log($"[InputSystem] Skill preview active, executing skill");
                     _world.Events.Publish(new SkillExecutionRequestEvent(entity));
                 }
                 else
@@ -71,9 +56,6 @@ public class InputSystem : ISystem
                             float timeSinceAttack = Time.time - attack.LastAttackTime;
                             if (timeSinceAttack < weapon.BaseCooldown)
                             {
-                                Debug.Log(
-                                    $"[InputSystem] Attack blocked - still in cooldown ({timeSinceAttack:F3}s / {weapon.BaseCooldown}s)"
-                                );
                                 continue; // Skip entire attack processing
                             }
 
@@ -105,11 +87,8 @@ public class InputSystem : ISystem
                                 }
                             }
                             attack.AttackDirection = attackDir.normalized;
-                            Debug.Log($"[InputSystem] Host set attack direction: {attack.AttackDirection}");
                         }
                     }
-
-                    Debug.Log($"[InputSystem] Requesting attack RPC to server");
 
                     _world.Events.Publish(new AttackPressedInputEvent(entity));
 
@@ -124,10 +103,6 @@ public class InputSystem : ISystem
                 if (_input.IsSkillDown(i))
                 {
                     Vector3 mousePos = _input.GetMouseWorldPosition();
-
-                    Debug.Log($"[InputSystem] Skill {i} pressed for entity {entity.Id} at {mousePos}");
-
-                    // Client predict preview immediately
                     _world.Events.Publish(new SkillPressedInputEvent(entity, i, true));
 
                     // Request server validation
@@ -135,8 +110,6 @@ public class InputSystem : ISystem
                 }
                 else if (_input.IsSkillUp(i))
                 {
-                    Debug.Log($"[InputSystem] Skill {i} released for entity {entity.Id}");
-                    
                     _world.Events.Publish(new SkillPressedInputEvent(entity, i, false));
 
                     sync.SyncView.RequestSkillServerRpc(i, false, Vector3.zero);

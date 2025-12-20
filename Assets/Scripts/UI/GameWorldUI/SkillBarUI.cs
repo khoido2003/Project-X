@@ -26,7 +26,6 @@ public class SkillBarUI : MonoBehaviour
             if (owner.IsLocalPlayer && _world.Components.Has<PlayerTagComponent>(entity))
             {
                 _playerEntity = entity;
-                Debug.Log($"[SkillBarUI] Bound to local player entity {entity.Id}");
                 break;
             }
         }

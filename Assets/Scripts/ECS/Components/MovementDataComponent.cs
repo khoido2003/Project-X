@@ -12,4 +12,10 @@ public class MovementDataComponent
     public bool IsGrounded;
     public bool IsStunned;
     public bool IsMoving;
+
+    /// <summary>
+    /// Computed velocity based on movement direction and speed.
+    /// Used for target prediction in enemy AI.
+    /// </summary>
+    public Vector3 Velocity => IsMoving ? MoveDirection.normalized * MoveSpeed : Vector3.zero;
 }

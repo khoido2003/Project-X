@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae417498b70a9d6459fba3467bb79bdf, type: 3}
+  m_Name: RangeEnemySound
+  m_EditorClassIdentifier: Assembly-CSharp::AudioProfileSO
+  cues:
+  - SoundType: 5
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 5f6028244f53d40718a33253a580463e, type: 3}
+    - {fileID: 8300000, guid: c93ffc94957224aa9adc54563b67afa1, type: 3}
+  - SoundType: 0
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: fac67cf65661843fcaf831c848e46a5d, type: 3}
+    - {fileID: 8300000, guid: 0c81ae95d73724800ab386a76a55cf99, type: 3}
+  - SoundType: 2
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 72d8200eb15874c629435731bbb929c0, type: 3}
+    - {fileID: 8300000, guid: 72d8200eb15874c629435731bbb929c0, type: 3}
+  - SoundType: 4
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 8ee249a537e1c4fac84b50379580dbbe, type: 3}
+    - {fileID: 8300000, guid: 732fdbc13a6684920bfb8fc9d106a440, type: 3}
+  - SoundType: 3
+    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: c4d1001d6f5c3634691abfe40c464d7c, type: 3}

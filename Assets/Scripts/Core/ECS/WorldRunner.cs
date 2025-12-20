@@ -52,18 +52,9 @@ public class WorldRunner : NetworkBehaviour
 
         Instance = this;
 
-        Debug.Log("[WorldRunner] Creating World instance...");
         World = new World();
-
-        Debug.Log("[WorldRunner] Initializing services...");
         InitServices();
-        
-        Debug.Log("[WorldRunner] Initializing systems...");
         InitSystems();
-
-        bool isServer = NetworkManager.Singleton?.IsServer == true;
-        bool isClient = NetworkManager.Singleton?.IsClient == true;
-        Debug.Log($"[WorldRunner] World initialized successfully! IsServer: {isServer}, IsClient: {isClient}");
     }
 
     public override void OnNetworkSpawn()
@@ -147,7 +138,6 @@ public class WorldRunner : NetworkBehaviour
 
         if (HasSpawnedPlayer(clientId))
         {
-            Debug.Log($"Client {clientId} already has a spawned player, skipping spawn!");
             return;
         }
 
@@ -170,10 +160,6 @@ public class WorldRunner : NetworkBehaviour
         {
             return;
         }
-
-        Debug.Log(
-            $"Spawning existing players. Connected Clients: {NetworkManager.Singleton.ConnectedClientsIds.Count}"
-        );
 
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
@@ -215,7 +201,6 @@ public class WorldRunner : NetworkBehaviour
         {
             if (character.isSelected && character.clientId == clientId)
             {
-                Debug.Log(character.name);
                 return character;
             }
         }
@@ -336,8 +321,6 @@ public class WorldRunner : NetworkBehaviour
 
     private void InitSystems()
     {
-        Debug.Log($"[WorldRunner] Initializing CLIENT systems (for all)");
-        
         // ===== SYSTEMS FOR ALL CLIENTS (Visual/Audio/Camera/Input) =====
         World.Systems.AddSystem(new CameraFollowSystem(), World);
         World.Systems.AddSystem(new TransformSyncSystem(), World);
@@ -358,8 +341,6 @@ public class WorldRunner : NetworkBehaviour
 
     private void InitServerSystems()
     {
-        Debug.Log("[WorldRunner] Registering SERVER gameplay systems...");
-        
         // Spawning
         _spawnSystem = new SpawnSystem(spawnConfig);
         World.Systems.AddSystem(_spawnSystem, World);
@@ -384,8 +365,6 @@ public class WorldRunner : NetworkBehaviour
         World.Systems.AddSystem(new EnemyAISystem(), World);
         
         EnemyAIHelpers.RegisterDefaultStates();
-        
-        Debug.Log("[WorldRunner] Server systems registered successfully");
     }
 
 }

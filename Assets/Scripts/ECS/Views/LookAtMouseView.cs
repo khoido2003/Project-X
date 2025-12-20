@@ -60,10 +60,6 @@ public class LookAtMouseView : EntityView
         if (WorldInstance != null && WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner))
         {
             _isLocalPlayer = owner.IsLocalPlayer;
-            if (_isLocalPlayer)
-            {
-                Debug.Log($"[LookAtMouseView] Detected as LOCAL player, enabling mouse look");
-            }
         }
     }
 
