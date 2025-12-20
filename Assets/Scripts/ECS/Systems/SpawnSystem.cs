@@ -86,8 +86,6 @@ public class SpawnSystem : ISystem
         // Publish spawn event (for camera to follow if local player)
         _world.Events.Publish(new PlayerSpawnEvent(entity, playerObj, playerObj.transform));
         _world.Events.Publish(new AudioCueEvent(entity, SoundType.Spawn));
-
-        Debug.Log($"Spawned player for client {clientId} at {spawnPosition}");
     }
 
     public void SpawnNetworkEnemy(EnemyDefinitionSO enemyData, Vector3 spawnPosition)
@@ -108,7 +106,6 @@ public class SpawnSystem : ISystem
 
         if (enemyObj != null)
         {
-            Debug.Log($"[SpawnSystem] Spawn network enemy {enemyData.enemyName} at {spawnPosition}");
             _world.Events.Publish(new AudioCueEvent(entity, SoundType.Spawn));
         }
     }

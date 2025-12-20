@@ -4,7 +4,8 @@ public class EnemyAttackStateAI : IEnemyState
 {
     public EnemyState StateType => EnemyState.Attack;
 
-    private readonly float rotateSpeed = 120f;
+    // Increased rotation speed for faster aiming
+    private readonly float rotateSpeed = 360f;
 
     public void OnEnter(World world, EntityId entity)
     {
@@ -18,7 +19,8 @@ public class EnemyAttackStateAI : IEnemyState
 
         if (!enemy.TargetEntity.Equals(default))
         {
-            FaceTarget(world, entity, enemy);
+            // Immediately snap to face target when entering attack state
+            SnapToFaceTarget(world, entity, enemy);
 
             // Fire immediately on entering the state if we're in range and off cooldown
             TryAttack(world, entity, enemy, weapon, attack);
@@ -97,7 +99,42 @@ public class EnemyAttackStateAI : IEnemyState
 
         if (attack.CanAttack(weapon.BaseCooldown) && !attack.IsAttacking)
         {
-            PerformAttack(world, entity, targetTf.Position);
+            // Get target movement for prediction
+            Vector3 targetVelocity = Vector3.zero;
+            if (world.Components.TryGet(enemy.TargetEntity, out MovementDataComponent targetMovement))
+            {
+                targetVelocity = targetMovement.Velocity;
+            }
+            
+            PerformAttack(world, entity, targetTf.Position, targetVelocity, weapon);
+        }
+    }
+
+    /// <summary>
+    /// Immediately snaps rotation to face target (used when entering attack state)
+    /// </summary>
+    private void SnapToFaceTarget(World world, EntityId entity, EnemyComponent enemy)
+    {
+        if (!world.Components.TryGet(enemy.TargetEntity, out TransformComponent targetTf))
+        {
+            return;
+        }
+
+        TransformComponent enemyTf = world.Components.Get<TransformComponent>(entity);
+
+        Vector3 dir = targetTf.Position - enemyTf.Position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude > 0.0001f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(dir.normalized);
+            enemyTf.Rotation = targetRotation; // Snap immediately
+
+            var registry = world.Services.Resolve<EntityViewRegistry>();
+            if (registry.TryGet(entity, out EntityView view))
+            {
+                view.transform.rotation = targetRotation;
+            }
         }
     }
 
@@ -127,25 +164,57 @@ public class EnemyAttackStateAI : IEnemyState
         }
     }
 
-    private void PerformAttack(World world, EntityId entity, Vector3 targetPos)
+    /// <summary>
+    /// Perform attack with target prediction for better accuracy
+    /// </summary>
+    private void PerformAttack(World world, EntityId entity, Vector3 targetPos, Vector3 targetVelocity, WeaponDataComponent weapon)
     {
         var attack = world.Components.Get<AttackDataComponent>(entity);
         var enemyTf = world.Components.Get<TransformComponent>(entity);
 
-        // Set attack direction
-        Vector3 direction = (targetPos - enemyTf.Position).normalized;
-        attack.AttackDirection = direction;
+        Vector3 toTarget = targetPos - enemyTf.Position;
+        float distance = toTarget.magnitude;
+        
+        // Calculate predicted target position (lead the target)
+        Vector3 predictedTargetPos = targetPos;
+        
+        // Only predict for ranged (projectile) attacks
+        if (weapon.ProjectileSpeed > 0 && distance > 0)
+        {
+            // Time for projectile to reach target at current position
+            float timeToTarget = distance / weapon.ProjectileSpeed;
+            
+            // Predict where target will be when projectile arrives
+            predictedTargetPos = targetPos + targetVelocity * timeToTarget * 0.8f; // 0.8 factor for slight underprediction
+            
+            // Keep prediction on same height plane
+            predictedTargetPos.y = targetPos.y;
+        }
+
+        // Set attack direction to predicted position
+        Vector3 direction = (predictedTargetPos - enemyTf.Position).normalized;
+        direction.y = 0f;
+        
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            direction = enemyTf.Rotation * Vector3.forward;
+        }
+        
+        attack.AttackDirection = direction.normalized;
         attack.IsAttacking = true;
         attack.LastAttackTime = Time.time;
 
-        // Trigger animation
+        // Trigger animation with random attack index
         if (world.Components.TryGet(entity, out AnimationDataComponent animation))
         {
-            // int randomIndex = Random.Range(0, animation.TotalAttackAnimations);
-            //
-            // world.Events.Publish(
-            //     new AnimationParameterEvent(entity, "attackIndex", AnimationParameterType.Float, randomIndex)
-            // );
+            // Random attack animation selection (like player characters)
+            if (weapon.TotalAttackAnimations > 1)
+            {
+                int randomIndex = Random.Range(0, weapon.TotalAttackAnimations);
+                world.Events.Publish(
+                    new AnimationParameterEvent(entity, "attackIndex", AnimationParameterType.Float, randomIndex)
+                );
+            }
 
             world.Events.Publish(
                 new AnimationParameterEvent(entity, animation.AttackTrigger, AnimationParameterType.Trigger, null)
@@ -155,3 +224,4 @@ public class EnemyAttackStateAI : IEnemyState
 
     public void OnExit(World world, EntityId entity) { }
 }
+

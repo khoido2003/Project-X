@@ -80,10 +80,6 @@ public class AnimationEventRelayView : EntityView
         }
 
         // Trigger attack execution
-        Debug.Log(
-            $"[AnimationEventRelayView] Publishing AttackExecutionRequestEvent for entity {_entityView.EntityInstance.Id}, Type: {weapon.ExecutionType}"
-        );
-
         _world.Events.Publish(
             new AttackExecutionRequestEvent
             {

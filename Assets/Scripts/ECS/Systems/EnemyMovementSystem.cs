@@ -11,16 +11,18 @@ public class EnemyMovementSystem : ISystem
     // --- Config ---
     private const float WAYPOINT_TOLERANCE = 0.5f;
     private const float NO_PROGRESS_THRESHOLD = 0.1f;
-    private const float NO_PROGRESS_REPATH_TIME = 2f;
-    private const float STUCK_REPATH_TIME = 1.5f;
-    private const float DEFAULT_REPATH_INTERVAL = 1f;
+    private const float NO_PROGRESS_REPATH_TIME = 0.8f;  // Reduced from 2f - faster unstuck
+    private const float STUCK_REPATH_TIME = 0.6f;       // Reduced from 1.5f - faster unstuck
+    private const float DEFAULT_REPATH_INTERVAL = 0.8f;  // Reduced from 1f - more frequent updates
     private const float RECALC_DISTANCE_THRESHOLD = 0.5f;
+    private const float STUCK_NUDGE_STRENGTH = 0.3f;     // Force to push enemy when stuck
 
     // --- GRAVITY ---
     private const float GRAVITY = -9.81f;
     private const float GROUND_CHECK_DISTANCE = 0.2f;
 
-    private readonly float rotateSpeed = 50f;
+    // Increased rotation speed for faster turning
+    private readonly float rotateSpeed = 180f;  // Increased from 50f
     private readonly Collider[] _overlapBuffer = new Collider[16];
 
     public void Initialize(World world) => _world = world;
@@ -344,6 +346,9 @@ public class EnemyMovementSystem : ISystem
             enemy.NoProgressTimer += dt;
             if (enemy.NoProgressTimer > NO_PROGRESS_REPATH_TIME)
             {
+                // Apply random nudge to escape corners/stuck positions
+                ApplyStuckNudge(entity, enemy, trans);
+                
                 RequestRepath(entity, enemy);
                 enemy.NoProgressTimer = 0f;
             }
@@ -388,5 +393,59 @@ public class EnemyMovementSystem : ISystem
 
         _world.Events.Publish(new EnemyPathRequestEvent(entity, enemy.LastRequestedTarget, enemy.StoppingDistance));
         enemy.LastRequestTime = Time.time;
+    }
+
+    /// <summary>
+    /// Applies a random nudge to push enemy out of stuck positions (corners, obstacles)
+    /// </summary>
+    private void ApplyStuckNudge(EntityId entity, EnemyComponent enemy, TransformComponent trans)
+    {
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (!registry.TryGet(entity, out EntityView view))
+        {
+            return;
+        }
+
+        // Generate random horizontal direction
+        float randomAngle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+        Vector3 nudgeDir = new Vector3(Mathf.Cos(randomAngle), 0f, Mathf.Sin(randomAngle));
+
+        // Try to nudge away from obstacles using raycast
+        LayerMask obstacleMask = GridSystem.Instance?.GetObstacleLayer() ?? LayerMask.GetMask("Default");
+        
+        // Cast rays in multiple directions to find clear path
+        Vector3 bestDir = nudgeDir;
+        float bestDist = 0f;
+        
+        for (int i = 0; i < 8; i++)
+        {
+            float angle = i * 45f * Mathf.Deg2Rad;
+            Vector3 testDir = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+            
+            if (!Physics.Raycast(
+                trans.Position + Vector3.up * 0.5f,
+                testDir,
+                out RaycastHit hit,
+                2f,
+                obstacleMask,
+                QueryTriggerInteraction.Ignore
+            ))
+            {
+                // No obstacle in this direction - it's the best!
+                bestDir = testDir;
+                bestDist = 2f;
+                break;
+            }
+            else if (hit.distance > bestDist)
+            {
+                bestDir = testDir;
+                bestDist = hit.distance;
+            }
+        }
+
+        // Apply nudge in best direction
+        Vector3 nudge = bestDir * STUCK_NUDGE_STRENGTH;
+        trans.Position += nudge;
+        view.transform.position = trans.Position;
     }
 }

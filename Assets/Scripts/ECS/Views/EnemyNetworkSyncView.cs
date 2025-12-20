@@ -83,12 +83,11 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         // On CLIENT: We need to create the ECS entity here since EnemyFactory doesn't run
         if (!IsServer && IsClient)
         {
-            Debug.Log("[EnemyNetworkSyncView] Client-side spawn detected, calling CreateClientEntity()");
             StartCoroutine(WaitForWorldAndCreateEntity());
         }
         else
         {
-            Debug.Log($"[EnemyNetworkSyncView] Skipping CreateClientEntity - IsServer: {IsServer}");
+            // Server initialization handled by EnemyFactory
         }
     }
 

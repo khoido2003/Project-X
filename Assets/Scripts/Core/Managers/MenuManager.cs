@@ -32,10 +32,7 @@ public class MenuManager : MonoBehaviour
     [SerializeField]
     private UISoundConfig uiSoundConfig;
 
-    private void Awake()
-    {
-        Debug.Log("MenuManager Awake");
-    }
+    private void Awake() { }
 
     private IEnumerator Start()
     {
@@ -81,7 +78,7 @@ public class MenuManager : MonoBehaviour
         PlayButtonClickSound();
         NetworkManager.Singleton.StartHost();
         LoadingSceneManager.Instance.LoadScene(nextScene);
-        Debug.Log("Host clicked");
+
     }
 
     public void OnClickJoin()

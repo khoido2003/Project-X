@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ae417498b70a9d6459fba3467bb79bdf, type: 3}
-  m_Name: EnemySound
+  m_Name: MeleeEnemySound
   m_EditorClassIdentifier: Assembly-CSharp::AudioProfileSO
   cues:
   - SoundType: 5

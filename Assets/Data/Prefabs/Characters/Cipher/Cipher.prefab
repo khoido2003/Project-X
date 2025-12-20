@@ -3097,8 +3097,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillPreviewView
   ringSegments: 64
   ringWidth: 0.05
-  rangeColor: {r: 0, g: 0, b: 1, a: 1}
-  indicatorColor: {r: 1, g: 0.2705882, b: 0, a: 1}
+  rangeColor: {r: 0.38679236, g: 0.8076093, b: 1, a: 1}
+  indicatorColor: {r: 1, g: 0, b: 0.05533409, a: 1}
   indicatorRadius: 0.5
 --- !u!114 &7954091672798518682
 MonoBehaviour:

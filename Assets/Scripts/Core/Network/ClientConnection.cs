@@ -39,24 +39,19 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
 
             if (playersConnected > m_maxConnections)
             {
-                Debug.Log($"Sorry we are full {clientId}");
-
                 return false;
             }
 
-            Debug.Log($"You are allowed to enter {clientId}");
             return true;
         }
         else
         {
             if (HasACharacterSelected(clientId))
             {
-                Debug.Log($"You are allowed to enter {clientId}");
                 return true;
             }
             else
             {
-                Debug.Log($"Sorry we are full {clientId}");
                 return false;
             }
         }

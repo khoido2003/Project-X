@@ -194,8 +194,6 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         }
 
         SendUpgradeOptionsClientRpc(clientId, options.ToArray());
-
-        Debug.Log($"[UpgradeSystem] Sent {options.Count} upgrade options to client {clientId}");
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -289,7 +287,6 @@ public class NetworkUpgradeSystem : NetworkBehaviour
                 playerUpgrades.LifestealPercent += rolledValue;
                 break;
         }
-        Debug.Log($"[UpgradeSystem] Applied {upgrade.type} upgrade to entity {entity.Id}");
     }
 
     private void ApplyMaxHealthUpgrade(EntityId entity, float value, bool isPercentage)
@@ -306,8 +303,6 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         health.CurrentHealth += increase;
 
         _world.Events.Publish(new HealthChangedEvent(entity, health.CurrentHealth, health.MaxHealth));
-
-        Debug.Log($"[Upgrade] MaxHealth: {oldMax} -> {health.MaxHealth}");
     }
 
     private void ApplyDamageUpgrade(EntityId entity, float deltaMultiplier)
@@ -323,8 +318,6 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         }
 
         weapon.BaseDamage *= deltaMultiplier;
-
-        Debug.Log($"[Upgrade] Damage delta {deltaMultiplier}, New Damage: {weapon.BaseDamage}");
     }
 
     private void ApplyMoveSpeedUpgrade(EntityId entity, float deltaMultiplier)
@@ -335,8 +328,6 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         }
 
         movement.MoveSpeed *= deltaMultiplier;
-
-        Debug.Log($"[Upgrade] MoveSpeed delta {deltaMultiplier}, New speed: {movement.MoveSpeed}");
     }
 
     private void ApplyAttackSpeedUpgrade(EntityId entity, float deltaMultiplier, float totalMultiplier)
@@ -350,10 +341,6 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         {
             attack.AttackSpeedMultiplier = totalMultiplier;
         }
-
-        Debug.Log(
-            $"[Upgrade] AttackSpeed delta {deltaMultiplier}, total {totalMultiplier}, Adjusted cooldown: {weapon.BaseCooldown / totalMultiplier}"
-        );
     }
 
     #endregion
@@ -413,8 +400,6 @@ public class NetworkUpgradeSystem : NetworkBehaviour
             return;
         }
 
-        Debug.Log($"[Client] Received {options.Length} upgrade options");
-
         // Show upgrade UI
         if (_upgradeCardUI == null)
         {
@@ -430,8 +415,6 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         {
             return;
         }
-
-        Debug.Log($"[Client] Upgrade {upgradeId} confirmed");
 
         // Hide upgrade UI
         if (_upgradeCardUI == null)

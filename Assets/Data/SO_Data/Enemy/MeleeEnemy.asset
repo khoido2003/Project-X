@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2aee4760c0ec9294f97c7ef222355bb9, type: 3}
-  m_Name: Enemy
+  m_Name: MeleeEnemy
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinitionSO
-  prefab: {fileID: 5191787420164104229, guid: e65286c6ffec9e841a064adfb1fd947c, type: 3}
-  enemyName: Enemy
-  maxHealth: 100
-  moveSpeed: 3
-  attackRange: 5
-  attackCooldown: 1.5
-  damage: 10
-  isRanged: 1
+  prefab: {fileID: 8343575081347477734, guid: b6c0514bbf501b544b172fa60a530f56, type: 3}
+  enemyName: Melee Enemy
+  maxHealth: 150
+  moveSpeed: 5
+  attackRange: 2
+  attackCooldown: 1.4
+  damage: 30
+  isRanged: 0
   isMovingParam: isMoving
   isRunningParam: isRunning
   moveXParam: moveX
@@ -33,25 +33,25 @@ MonoBehaviour:
   checkInterval: 0.5
   detectionMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 1920
   generatePatrolPoints: 1
-  patrolPointCount: 4
-  patrolRadius: 10
+  patrolPointCount: 3
+  patrolRadius: 4
   defaultState: 0
-  audioProfile: {fileID: 11400000, guid: 4f068eb5bfcf9fa4aa0b343406bbe870, type: 2}
+  audioProfile: {fileID: 11400000, guid: e57d21c5440c0414a9b5013ebca7dda1, type: 2}
   attacks:
-  - attackName: Gun
-    executionType: 1
-    damage: 14
-    cooldown: 1
-    range: 5
-    animationTrigger: attack
-    totalAnimations: 1
-    hitImpactVFX: {fileID: 198670200411678530, guid: 289ba3245c9c98c42aeb93d5f45a2248, type: 3}
+  - attackName: Axe
+    executionType: 0
+    damage: 30
+    cooldown: 1.4
+    range: 1.3
+    animationTrigger: attackIndex
+    totalAnimations: 2
+    hitImpactVFX: {fileID: 198768705176500678, guid: dfbf3c0c9b72b8442b5d15c41fb4fd92, type: 3}
     attackSound: {fileID: 0}
-    projectilePrefab: {fileID: 3093263165227071769, guid: 36341ae1e266f0e45b0a4e3fd8488bbf, type: 3}
-    projectileSpeed: 25
-    projectileLifetime: 5
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 0
+    projectileLifetime: 0
     projectileSpawnOffset: {x: 0, y: 0, z: 0}
     areaRadius: 0
     areaDuration: 0

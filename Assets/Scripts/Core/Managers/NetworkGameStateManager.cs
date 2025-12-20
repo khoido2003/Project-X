@@ -183,8 +183,6 @@ public class NetworkGameStateManager : NetworkBehaviour
 
         _netPhaseTimeRemaining.Value = GetPhaseDuration();
 
-        Debug.Log($"NetworkGameState: Transitioning to {newPhase}, Round {_netCurrentPhase.Value + 1}");
-
         switch (newPhase)
         {
             case GamePhase.UpgradePhase:
@@ -235,7 +233,6 @@ public class NetworkGameStateManager : NetworkBehaviour
     [ClientRpc]
     private void BroadcastPhaseStartClientRpc(GamePhase newPhase, int round, float duration)
     {
-        Debug.Log($"[Client] Phase changed to {newPhase}, Round {round}");
         OnPhaseChanged?.Invoke(newPhase, round);
         OnPhaseTimerUpdate?.Invoke(duration);
 

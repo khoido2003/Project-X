@@ -53,23 +53,15 @@ public class CameraFollowSystem : ISystem
 
         if (_hasSetCamera)
         {
-            Debug.Log($"[CameraFollowSystem] Camera already set, ignoring spawn event for entity {@event.Entity.Id}");
             return;
         }
 
         if (_world.Components.TryGet(@event.Entity, out NetworkOwnerComponent owner))
         {
-            Debug.Log($"[CameraFollowSystem] Player spawned - Entity: {@event.Entity.Id}, ClientId: {owner.ClientId}, IsLocalPlayer: {owner.IsLocalPlayer}");
-            
             if (owner.IsLocalPlayer)
             {
                 _cameraService.Follow(@event.Transform);
                 _hasSetCamera = true;
-                Debug.Log($"[CameraFollowSystem] Camera now following local player entity {@event.Entity.Id}");
-            }
-            else
-            {
-                Debug.Log($"[CameraFollowSystem] Ignoring remote player entity {@event.Entity.Id}");
             }
         }
         else
@@ -80,12 +72,8 @@ public class CameraFollowSystem : ISystem
 
     private void TrySetCameraToLocalPlayer()
     {
-        Debug.Log("[CameraFollowSystem] Attempting to find local player for camera...");
-        
         foreach (var (entity, owner, _) in _world.Components.Query<NetworkOwnerComponent, PlayerTagComponent>())
         {
-            Debug.Log($"[CameraFollowSystem] Found player entity {entity.Id} - ClientId: {owner.ClientId}, IsLocalPlayer: {owner.IsLocalPlayer}");
-            
             if (owner.IsLocalPlayer)
             {
                 var registry = _world.Services.Resolve<EntityViewRegistry>();
@@ -93,20 +81,10 @@ public class CameraFollowSystem : ISystem
                 if (registry.TryGet(entity, out EntityView view))
                 {
                     _cameraService.Follow(view.transform);
-
                     _hasSetCamera = true;
-
-                    Debug.Log($"[CameraFollowSystem] Camera set to local player entity {entity.Id}");
-
                     return;
-                }
-                else
-                {
-                    Debug.LogWarning($"[CameraFollowSystem] Local player entity {entity.Id} not found in EntityViewRegistry");
                 }
             }
         }
-        
-        Debug.LogWarning("[CameraFollowSystem] No local player found yet");
     }
 }

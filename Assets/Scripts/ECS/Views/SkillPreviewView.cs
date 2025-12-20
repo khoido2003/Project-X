@@ -34,8 +34,6 @@ public class SkillPreviewView : EntityView
     public override void Bind(World world, EntityId entity)
     {
         base.Bind(world, entity);
-        
-        Debug.Log($"[SkillPreviewView] Bind called for entity {entity.Id}");
 
         if (WorldInstance == null)
         {
@@ -48,7 +46,6 @@ public class SkillPreviewView : EntityView
             WorldInstance.Events.Subscribe<MouseWorldInputEvent>(OnMouseWorldInputEvent);
             WorldInstance.Events.Subscribe<SkillPreviewRequestEvent>(OnSkillPreviewRequestEvent);
             WorldInstance.Events.Subscribe<SkillExecutionRequestEvent>(OnSkillExecutionRequestEvent);
-            Debug.Log($"[SkillPreviewView] Successfully subscribed to events for entity {entity.Id}");
         }
         catch (System.Exception ex)
         {
@@ -85,11 +82,8 @@ public class SkillPreviewView : EntityView
         }
         if (!WorldInstance.Components.TryGet(EntityInstance, out NetworkOwnerComponent owner) || !owner.IsLocalPlayer)
         {
-            Debug.Log($"[SkillPreviewView] Entity {@event.Entity.Id} is not local player - owner null: {owner == null}, IsLocalPlayer: {owner?.IsLocalPlayer}");
             return;
         }
-        
-        Debug.Log($"[SkillPreviewView] Processing preview for entity {@event.Entity.Id}, IsActive: {@event.IsActive}, Skill: {@event.Skill?.skillName}");
         
         if (@event.IsActive)
         {
