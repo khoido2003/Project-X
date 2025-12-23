@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossDefinitionSO
   prefab: {fileID: 4147245692572374181, guid: 922a49f854a85e945b728778ee8c9db9, type: 3}
   bossName: Corrupted Mech
-  maxHealth: 2500
+  maxHealth: 3000
   moveSpeed: 4
   enrageHealthThreshold: 0.3
   hammerDamage: 50
@@ -33,7 +33,7 @@ MonoBehaviour:
   jumpAttackRange: 8
   jumpAttackMinRange: 5
   jumpAttackCooldown: 7
-  jumpAttackDamage: 30
+  jumpAttackDamage: 50
   jumpAttackRadius: 4
   jumpDuration: 0.6
   jumpAnimationTrigger: jumpAttack

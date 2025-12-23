@@ -25,7 +25,9 @@ public class MovementView : EntityView
         {
             movement.IsGrounded = controller.isGrounded;
 
-            Vector3 moveDir = transform.right * movement.MoveDirection.x + transform.forward * movement.MoveDirection.z;
+            // World-space movement: WASD moves in fixed world directions
+            // Character rotation (facing mouse) is independent of movement
+            Vector3 moveDir = new Vector3(-movement.MoveDirection.x, 0f, -movement.MoveDirection.z);
 
             Vector3 move = moveDir * movement.MoveSpeed + Vector3.up * movement.VerticalVelocity;
 

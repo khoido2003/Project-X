@@ -67,5 +67,6 @@ public class StunSystem : ISystem
     public void Shutdown()
     {
         _world.Events.Unsubscribe<StunEvent>(OnStunEvent);
+        _stunEndTimes.Clear();
     }
 }

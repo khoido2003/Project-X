@@ -18,13 +18,13 @@ MonoBehaviour:
   isInstant: 1
   keyTrigger: Q
   damage: 30
-  castRange: 5
+  castRange: 6
   cooldown: 3
   hitVfxPrefab: {fileID: 198011925041146442, guid: 57e18706e2792ff4bb5561ed74b796e2, type: 3}
   skillVfxPrefab: {fileID: 198533653044838976, guid: b46264f9e12caed4cb53e7c2ad64aa54, type: 3}
   activateSound: {fileID: 8300000, guid: 78db9d561d1134f1c91be2940e267353, type: 3}
   activationAnimationTrigger: skill2
-  projectileCount: 5
+  projectileCount: 7
   timeBetweenShots: 0.2
   spreadAngle: 3
   projectilePrefab: {fileID: 7412084954217616309, guid: 834b1ec1f6cd30d4683e095560d6facc, type: 3}
