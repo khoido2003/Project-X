@@ -188,4 +188,10 @@ public class HomerunSwingExecutorView : SkillExecutorView
 
         FinishSkill(skill);
     }
+
+    protected override void OnDestroy()
+    {
+        StopAllCoroutines(); // Stop any running charge/swing coroutines
+        base.OnDestroy();
+    }
 }

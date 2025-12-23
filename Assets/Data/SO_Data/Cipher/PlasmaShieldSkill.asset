@@ -19,7 +19,7 @@ MonoBehaviour:
   keyTrigger: E
   damage: 0
   castRange: 0
-  cooldown: 1
+  cooldown: 4
   hitVfxPrefab: {fileID: 0}
   skillVfxPrefab: {fileID: 9182071414042874320, guid: d157ae1c06c365d4fb024376bdf83cab, type: 3}
   activateSound: {fileID: 0}

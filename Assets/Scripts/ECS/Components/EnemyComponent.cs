@@ -8,6 +8,10 @@ public enum EnemyState
     Chase,
     TakeCover,
     Attack,
+   
+    JumpAttack,   // Boss-only: leap attack to close distance
+    Flamethrower, // Boss-only: cone AoE damage
+   
     Dead,
 }
 

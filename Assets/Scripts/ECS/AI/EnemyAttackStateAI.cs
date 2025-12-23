@@ -13,7 +13,6 @@ public class EnemyAttackStateAI : IEnemyState
         var weapon = world.Components.Get<WeaponDataComponent>(entity);
         var attack = world.Components.Get<AttackDataComponent>(entity);
 
-        // Defensive reset in case the previous attack never fired an end event (network desync, missing anim event, etc.)
         attack.IsAttacking = false;
         enemy.StateTime = 0f;
 
@@ -22,7 +21,7 @@ public class EnemyAttackStateAI : IEnemyState
             // Immediately snap to face target when entering attack state
             SnapToFaceTarget(world, entity, enemy);
 
-            // Fire immediately on entering the state if we're in range and off cooldown
+            // Fire immediately on entering the state if in range and off cooldown
             TryAttack(world, entity, enemy, weapon, attack);
         }
     }
@@ -54,8 +53,36 @@ public class EnemyAttackStateAI : IEnemyState
 
         if (dist > weapon.BaseRange * 1.1f)
         {
+            // Boss: Check for special moves when target moved away
+            if (enemy.IsBoss && world.Components.TryGet(entity, out BossComponent boss))
+            {
+                // Prefer jump attack to close distance
+                if (boss.CanJumpAttack && dist >= boss.JumpAttackMinRange && dist <= boss.JumpAttackRange)
+                {
+                    EnemyAIHelpers.ChangeState(world, entity, EnemyState.JumpAttack);
+                    return;
+                }
+
+                // Use flamethrower if jump is on cooldown and in range
+                if (boss.CanFlamethrower && dist <= boss.FlamethrowerRange)
+                {
+                    EnemyAIHelpers.ChangeState(world, entity, EnemyState.Flamethrower);
+                    return;
+                }
+            }
+
             EnemyAIHelpers.ChangeState(world, entity, EnemyState.Chase);
             return;
+        }
+
+        // Boss: Use flamethrower if in range and ready
+        if (enemy.IsBoss && world.Components.TryGet(entity, out BossComponent bossComp))
+        {
+            if (bossComp.CanFlamethrower && dist <= bossComp.FlamethrowerRange)
+            {
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.Flamethrower);
+                return;
+            }
         }
 
         FaceTarget(world, entity, enemy);
@@ -105,7 +132,7 @@ public class EnemyAttackStateAI : IEnemyState
             {
                 targetVelocity = targetMovement.Velocity;
             }
-            
+
             PerformAttack(world, entity, targetTf.Position, targetVelocity, weapon);
         }
     }
@@ -167,26 +194,32 @@ public class EnemyAttackStateAI : IEnemyState
     /// <summary>
     /// Perform attack with target prediction for better accuracy
     /// </summary>
-    private void PerformAttack(World world, EntityId entity, Vector3 targetPos, Vector3 targetVelocity, WeaponDataComponent weapon)
+    private void PerformAttack(
+        World world,
+        EntityId entity,
+        Vector3 targetPos,
+        Vector3 targetVelocity,
+        WeaponDataComponent weapon
+    )
     {
         var attack = world.Components.Get<AttackDataComponent>(entity);
         var enemyTf = world.Components.Get<TransformComponent>(entity);
 
         Vector3 toTarget = targetPos - enemyTf.Position;
         float distance = toTarget.magnitude;
-        
+
         // Calculate predicted target position (lead the target)
         Vector3 predictedTargetPos = targetPos;
-        
+
         // Only predict for ranged (projectile) attacks
         if (weapon.ProjectileSpeed > 0 && distance > 0)
         {
             // Time for projectile to reach target at current position
             float timeToTarget = distance / weapon.ProjectileSpeed;
-            
+
             // Predict where target will be when projectile arrives
             predictedTargetPos = targetPos + targetVelocity * timeToTarget * 0.8f; // 0.8 factor for slight underprediction
-            
+
             // Keep prediction on same height plane
             predictedTargetPos.y = targetPos.y;
         }
@@ -194,12 +227,12 @@ public class EnemyAttackStateAI : IEnemyState
         // Set attack direction to predicted position
         Vector3 direction = (predictedTargetPos - enemyTf.Position).normalized;
         direction.y = 0f;
-        
+
         if (direction.sqrMagnitude < 0.0001f)
         {
             direction = enemyTf.Rotation * Vector3.forward;
         }
-        
+
         attack.AttackDirection = direction.normalized;
         attack.IsAttacking = true;
         attack.LastAttackTime = Time.time;
@@ -224,4 +257,3 @@ public class EnemyAttackStateAI : IEnemyState
 
     public void OnExit(World world, EntityId entity) { }
 }
-

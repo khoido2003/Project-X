@@ -205,9 +205,9 @@ public class NetworkGameStateManager : NetworkBehaviour
                 break;
 
             case GamePhase.GameEnd:
-                // Destroy all enemies and players when match ends
-                DestroyAllEntities();
+                // CRITICAL: Calculate results BEFORE destroying entities!
                 CalculateAndBroadcastResults();
+                DestroyAllEntities();
                 BroadcastPhaseStartClientRpc(newPhase, _netCurrentRound.Value + 1, upgradePhaseDuration);
                 break;
         }
@@ -517,7 +517,8 @@ public class NetworkGameStateManager : NetworkBehaviour
     {
         List<PlayerResult> results = new();
 
-        foreach (var (entity, score, owner) in _world.Components.Query<PlayerScoreComponent, NetworkOwnerComponent>())
+        // IMPORTANT: Only include actual players (not enemies that might have scores)
+        foreach (var (entity, score, owner, _) in _world.Components.Query<PlayerScoreComponent, NetworkOwnerComponent, PlayerTagComponent>())
         {
             string playerName = $"Player_{owner.ClientId}";
             if (_world.Components.TryGet(entity, out CharacterSelectionComponent characterSelection))

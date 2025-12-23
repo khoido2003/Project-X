@@ -16,8 +16,15 @@ public class WaveManager : MonoBehaviour
     [SerializeField]
     private List<WaveConfiguration> waveConfigs = new();
 
+    [Header("Boss Configuration")]
     [SerializeField]
-    private EnemyDefinitionSO bossEnemy;
+    private BossDefinitionSO bossDefinition;
+
+    [SerializeField]
+    private int bossSpawnRound = 2;
+    
+    [SerializeField]
+    private float bossFightTimeLimit = 120f; // 2 minutes max for boss fight
 
     [Header("Spawn Points")]
     [SerializeField]
@@ -44,7 +51,13 @@ public class WaveManager : MonoBehaviour
 
     private World _world;
     private SpawnSystem _spawnSystem;
+    private BossFactory _bossFactory;
     private Coroutine _continuousSpawnCoroutine;
+    private Coroutine _bossFightTimerCoroutine;
+    private bool _bossSpawned = false;
+    private EntityId _bossEntityId;
+    
+    public event System.Action OnBossFightTimeout;
 
     private void Start()
     {
@@ -63,6 +76,9 @@ public class WaveManager : MonoBehaviour
             {
                 Debug.LogError("[Wave Manager] Failed to get SpawnSystem");
             }
+
+            // Initialize BossFactory
+            _bossFactory = new BossFactory(_world);
         }
 
         // Subscribe to death events once
@@ -86,6 +102,13 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
+        // Check if this is a boss round
+        if (round % bossSpawnRound == 0 && bossDefinition != null)
+        {
+            SpawnBoss();
+            // return; // Boss round = boss only, no regular enemies
+        }
+
         WaveConfiguration configuration = GetWaveConfig(round);
 
         if (configuration == null)
@@ -105,6 +128,93 @@ public class WaveManager : MonoBehaviour
         {
             _continuousSpawnCoroutine = StartCoroutine(ContinuousSpawnCoroutine(configuration));
         }
+    }
+
+    public void SpawnBoss()
+    {
+        if (_bossSpawned)
+        {
+            Debug.LogWarning("[WaveManager] Boss already spawned!");
+            return;
+        }
+
+        if (bossDefinition == null)
+        {
+            Debug.LogError("[WaveManager] No boss definition assigned!");
+            return;
+        }
+
+        // Get boss spawn position
+        Vector3 spawnPos = Vector3.zero;
+        if (bossSpawnPoints != null && bossSpawnPoints.Length > 0)
+        {
+            Transform spawnPoint = bossSpawnPoints[UnityEngine.Random.Range(0, bossSpawnPoints.Length)];
+            spawnPos = spawnPoint.position;
+        }
+        else if (enemySpawnPoints != null && enemySpawnPoints.Length > 0)
+        {
+            // Fallback to enemy spawn points
+            Transform spawnPoint = enemySpawnPoints[UnityEngine.Random.Range(0, enemySpawnPoints.Length)];
+            spawnPos = spawnPoint.position;
+        }
+
+        // Spawn the boss
+        _bossFactory.CreateNetworkBoss(bossDefinition, spawnPos, out EntityId bossEntity);
+        _bossSpawned = true;
+        _bossEntityId = bossEntity;
+
+        // Start boss fight timer
+        if (_bossFightTimerCoroutine != null)
+        {
+            StopCoroutine(_bossFightTimerCoroutine);
+        }
+        _bossFightTimerCoroutine = StartCoroutine(BossFightTimerCoroutine());
+
+        Debug.Log($"[WaveManager] Boss '{bossDefinition.bossName}' spawned at {spawnPos}! Time limit: {bossFightTimeLimit}s");
+    }
+
+    private IEnumerator BossFightTimerCoroutine()
+    {
+        yield return new WaitForSeconds(bossFightTimeLimit);
+        
+        // Time's up! Kill the boss and end the fight
+        if (_bossSpawned && _world != null)
+        {
+            Debug.Log("[WaveManager] Boss fight timeout! Ending boss round.");
+            
+            // Force kill the boss
+            if (_world.Components.TryGet(_bossEntityId, out HealthDataComponent health))
+            {
+                health.CurrentHealth = 0;
+                health.IsDead = true;
+                _world.Events.Publish(new EntityDeathEvent { Entity = _bossEntityId });
+            }
+            
+            OnBossFightTimeout?.Invoke();
+        }
+    }
+
+    public void ResetBossSpawned()
+    {
+        _bossSpawned = false;
+        _bossEntityId = default;
+        
+        if (_bossFightTimerCoroutine != null)
+        {
+            StopCoroutine(_bossFightTimerCoroutine);
+            _bossFightTimerCoroutine = null;
+        }
+    }
+    
+    public bool IsBossAlive()
+    {
+        if (!_bossSpawned) return false;
+        
+        if (_world.Components.TryGet(_bossEntityId, out HealthDataComponent health))
+        {
+            return !health.IsDead && health.CurrentHealth > 0;
+        }
+        return false;
     }
 
     private IEnumerator SpawnWaveCoroutine(WaveConfiguration config)
@@ -339,41 +449,6 @@ public class WaveManager : MonoBehaviour
         // Randomly select one of the alive players to spawn enemies near
         int randomIndex = UnityEngine.Random.Range(0, alivePlayerPositions.Count);
         return alivePlayerPositions[randomIndex];
-    }
-
-    public void SpawnBoss()
-    {
-        if (!NetworkManager.Singleton.IsServer)
-        {
-            return;
-        }
-
-        // Stop continuous spawning
-        if (_continuousSpawnCoroutine != null)
-        {
-            StopCoroutine(_continuousSpawnCoroutine);
-        }
-
-        if (bossEnemy == null)
-        {
-            Debug.LogError("[WaveManager] No boss enemy configured!");
-            return;
-        }
-
-        // Find boss spawn point
-        Transform bossSpawn = FindBossSpawnPoint();
-        Vector3 spawnPos = bossSpawn != null ? bossSpawn.position : Vector3.zero;
-
-        Debug.Log($"[WaveManager] Spawning boss at {spawnPos}");
-
-        _spawnSystem.SpawnNetworkEnemy(bossEnemy, spawnPos);
-    }
-
-    private Transform FindBossSpawnPoint()
-    {
-        int index = UnityEngine.Random.Range(0, bossSpawnPoints.Length - 1);
-
-        return bossSpawnPoints[index];
     }
 
     public void StopSpawning()

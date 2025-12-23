@@ -227,6 +227,19 @@ public class SkillPreviewView : EntityView
             Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - no current skill selected");
             return;
         }
+        
+        // Check cooldown on client side to prevent spamming
+        if (WorldInstance.Components.TryGet(EntityInstance, out SkillSetComponent skillSet))
+        {
+            if (selectedSkillIndex >= 0 && selectedSkillIndex < skillSet.CooldownUntil.Length)
+            {
+                if (Time.time < skillSet.CooldownUntil[selectedSkillIndex])
+                {
+                    Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - skill on cooldown until {skillSet.CooldownUntil[selectedSkillIndex]}");
+                    return;
+                }
+            }
+        }
 
         Vector3 target = mouseWorldPos;
         float range = GetCurrentSkill()?.castRange ?? 0f;
@@ -282,6 +295,9 @@ public class SkillPreviewView : EntityView
 
     private void ShowSkillVfxEffect()
     {
+        // CRITICAL: Clean up any existing VFX first to prevent stacking
+        HideSkillVfxEffect();
+        
         if (weaponVfxEffectSocket == null)
         {
             weaponVfxEffectSocket = GetComponentInChildren<SkillVfxEffectSocket>();
@@ -302,7 +318,7 @@ public class SkillPreviewView : EntityView
 
         var currentSkill = GetCurrentSkill();
 
-        if (currentSkill.skillVfxPrefab == null)
+        if (currentSkill == null || currentSkill.skillVfxPrefab == null)
         {
             return;
         }
@@ -327,6 +343,7 @@ public class SkillPreviewView : EntityView
 
     private void OnDestroy()
     {
+        HideSkillVfxEffect();
         HidePreview();
     }
 }

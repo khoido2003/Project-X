@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca3de4d95b7258a4ea791b4c8fccc405, type: 3}
+  m_Name: CorruptedMech
+  m_EditorClassIdentifier: Assembly-CSharp::BossDefinitionSO
+  prefab: {fileID: 4147245692572374181, guid: 922a49f854a85e945b728778ee8c9db9, type: 3}
+  bossName: Corrupted Mech
+  maxHealth: 2000
+  moveSpeed: 4
+  enrageHealthThreshold: 0.3
+  hammerDamage: 40
+  hammerCooldown: 1.5
+  hammerRange: 3
+  hammerAnimationTrigger: attack
+  totalHammerAnimations: 2
+  hammerImpactVFX: {fileID: 198633821086180066, guid: 2fc2b4305b63e364b8dfa3b209f8ae8b, type: 3}
+  hammerSwingSound: {fileID: 8300000, guid: 0c81ae95d73724800ab386a76a55cf99, type: 3}
+  hammerSlamDamage: 60
+  hammerSlamRadius: 5
+  hammerSlamCooldown: 8
+  hammerSlamTrigger: attack
+  hammerSlamVFX: {fileID: 198011925041146442, guid: 319c6b2bec42ddf4d949a0bdc4f2ce3f, type: 3}
+  hammerSlamSound: {fileID: 8300000, guid: 78db9d561d1134f1c91be2940e267353, type: 3}
+  jumpAttackRange: 10
+  jumpAttackMinRange: 5
+  jumpAttackCooldown: 7
+  jumpAttackDamage: 30
+  jumpAttackRadius: 4
+  jumpDuration: 0.6
+  jumpAnimationTrigger: jumpAttack
+  jumpLandingVFX: {fileID: 198106895250101352, guid: 876473f06ffd95c42b0cae78a94bc015, type: 3}
+  jumpSound: {fileID: 8300000, guid: 8b735966d1aff452c95425551476d49b, type: 3}
+  flamethrowerCooldown: 10
+  flamethrowerDamagePerTick: 15
+  flamethrowerTickInterval: 0.3
+  flamethrowerRange: 8
+  flamethrowerAngle: 45
+  flamethrowerDuration: 3
+  flamethrowerTrigger: flamethrower
+  flamethrowerVFX: {fileID: 198015459346078236, guid: 49a1555350ecbab47bd9957762c9e75b, type: 3}
+  flamethrowerSound: {fileID: 8300000, guid: 8efd4a726f8b3490bbee00b31df3d28b, type: 3}
+  isMovingParam: isMoving
+  isRunningParam: isRunning
+  moveXParam: moveX
+  moveYParam: moveY
+  detectionRange: 20
+  loseTargetRange: 30
+  fieldOfView: 360
+  checkInterval: 0.2
+  detectionMask:
+    serializedVersion: 2
+    m_Bits: 1920
+  audioProfile: {fileID: 11400000, guid: 347998f7f5459d744ab089e6fa8d7316, type: 2}
+  enrageRoarSound: {fileID: 8300000, guid: b1ae84d271c6d40f1b3c036f3a8ada46, type: 3}
+  deathSound: {fileID: 8300000, guid: 13485403feb754f1facba07ba73ed72e, type: 3}

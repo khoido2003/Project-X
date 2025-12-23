@@ -154,6 +154,17 @@ public class SkillSystem : ISystem
             direction = Vector3.forward;
         }
 
+        // CRITICAL: Publish SkillEffectTriggerEvent to apply cooldown (otherwise instant skills have no cooldown!)
+        _world.Events.Publish(
+            new SkillEffectTriggerEvent
+            {
+                Caster = caster,
+                Skill = skill,
+                TargetPoint = targetPoint,
+                Direction = direction.normalized
+            }
+        );
+        
         _world.Events.Publish(new SkillConfirmExecutionEvent(caster, skill, targetPoint, direction.normalized));
     }
 

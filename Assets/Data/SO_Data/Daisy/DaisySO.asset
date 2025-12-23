@@ -18,8 +18,8 @@ MonoBehaviour:
   isPlayer: 1
   characterSprite: {fileID: 21300000, guid: 21b2b3f923cb29145b951d77ef5dc6e7, type: 3}
   weaponSprite: {fileID: 21300000, guid: 0e48012f5dfa16345963314be590a3c0, type: 3}
-  maxHealth: 90
-  moveSpeed: 4
+  maxHealth: 200
+  moveSpeed: 5
   forwardMultiplier: 1
   isMovingParam: isMoving
   moveXParam: moveX
@@ -31,7 +31,7 @@ MonoBehaviour:
   attacks:
   - attackName: Rifle Shoot
     executionType: 1
-    damage: 20
+    damage: 50
     cooldown: 0.5
     range: 5
     animationTrigger: attack
@@ -50,7 +50,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a1520e4226922d04a833de1b05f932f4, type: 2}
   audioProfile: {fileID: 11400000, guid: 03e229b1384b22e4e940bd950f76ac59, type: 2}
   clientId: 0
-  playerId: -1
-  isSelected: 0
+  playerId: 0
+  isSelected: 1
   enemiesDestroyed: 0
   totalDamages: 0

@@ -212,6 +212,13 @@ public class PlayerRespawnSystem : ISystem
                 && Time.time - enemy.LastDamageTime < GameConstants.DAMAGE_ATTRIBUTION_TIMEOUT
             )
             {
+                // CRITICAL: Only award points if the attacker is actually a player!
+                if (!_world.Components.Has<PlayerTagComponent>(enemy.LastAttacker))
+                {
+                    Debug.Log($"[PlayerRespawn] Enemy killed by non-player entity {enemy.LastAttacker.Id}, no points awarded");
+                    return;
+                }
+                
                 int points = enemy.IsBoss ? GameConstants.SCORE_BOSS_KILL : GameConstants.SCORE_ENEMY_KILL;
                 AwardPoints(enemy.LastAttacker, points, enemy.IsBoss, false);
             }

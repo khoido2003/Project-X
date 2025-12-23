@@ -54,6 +54,24 @@ public class EnemyChaseStateAI : IEnemyState
                 EnemyAIHelpers.ChangeState(world, entity, EnemyState.Attack);
                 return;
             }
+
+            // Boss: Check for special moves with smart priority
+            if (enemy.IsBoss && world.Components.TryGet(entity, out BossComponent boss))
+            {
+                // Close range: prefer flamethrower (it's more effective up close)
+                if (distance <= boss.FlamethrowerRange && boss.CanFlamethrower)
+                {
+                    EnemyAIHelpers.ChangeState(world, entity, EnemyState.Flamethrower);
+                    return;
+                }
+                
+                // Mid-to-far range: use jump attack to close distance
+                if (boss.CanJumpAttack && distance >= boss.JumpAttackMinRange && distance <= boss.JumpAttackRange)
+                {
+                    EnemyAIHelpers.ChangeState(world, entity, EnemyState.JumpAttack);
+                    return;
+                }
+            }
         }
 
         if (Time.time - enemy.LastCoverTime > enemy.CoverCooldown)

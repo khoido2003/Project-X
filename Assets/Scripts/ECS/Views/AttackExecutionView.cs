@@ -121,7 +121,8 @@ public class AttackExecutionView : EntityView
             // Server spawns impact effect locally
             if (@event.ImpactEffect)
             {
-                Instantiate(@event.ImpactEffect, impactPos, Quaternion.identity);
+                var impactGo = Instantiate(@event.ImpactEffect, impactPos, Quaternion.identity);
+                Destroy(impactGo, 2f); // CRITICAL: Cleanup VFX to prevent memory leak
             }
 
             // Broadcast to all clients to spawn impact effect

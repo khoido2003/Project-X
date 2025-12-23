@@ -121,6 +121,9 @@ public abstract class SkillExecutorView : EntityView
 
     protected virtual void OnDestroy()
     {
+        if (WorldInstance == null) return;
+        
+        StopAllCoroutines(); // Stop any running skill coroutines
         WorldInstance.Events.Unsubscribe<SkillConfirmExecutionEvent>(OnSkillConfirmExecutionEvent);
         WorldInstance.Events.Unsubscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
     }
