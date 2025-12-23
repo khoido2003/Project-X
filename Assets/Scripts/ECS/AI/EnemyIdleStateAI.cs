@@ -10,6 +10,12 @@ public class EnemyIdleStateAI : IEnemyState
         if (world.Components.TryGet(entity, out EnemyComponent enemy))
         {
             enemy.StateTime = 0f;
+            
+            // Boss: Immediately hunt players - no waiting!
+            if (enemy.IsBoss)
+            {
+                FindAndTargetNearestPlayer(world, entity, enemy);
+            }
         }
     }
 
@@ -25,9 +31,45 @@ public class EnemyIdleStateAI : IEnemyState
             return;
         }
 
+        // Boss: Always actively hunt players
+        if (enemy.IsBoss)
+        {
+            FindAndTargetNearestPlayer(world, entity, enemy);
+            if (!enemy.TargetEntity.Equals(default))
+            {
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.Chase);
+                return;
+            }
+        }
+
         if (enemy.StateTime > MAX_IDLE_TIME && enemy.PatrolWaypoints.Count > 0)
         {
             EnemyAIHelpers.ChangeState(world, entity, EnemyState.Patrol);
+        }
+    }
+
+    private void FindAndTargetNearestPlayer(World world, EntityId entity, EnemyComponent enemy)
+    {
+        var enemyTf = world.Components.Get<TransformComponent>(entity);
+        float nearestDist = float.MaxValue;
+        EntityId nearestPlayer = default;
+
+        foreach (var (playerEntity, player, playerTf, health) in
+            world.Components.Query<PlayerTagComponent, TransformComponent, HealthDataComponent>())
+        {
+            if (health.IsDead) continue;
+            
+            float dist = Vector3.Distance(enemyTf.Position, playerTf.Position);
+            if (dist < nearestDist)
+            {
+                nearestDist = dist;
+                nearestPlayer = playerEntity;
+            }
+        }
+
+        if (!nearestPlayer.Equals(default))
+        {
+            enemy.TargetEntity = nearestPlayer;
         }
     }
 

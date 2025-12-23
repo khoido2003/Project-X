@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 094a91e192074804bbd0d31d5140e20a, type: 3}
   m_Name: SceneAudioConfig
   m_EditorClassIdentifier: Assembly-CSharp::SceneAudioConfig
-  menuMusic: {fileID: 8300000, guid: 486166e37f63a27418057c62e8259787, type: 3}
+  menuMusic: {fileID: 8300000, guid: 2469cbacad250fc4bb9073582bf2f501, type: 3}
   characterSelectionMusic: {fileID: 8300000, guid: c4e446e9096b1674cbbfe7d4bdd5dbe1, type: 3}
   map1Music: {fileID: 8300000, guid: cd8f2744e56f1b948a405f01ac9bd54a, type: 3}
   map2Music: {fileID: 8300000, guid: cd8f2744e56f1b948a405f01ac9bd54a, type: 3}

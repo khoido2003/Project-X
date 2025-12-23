@@ -153,5 +153,10 @@ public class DashStrikeExecutorView : SkillExecutorView
             }
         }
     }
-}
 
+    protected override void OnDestroy()
+    {
+        StopAllCoroutines(); // Stop any running dash coroutines
+        base.OnDestroy();
+    }
+}

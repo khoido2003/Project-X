@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinitionSO
   prefab: {fileID: 5191787420164104229, guid: e65286c6ffec9e841a064adfb1fd947c, type: 3}
   enemyName: Enemy
-  maxHealth: 100
+  maxHealth: 120
   moveSpeed: 3
   attackRange: 5
   attackCooldown: 1.5
-  damage: 10
+  damage: 40
   isRanged: 1
   isMovingParam: isMoving
   isRunningParam: isRunning
@@ -42,7 +42,7 @@ MonoBehaviour:
   attacks:
   - attackName: Gun
     executionType: 1
-    damage: 40
+    damage: 30
     cooldown: 1
     range: 5
     animationTrigger: attack

@@ -38,6 +38,10 @@ public static class EnemyAIHelpers
         RegisterState(new EnemyPatrolStateAI());
         RegisterState(new EnemyChaseStateAI());
         RegisterState(new EnemyAttackStateAI());
+
+        RegisterState(new BossJumpAttackStateAI());
+        RegisterState(new BossFlamethrowerStateAI());
+
         RegisterState(new EnemyDeadStateAI());
         RegisterState(new EnemyTakeCoverStateAI());
     }

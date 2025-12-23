@@ -127,6 +127,7 @@ public class EnemyFactory
         EnemyComponent enemy = new EnemyComponent
         {
             IsRanged = enemyData.isRanged,
+            IsBoss = false, // Regular enemies are never bosses
             DetectionRange = enemyData.detectionRange,
             LoseTargetRange = enemyData.loseTargetRange,
             FieldOfView = enemyData.fieldOfView,
