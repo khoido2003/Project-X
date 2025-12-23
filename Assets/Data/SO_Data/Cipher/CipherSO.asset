@@ -18,7 +18,7 @@ MonoBehaviour:
   isPlayer: 1
   characterSprite: {fileID: 21300000, guid: caef1cc0f6f1d0e41b51312e944c9e22, type: 3}
   weaponSprite: {fileID: 21300000, guid: ed7b42d3ef2157a41838269516ea1647, type: 3}
-  maxHealth: 200
+  maxHealth: 250
   moveSpeed: 5
   forwardMultiplier: 1
   isMovingParam: isMoving
@@ -31,7 +31,7 @@ MonoBehaviour:
   attacks:
   - attackName: Baseball Bat
     executionType: 0
-    damage: 70
+    damage: 80
     cooldown: 1.4
     range: 1.2
     animationTrigger: attack
@@ -50,7 +50,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f3a53398fc9123f4b804ec8111e7164e, type: 2}
   audioProfile: {fileID: 11400000, guid: 6b71d1d5403a5e24badcdc590cff1a09, type: 2}
   clientId: 0
-  playerId: -1
-  isSelected: 0
+  playerId: 0
+  isSelected: 1
   enemiesDestroyed: 0
   totalDamages: 0

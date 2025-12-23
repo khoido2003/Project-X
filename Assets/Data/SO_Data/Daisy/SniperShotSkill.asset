@@ -17,9 +17,9 @@ MonoBehaviour:
   category: 5
   isInstant: 0
   keyTrigger: Space
-  damage: 150
+  damage: 250
   castRange: 8
-  cooldown: 2
+  cooldown: 4
   hitVfxPrefab: {fileID: 198633821086180066, guid: 101d62f0a3e4fef4eab61adb79c845df, type: 3}
   skillVfxPrefab: {fileID: 198533653044838976, guid: b46264f9e12caed4cb53e7c2ad64aa54, type: 3}
   activateSound: {fileID: 8300000, guid: e8e15a6dc1992406e9bf9fd158199864, type: 3}
