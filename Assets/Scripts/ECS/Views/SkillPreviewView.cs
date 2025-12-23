@@ -343,6 +343,13 @@ public class SkillPreviewView : EntityView
 
     private void OnDestroy()
     {
+        if (WorldInstance != null)
+        {
+            WorldInstance.Events.Unsubscribe<MouseWorldInputEvent>(OnMouseWorldInputEvent);
+            WorldInstance.Events.Unsubscribe<SkillPreviewRequestEvent>(OnSkillPreviewRequestEvent);
+            WorldInstance.Events.Unsubscribe<SkillExecutionRequestEvent>(OnSkillExecutionRequestEvent);
+        }
+
         HideSkillVfxEffect();
         HidePreview();
     }

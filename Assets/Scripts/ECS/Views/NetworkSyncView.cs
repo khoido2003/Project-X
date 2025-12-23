@@ -1124,14 +1124,28 @@ public class NetworkSyncView : NetworkBehaviour
         // This is what ExplosiveShotExecutorView, SniperShotExecutorView, etc. listen for
         _world.Events.Publish(new SkillConfirmExecutionEvent(_entity, buffer.Skill, targetPoint, validatedDirection));
 
-        BroadcastSkillExecutionClientRpc(targetPoint, validatedDirection);
+        // Find the skill index to pass to clients so they can look up the skill and apply cooldown
+        int skillIndexToSend = -1;
+        if (_world.Components.TryGet(_entity, out SkillSetComponent skillSetForIndex))
+        {
+            for (int i = 0; i < skillSetForIndex.Skills.Count; i++)
+            {
+                if (skillSetForIndex.Skills[i] == buffer.Skill)
+                {
+                    skillIndexToSend = i;
+                    break;
+                }
+            }
+        }
+        
+        BroadcastSkillExecutionClientRpc(targetPoint, validatedDirection, skillIndexToSend);
     }
 
     [ClientRpc]
-    private void BroadcastSkillExecutionClientRpc(Vector3 targetPoint, Vector3 direction)
+    private void BroadcastSkillExecutionClientRpc(Vector3 targetPoint, Vector3 direction, int skillIndex)
     {
         Debug.Log(
-            $"[NetworkSyncView] BroadcastSkillExecutionClientRpc called, Entity: {_entity.Id}, IsServer: {IsServer}"
+            $"[NetworkSyncView] BroadcastSkillExecutionClientRpc called, Entity: {_entity.Id}, IsServer: {IsServer}, skillIndex: {skillIndex}"
         );
 
         // Server already processed this in the RPC caller context
@@ -1140,31 +1154,44 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        if (!_world.Components.TryGet(_entity, out SkillCastBufferComponent buffer))
+        // Look up skill from SkillSetComponent using the index
+        // This is more reliable than using buffer.Skill which may not be set on client for instant skills
+        SkillDefinitionSO skill = null;
+        
+        if (skillIndex >= 0 && _world.Components.TryGet(_entity, out SkillSetComponent skillSet))
         {
-            Debug.LogWarning(
-                $"[NetworkSyncView] BroadcastSkillExecutionClientRpc: SkillCastBufferComponent not found for entity {_entity.Id}"
-            );
-            return;
+            if (skillIndex < skillSet.Skills.Count)
+            {
+                skill = skillSet.Skills[skillIndex];
+            }
+        }
+        
+        // Fallback to buffer.Skill if index lookup fails
+        if (skill == null)
+        {
+            if (_world.Components.TryGet(_entity, out SkillCastBufferComponent buffer) && buffer.Skill != null)
+            {
+                skill = buffer.Skill;
+            }
         }
 
-        if (buffer.Skill == null)
+        if (skill == null)
         {
             Debug.LogWarning(
-                $"[NetworkSyncView] BroadcastSkillExecutionClientRpc: buffer.Skill is null for entity {_entity.Id}"
+                $"[NetworkSyncView] BroadcastSkillExecutionClientRpc: Could not find skill for entity {_entity.Id} (skillIndex: {skillIndex})"
             );
             return;
         }
 
         Debug.Log(
-            $"[NetworkSyncView] Publishing SkillEffectTriggerEvent for skill: {buffer.Skill.skillName}, category: {buffer.Skill.category}"
+            $"[NetworkSyncView] Publishing SkillEffectTriggerEvent for skill: {skill.skillName}, category: {skill.category}"
         );
 
         _world.Events.Publish(
             new SkillEffectTriggerEvent
             {
                 Caster = _entity,
-                Skill = buffer.Skill,
+                Skill = skill,
                 TargetPoint = targetPoint,
                 Direction = direction,
             }

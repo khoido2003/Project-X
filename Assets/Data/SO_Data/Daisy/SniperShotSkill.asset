@@ -16,7 +16,7 @@ MonoBehaviour:
   skillName: Sniper Shot
   category: 5
   isInstant: 0
-  keyTrigger: Space
+  keyTrigger: E
   damage: 250
   castRange: 8
   cooldown: 4

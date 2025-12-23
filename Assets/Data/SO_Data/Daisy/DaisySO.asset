@@ -32,8 +32,8 @@ MonoBehaviour:
   - attackName: Rifle Shoot
     executionType: 1
     damage: 50
-    cooldown: 0.5
-    range: 5
+    cooldown: 0.4
+    range: 6
     animationTrigger: attack
     totalAnimations: 1
     hitImpactVFX: {fileID: 198670200411678530, guid: 289ba3245c9c98c42aeb93d5f45a2248, type: 3}
@@ -50,7 +50,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a1520e4226922d04a833de1b05f932f4, type: 2}
   audioProfile: {fileID: 11400000, guid: 03e229b1384b22e4e940bd950f76ac59, type: 2}
   clientId: 0
-  playerId: 0
-  isSelected: 1
+  playerId: -1
+  isSelected: 0
   enemiesDestroyed: 0
   totalDamages: 0
