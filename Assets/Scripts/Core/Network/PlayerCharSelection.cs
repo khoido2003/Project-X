@@ -173,6 +173,17 @@ public class PlayerCharSelection : NetworkBehaviour
         {
             ChangeCharacterSelectionServerRpc(charTemp);
 
+            // Play character switch sound
+            if (_changedCharacterCClip != null && AudioService.Instance != null)
+            {
+                AudioHelper.PlaySound(_changedCharacterCClip, AudioCategory.UI);
+            }
+            else
+            {
+                // Fallback to button click sound
+                CharacterSelectionManager.Instance.PlayButtonClickSound();
+            }
+
             // Immediately update UI on the client not wait for the server update
             CharacterSelectionManager.Instance.SetPlayableChar(m_playerId.Value, charTemp, IsOwner);
         }

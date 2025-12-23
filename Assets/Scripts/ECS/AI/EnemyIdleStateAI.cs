@@ -31,8 +31,9 @@ public class EnemyIdleStateAI : IEnemyState
             return;
         }
 
-        // Boss: Always actively hunt players
-        if (enemy.IsBoss)
+        // IMPROVEMENT: ALL enemies actively hunt players after short idle
+        // This makes enemies more threatening and responsive
+        if (enemy.StateTime > 0.5f)
         {
             FindAndTargetNearestPlayer(world, entity, enemy);
             if (!enemy.TargetEntity.Equals(default))
@@ -51,6 +52,17 @@ public class EnemyIdleStateAI : IEnemyState
     private void FindAndTargetNearestPlayer(World world, EntityId entity, EnemyComponent enemy)
     {
         var enemyTf = world.Components.Get<TransformComponent>(entity);
+        
+        // Boss: Check target switch cooldown to prevent instant target switching
+        if (enemy.IsBoss && world.Components.TryGet(entity, out BossComponent boss))
+        {
+            // If we had a target recently, wait before switching
+            if (!boss.LastKnownTarget.Equals(default) && !boss.CanSwitchTarget)
+            {
+                return; // Still in cooldown, don't switch targets
+            }
+        }
+        
         float nearestDist = float.MaxValue;
         EntityId nearestPlayer = default;
 
@@ -69,6 +81,15 @@ public class EnemyIdleStateAI : IEnemyState
 
         if (!nearestPlayer.Equals(default))
         {
+            // Boss: Track target switching
+            if (enemy.IsBoss && world.Components.TryGet(entity, out BossComponent bossComp))
+            {
+                if (!nearestPlayer.Equals(bossComp.LastKnownTarget))
+                {
+                    bossComp.LastTargetSwitchTime = Time.time;
+                    bossComp.LastKnownTarget = nearestPlayer;
+                }
+            }
             enemy.TargetEntity = nearestPlayer;
         }
     }

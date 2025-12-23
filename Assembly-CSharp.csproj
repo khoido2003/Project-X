@@ -50,6 +50,7 @@
     <Analyzer Include="D:\unity_projects\Project-X\Library\PackageCache\com.unity.dt.app-ui@8ac7e730dd5d\Runtime\MVVM\SourceGenerators\netstandard2.0\MVVMSourceGenerators.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\SO\Skills\CloakStrikeSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\AudioService.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
@@ -64,6 +65,7 @@
     <Compile Include="Assets\Scripts\Utils\TypescriptEffect.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\RapidFireSkillSO.cs" />
     <Compile Include="Assets\Scripts\Core\Network\NetworkObjectSpawner.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\BladeStormExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AnimationEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\TransformDataComponent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ActionFlagComponent.cs" />
@@ -109,17 +111,21 @@
     <Compile Include="Assets\Scripts\ECS\Views\TransformSyncView.cs" />
     <Compile Include="Assets\Scripts\ECS\Helpers\LoadingSceneHelper.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\GrapplingClawSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\PlayerRespawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ExplosiveProjectileView.cs" />
     <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\GrapplingClawExecutorView.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\CinemachineCameraService.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyRoom\BaseCharacterLobby.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\CloakStrikeExecutorView.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\ExplosiveShotSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IEnemyState.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\RapidFireExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\EnemyMovementView.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\BladeStormSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\CombatStateEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
     <Compile Include="Assets\Scripts\SO\NetworkSO.cs" />

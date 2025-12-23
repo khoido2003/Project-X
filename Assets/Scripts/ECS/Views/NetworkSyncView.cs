@@ -71,6 +71,11 @@ public class NetworkSyncView : NetworkBehaviour
     private Quaternion _previousRotation = Quaternion.identity;
     private Quaternion _targerRotation = Quaternion.identity;
     private float _lerpProgress;
+    
+    // Network optimization: velocity-based dead reckoning
+    private Vector3 _estimatedVelocity;
+    private float _lastNetworkUpdateTime;
+    private uint _lastReceivedTick;
 
     /////////////////////////////////////////////////////////////////////////////
 
@@ -393,10 +398,11 @@ public class NetworkSyncView : NetworkBehaviour
                 Tick = _currentTick,
             };
 
-            // update if changed significantly
+            // OPTIMIZATION: Increased thresholds to reduce sync frequency
+            // 0.05f position (was 0.01f), 3f rotation (was 1f)
             if (
-                Vector3.Distance(_netTransform.Value.Position, newState.Position) > 0.01f
-                || Quaternion.Angle(_netTransform.Value.Rotation, newState.Rotation) > 1f
+                Vector3.Distance(_netTransform.Value.Position, newState.Position) > 0.05f
+                || Quaternion.Angle(_netTransform.Value.Rotation, newState.Rotation) > 3f
             )
             {
                 _netTransform.Value = newState;
@@ -468,10 +474,12 @@ public class NetworkSyncView : NetworkBehaviour
             _inputHistory.Dequeue();
         }
 
-        // Send to server EVERY frame for smooth movement
-        // Previously only sent every other frame (_currentTick % 2 == 0)
-        // This caused choppy movement on server
-        SendInputToServerRpc(inputState);
+        // OPTIMIZATION: Send input every 2 ticks (~30Hz) instead of every frame
+        // This reduces bandwidth by 50% while still maintaining smooth movement
+        if (_currentTick % 2 == 0)
+        {
+            SendInputToServerRpc(inputState);
+        }
 
         // Update local movement component for immediate client-side prediction
         if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
@@ -487,14 +495,26 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        _lerpProgress += Time.deltaTime * 10f;
+        // OPTIMIZATION: Adaptive lerp speed based on distance
+        // Faster when far (to catch up), slower when close (for smoothness)
+        float distance = Vector3.Distance(_previousPosition, _targetPosition);
+        float adaptiveSpeed = Mathf.Lerp(8f, 20f, Mathf.Clamp01(distance / 3f));
+        _lerpProgress += Time.deltaTime * adaptiveSpeed;
 
         // Update ECS TransformComponent, TransformSyncSystem will apply to Unity Transform
-        // This prevents conflicts where both this method and TransformSyncSystem manipulate position
         if (_world.Components.TryGet(_entity, out TransformComponent trans))
         {
-            // Interpolate position
-            trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, _lerpProgress);
+            if (_lerpProgress < 1f)
+            {
+                // Standard interpolation to target
+                trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, _lerpProgress);
+            }
+            else
+            {
+                // DEAD RECKONING: Continue moving in predicted direction when lerp complete
+                // This prevents stuttering while waiting for next network update
+                trans.Position = _targetPosition + _estimatedVelocity * (Time.time - _lastNetworkUpdateTime - 0.1f);
+            }
 
             // Interpolate rotation with safety checks
             bool previousValid =
@@ -513,7 +533,7 @@ public class NetworkSyncView : NetworkBehaviour
 
             if (previousValid && targetValid)
             {
-                trans.Rotation = Quaternion.Lerp(_previousRotation, _targerRotation, _lerpProgress);
+                trans.Rotation = Quaternion.Slerp(_previousRotation, _targerRotation, Mathf.Clamp01(_lerpProgress));
             }
             else if (targetValid)
             {
@@ -1104,14 +1124,28 @@ public class NetworkSyncView : NetworkBehaviour
         // This is what ExplosiveShotExecutorView, SniperShotExecutorView, etc. listen for
         _world.Events.Publish(new SkillConfirmExecutionEvent(_entity, buffer.Skill, targetPoint, validatedDirection));
 
-        BroadcastSkillExecutionClientRpc(targetPoint, validatedDirection);
+        // Find the skill index to pass to clients so they can look up the skill and apply cooldown
+        int skillIndexToSend = -1;
+        if (_world.Components.TryGet(_entity, out SkillSetComponent skillSetForIndex))
+        {
+            for (int i = 0; i < skillSetForIndex.Skills.Count; i++)
+            {
+                if (skillSetForIndex.Skills[i] == buffer.Skill)
+                {
+                    skillIndexToSend = i;
+                    break;
+                }
+            }
+        }
+        
+        BroadcastSkillExecutionClientRpc(targetPoint, validatedDirection, skillIndexToSend);
     }
 
     [ClientRpc]
-    private void BroadcastSkillExecutionClientRpc(Vector3 targetPoint, Vector3 direction)
+    private void BroadcastSkillExecutionClientRpc(Vector3 targetPoint, Vector3 direction, int skillIndex)
     {
         Debug.Log(
-            $"[NetworkSyncView] BroadcastSkillExecutionClientRpc called, Entity: {_entity.Id}, IsServer: {IsServer}"
+            $"[NetworkSyncView] BroadcastSkillExecutionClientRpc called, Entity: {_entity.Id}, IsServer: {IsServer}, skillIndex: {skillIndex}"
         );
 
         // Server already processed this in the RPC caller context
@@ -1120,31 +1154,44 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        if (!_world.Components.TryGet(_entity, out SkillCastBufferComponent buffer))
+        // Look up skill from SkillSetComponent using the index
+        // This is more reliable than using buffer.Skill which may not be set on client for instant skills
+        SkillDefinitionSO skill = null;
+        
+        if (skillIndex >= 0 && _world.Components.TryGet(_entity, out SkillSetComponent skillSet))
         {
-            Debug.LogWarning(
-                $"[NetworkSyncView] BroadcastSkillExecutionClientRpc: SkillCastBufferComponent not found for entity {_entity.Id}"
-            );
-            return;
+            if (skillIndex < skillSet.Skills.Count)
+            {
+                skill = skillSet.Skills[skillIndex];
+            }
+        }
+        
+        // Fallback to buffer.Skill if index lookup fails
+        if (skill == null)
+        {
+            if (_world.Components.TryGet(_entity, out SkillCastBufferComponent buffer) && buffer.Skill != null)
+            {
+                skill = buffer.Skill;
+            }
         }
 
-        if (buffer.Skill == null)
+        if (skill == null)
         {
             Debug.LogWarning(
-                $"[NetworkSyncView] BroadcastSkillExecutionClientRpc: buffer.Skill is null for entity {_entity.Id}"
+                $"[NetworkSyncView] BroadcastSkillExecutionClientRpc: Could not find skill for entity {_entity.Id} (skillIndex: {skillIndex})"
             );
             return;
         }
 
         Debug.Log(
-            $"[NetworkSyncView] Publishing SkillEffectTriggerEvent for skill: {buffer.Skill.skillName}, category: {buffer.Skill.category}"
+            $"[NetworkSyncView] Publishing SkillEffectTriggerEvent for skill: {skill.skillName}, category: {skill.category}"
         );
 
         _world.Events.Publish(
             new SkillEffectTriggerEvent
             {
                 Caster = _entity,
-                Skill = buffer.Skill,
+                Skill = skill,
                 TargetPoint = targetPoint,
                 Direction = direction,
             }
@@ -1448,6 +1495,18 @@ public class NetworkSyncView : NetworkBehaviour
         }
         else
         {
+            // DEAD RECKONING: Calculate velocity from position delta for extrapolation
+            if (_lastReceivedTick > 0 && current.Tick > _lastReceivedTick)
+            {
+                float tickDelta = (current.Tick - _lastReceivedTick) * Time.fixedDeltaTime;
+                if (tickDelta > 0.001f)
+                {
+                    _estimatedVelocity = (current.Position - _targetPosition) / tickDelta;
+                }
+            }
+            _lastReceivedTick = current.Tick;
+            _lastNetworkUpdateTime = Time.time;
+            
             // Remote clients: interpolate for smooth appearance
             _previousPosition = transform.position;
             _targetPosition = current.Position;

@@ -21,16 +21,22 @@ public class BossFlamethrowerStateAI : IEnemyState
         // Trigger flamethrower animation
         world.Events.Publish(new AnimationParameterEvent(entity, "flamethrower", AnimationParameterType.Trigger, null));
 
-        // Spawn flamethrower VFX attached to boss
+        // Spawn flamethrower VFX attached to boss (server side)
+        var registry = world.Services.Resolve<EntityViewRegistry>();
         if (boss.FlamethrowerVFXPrefab != null)
         {
-            var registry = world.Services.Resolve<EntityViewRegistry>();
             if (registry.TryGet(entity, out EntityView view))
             {
                 boss.ActiveFlameVFX = Object.Instantiate(boss.FlamethrowerVFXPrefab, view.transform);
                 boss.ActiveFlameVFX.transform.localPosition = new Vector3(0, 1.5f, 0.5f); // Position in front
                 boss.ActiveFlameVFX.Play();
             }
+        }
+        
+        // Broadcast VFX start to all clients
+        if (registry.TryGet(entity, out EntityView entityView) && entityView.TryGetComponent(out EnemyNetworkSyncView syncView))
+        {
+            syncView.BroadcastBossFlamethrowerVfxClientRpc(true);
         }
 
         // Play flamethrower sound directly using the clip from BossComponent
@@ -173,12 +179,19 @@ public class BossFlamethrowerStateAI : IEnemyState
             boss.IsFlaming = false;
             boss.FlameProgress = 0f;
             
-            // Cleanup flamethrower VFX
+            // Cleanup flamethrower VFX on server
             if (boss.ActiveFlameVFX != null)
             {
                 boss.ActiveFlameVFX.Stop();
                 Object.Destroy(boss.ActiveFlameVFX.gameObject, 0.5f);
                 boss.ActiveFlameVFX = null;
+            }
+            
+            // Broadcast VFX stop to all clients
+            var registry = world.Services.Resolve<EntityViewRegistry>();
+            if (registry.TryGet(entity, out EntityView view) && view.TryGetComponent(out EnemyNetworkSyncView syncView))
+            {
+                syncView.BroadcastBossFlamethrowerVfxClientRpc(false);
             }
         }
     }

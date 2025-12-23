@@ -60,6 +60,28 @@ public class DamageSystem : ISystem
             return;
         }
 
+        // Faction check: Prevent friendly fire
+        // - Enemies (including bosses) should NOT damage other enemies
+        // - Players should NOT damage other players (in PvE context)
+        bool attackerIsEnemy = _world.Components.Has<EnemyComponent>(@event.Attacker);
+        bool targetIsEnemy = _world.Components.Has<EnemyComponent>(@event.Target);
+        bool attackerIsPlayer = _world.Components.Has<PlayerTagComponent>(@event.Attacker);
+        bool targetIsPlayer = _world.Components.Has<PlayerTagComponent>(@event.Target);
+
+        // If both are enemies, skip damage (no friendly fire between enemies/bosses)
+        if (attackerIsEnemy && targetIsEnemy)
+        {
+            return;
+        }
+
+        // If both are players, skip damage (no PvP in PvE mode)
+        /*
+        if (attackerIsPlayer && targetIsPlayer)
+        {
+            return;
+        }
+        */
+        
         float actualDamage = @event.Amount;
 
         // Apply defense buffs (shield)
@@ -190,6 +212,7 @@ public class DamageSystem : ISystem
     {
         _world.Events.Unsubscribe<DamageEvent>(OnDamage);
         _world.Events.Unsubscribe<ApplyBuffEvent>(OnApplyBuff);
+        _defenseBuffs.Clear();
     }
 
     private void OnApplyBuff(ApplyBuffEvent @event)

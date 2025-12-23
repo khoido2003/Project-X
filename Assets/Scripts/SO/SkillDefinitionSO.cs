@@ -11,6 +11,11 @@ public enum SkillCategory
     RapidFire,
     ExplosiveShot,
     SniperShot,
+    
+    // Murder Kitten
+    CloakStrike,
+    GrapplingClaw,
+    BladeStorm,
 }
 
 public abstract class SkillDefinitionSO : NetworkSO

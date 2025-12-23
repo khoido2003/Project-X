@@ -29,7 +29,10 @@ public class EnemyVisionSystem : ISystem
             }
 
             enemy.TimeSinceLastCheck += dt;
-            if (enemy.TimeSinceLastCheck < enemy.CheckInterval)
+            
+            // IMPROVEMENT: Faster check interval when no target (more responsive detection)
+            float effectiveCheckInterval = enemy.TargetEntity.Equals(default) ? 0.1f : enemy.CheckInterval;
+            if (enemy.TimeSinceLastCheck < effectiveCheckInterval)
             {
                 continue;
             }
@@ -81,12 +84,18 @@ public class EnemyVisionSystem : ISystem
                     continue;
                 }
 
-                // FOV check
-                Vector3 forward = trans.Rotation * Vector3.forward;
-                float angle = Vector3.Angle(forward, dirFlat.normalized);
-                if (angle > enemy.FieldOfView * 0.5f)
+                // IMPROVEMENT: Skip FOV check if player is very close (within 3m)
+                // This ensures enemies detect players sneaking up behind them
+                const float IMMEDIATE_DETECTION_RANGE_SQR = 9f; // 3m squared
+                if (dsq > IMMEDIATE_DETECTION_RANGE_SQR)
                 {
-                    continue;
+                    // FOV check only for players beyond 3m
+                    Vector3 forward = trans.Rotation * Vector3.forward;
+                    float angle = Vector3.Angle(forward, dirFlat.normalized);
+                    if (angle > enemy.FieldOfView * 0.5f)
+                    {
+                        continue;
+                    }
                 }
 
                 // LOS check
