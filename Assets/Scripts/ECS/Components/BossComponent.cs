@@ -46,10 +46,21 @@ public class BossComponent
     public AudioClip HammerSwingSound;
     public AudioClip HammerSlamSound;
 
+    // --- Target Switching ---
+    public float TargetSwitchCooldown = 2f; // Delay before switching to a new target
+    public float LastTargetSwitchTime;
+    public EntityId LastKnownTarget; // Track to detect target changes
+    
+    // --- Stuck Prevention ---
+    public float StuckCheckTimer;
+    public Vector3 LastStuckCheckPosition;
+    public int ConsecutiveStuckChecks; // How many times we've been stuck in a row
+
     // --- Helpers ---
     public bool CanJumpAttack => Time.time >= LastJumpTime + JumpAttackCooldown;
     public bool CanFlamethrower => Time.time >= LastFlamethrowerTime + FlamethrowerCooldown;
     public bool CanHammerSlam => Time.time >= LastHammerSlamTime + HammerSlamCooldown;
+    public bool CanSwitchTarget => Time.time >= LastTargetSwitchTime + TargetSwitchCooldown;
 }
 
 public enum BossPhase

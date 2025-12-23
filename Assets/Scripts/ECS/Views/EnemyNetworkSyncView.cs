@@ -43,6 +43,16 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     [SerializeField]
     private string _attackAnimationTrigger = "attack";
+    
+    [Header("Boss VFX (Configure on Boss Prefab)")]
+    [SerializeField]
+    private ParticleSystem _bossJumpLandingVFX;
+    
+    [SerializeField]
+    private ParticleSystem _bossFlamethrowerVFX;
+    
+    // Active flamethrower VFX instance (for start/stop)
+    private ParticleSystem _activeFlameVFX;
 
     private uint _currentTick;
 
@@ -54,6 +64,11 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     private float _lerpProgress;
     private bool _isInitialized = false;
     private bool _firstTransformReceived = false;
+
+    // Network optimization: velocity-based dead reckoning
+    private Vector3 _estimatedVelocity;
+    private float _lastNetworkUpdateTime;
+    private uint _lastReceivedTick;
 
     // Public setters for EnemyFactory to configure weapon data
     public void SetWeaponData(
@@ -258,6 +273,57 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             ServerUpdate();
         }
+        else
+        {
+            // CLIENT: Interpolate enemy position for smooth movement
+            ClientInterpolation();
+        }
+    }
+
+    private void ClientInterpolation()
+    {
+        if (!_firstTransformReceived)
+            return;
+
+        // OPTIMIZATION: Distance-based LOD for client interpolation
+        // Far enemies update less frequently to save CPU
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            float distToCamera = Vector3.Distance(transform.position, mainCam.transform.position);
+            
+            // Very far enemies (>50m): update every 4 frames
+            if (distToCamera > 50f && Time.frameCount % 4 != 0)
+            {
+                return;
+            }
+            // Medium distance (>25m): update every 2 frames
+            else if (distToCamera > 25f && Time.frameCount % 2 != 0)
+            {
+                return;
+            }
+            // Close enemies: update every frame (no skip)
+        }
+            
+        // Adaptive lerp speed based on distance
+        float distance = Vector3.Distance(_previousPosition, _targetPosition);
+        float adaptiveSpeed = Mathf.Lerp(8f, 20f, Mathf.Clamp01(distance / 3f));
+        _lerpProgress += Time.deltaTime * adaptiveSpeed;
+
+        if (_world.Components.TryGet(_entity, out TransformComponent trans))
+        {
+            if (_lerpProgress < 1f)
+            {
+                trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, _lerpProgress);
+            }
+            else
+            {
+                // Dead reckoning: continue in predicted direction
+                trans.Position = _targetPosition + _estimatedVelocity * (Time.time - _lastNetworkUpdateTime - 0.1f);
+            }
+
+            trans.Rotation = Quaternion.Slerp(_previousRotation, _targetRotation, Mathf.Clamp01(_lerpProgress));
+        }
     }
 
     private void FixedUpdate()
@@ -301,12 +367,21 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             transform.SetPositionAndRotation(trans.Position, trans.Rotation);
 
-            _netTransform.Value = new NetworkTransformState
+            var newState = new NetworkTransformState
             {
                 Position = trans.Position,
                 Rotation = trans.Rotation,
                 Tick = _currentTick,
             };
+
+            // OPTIMIZATION: Only sync if position/rotation changed significantly
+            if (
+                Vector3.Distance(_netTransform.Value.Position, newState.Position) > 0.05f
+                || Quaternion.Angle(_netTransform.Value.Rotation, newState.Rotation) > 3f
+            )
+            {
+                _netTransform.Value = newState;
+            }
         }
     }
 
@@ -487,6 +562,47 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         Debug.Log($"[EnemyNetworkSync] Client: Enemy {_entity} died");
     }
 
+    /// <summary>
+    /// Broadcasts boss jump landing VFX to all clients
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastBossJumpLandingVfxClientRpc(Vector3 position)
+    {
+        if (IsServer) return;
+
+        // Use serialized prefab from this view (available on prefab, works on clients!)
+        if (_bossJumpLandingVFX != null)
+        {
+            var vfx = Instantiate(_bossJumpLandingVFX, position, Quaternion.identity);
+            vfx.Play();
+            Destroy(vfx.gameObject, 3f);
+        }
+    }
+
+    /// <summary>
+    /// Broadcasts boss flamethrower VFX start/stop to all clients
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastBossFlamethrowerVfxClientRpc(bool isStarting)
+    {
+        if (IsServer) return;
+
+        if (isStarting && _bossFlamethrowerVFX != null)
+        {
+            // Spawn and attach to boss
+            _activeFlameVFX = Instantiate(_bossFlamethrowerVFX, transform);
+            _activeFlameVFX.transform.localPosition = new Vector3(0, 1.5f, 0.5f);
+            _activeFlameVFX.Play();
+        }
+        else if (!isStarting && _activeFlameVFX != null)
+        {
+            // Stop and destroy
+            _activeFlameVFX.Stop();
+            Destroy(_activeFlameVFX.gameObject, 1f);
+            _activeFlameVFX = null;
+        }
+    }
+
     #endregion
 
 
@@ -647,6 +763,8 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             _targetPosition = current.Position;
             _previousRotation = current.Rotation;
             _targetRotation = current.Rotation;
+            _lastReceivedTick = current.Tick;
+            _lastNetworkUpdateTime = Time.time;
 
             if (_world.Components.TryGet(_entity, out TransformComponent trans))
             {
@@ -658,20 +776,24 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
+        // DEAD RECKONING: Calculate velocity from position delta for extrapolation
+        if (_lastReceivedTick > 0 && current.Tick > _lastReceivedTick)
+        {
+            float tickDelta = (current.Tick - _lastReceivedTick) * Time.fixedDeltaTime;
+            if (tickDelta > 0.001f)
+            {
+                _estimatedVelocity = (current.Position - _targetPosition) / tickDelta;
+            }
+        }
+        _lastReceivedTick = current.Tick;
+        _lastNetworkUpdateTime = Time.time;
+
         _previousPosition = _targetPosition;
         _targetPosition = current.Position;
         _previousRotation = _targetRotation;
         _targetRotation = current.Rotation;
 
         _lerpProgress = 0f;
-
-        // Update ECS TransformComponent on EVERY position change
-        // EnemyMovementView reads from ECS to apply to Unity Transform with interpolation
-        if (_world.Components.TryGet(_entity, out TransformComponent transComponent))
-        {
-            transComponent.Position = current.Position;
-            transComponent.Rotation = current.Rotation;
-        }
     }
 
     private void OnAttackExecutionRequest(AttackExecutionRequestEvent @event)
