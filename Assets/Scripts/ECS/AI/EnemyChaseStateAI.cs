@@ -19,7 +19,14 @@ public class EnemyChaseStateAI : IEnemyState
     {
         var enemy = world.Components.Get<EnemyComponent>(entity);
         var weapon = world.Components.Get<WeaponDataComponent>(entity);
+        var enemyTf = world.Components.Get<TransformComponent>(entity);
         enemy.StateTime += dt;
+
+        // Boss: Dynamically switch to nearest player during chase
+        if (enemy.IsBoss)
+        {
+            UpdateBossTargetToNearest(world, entity, enemy, enemyTf);
+        }
 
         if (enemy.TargetEntity.Equals(default))
         {
@@ -36,7 +43,7 @@ public class EnemyChaseStateAI : IEnemyState
 
         Vector3 targetPos = targetView.transform.position;
 
-        float distance = Vector3.Distance(targetPos, world.Components.Get<TransformComponent>(entity).Position);
+        float distance = Vector3.Distance(targetPos, enemyTf.Position);
 
         // Switch to attack if near player
         if (enemy.IsRanged)
@@ -119,5 +126,38 @@ public class EnemyChaseStateAI : IEnemyState
         world.Events.Publish(
             new AnimationParameterEvent(entity, animation.IsRunningParam, AnimationParameterType.Bool, false)
         );
+    }
+    
+    /// <summary>
+    /// Updates boss target to the nearest alive player during chase
+    /// </summary>
+    private void UpdateBossTargetToNearest(World world, EntityId entity, EnemyComponent enemy, TransformComponent enemyTf)
+    {
+        float nearestDist = float.MaxValue;
+        EntityId nearestPlayer = default;
+
+        foreach (var (playerEntity, player, playerTf, health) in
+            world.Components.Query<PlayerTagComponent, TransformComponent, HealthDataComponent>())
+        {
+            if (health.IsDead) continue;
+            
+            float dist = Vector3.Distance(enemyTf.Position, playerTf.Position);
+            if (dist < nearestDist)
+            {
+                nearestDist = dist;
+                nearestPlayer = playerEntity;
+            }
+        }
+
+        // Switch to nearest if different from current (and there is a valid target)
+        if (!nearestPlayer.Equals(default) && !nearestPlayer.Equals(enemy.TargetEntity))
+        {
+            enemy.TargetEntity = nearestPlayer;
+            
+            // Request new path to new target
+            world.Events.Publish(new EnemyPathRequestEvent(entity, 
+                world.Components.Get<TransformComponent>(nearestPlayer).Position, 
+                enemy.StoppingDistance));
+        }
     }
 }

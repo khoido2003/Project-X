@@ -10490,6 +10490,8 @@ MonoBehaviour:
   _projectileLifetime: 3
   _projectileSpawnOffset: {x: 0, y: 0, z: 0}
   _attackAnimationTrigger: attack
+  _bossJumpLandingVFX: {fileID: 198106895250101352, guid: 876473f06ffd95c42b0cae78a94bc015, type: 3}
+  _bossFlamethrowerVFX: {fileID: 198015459346078236, guid: 49a1555350ecbab47bd9957762c9e75b, type: 3}
 --- !u!1 &4156250815486133128
 GameObject:
   m_ObjectHideFlags: 0

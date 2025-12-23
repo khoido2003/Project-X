@@ -22,9 +22,20 @@ public class EnemyAISystem : ISystem
             return;
         }
 
+        int frameIndex = Time.frameCount % 3;
+        
         foreach (var (entity, ai) in _world.Components.Query<EnemyComponent>())
         {
-            ai.StateTime += dt;
+            // OPTIMIZATION: Stagger updates - only 1/3 of enemies update each frame
+            // Boss always updates for responsiveness, others are staggered by entity ID
+            if (!ai.IsBoss && (entity.Id % 3) != frameIndex)
+            {
+                continue;
+            }
+            
+            // Multiply dt by 3 to compensate for updating every 3rd frame
+            float effectiveDt = ai.IsBoss ? dt : dt * 3f;
+            ai.StateTime += effectiveDt;
 
             IEnemyState state = EnemyAIHelpers.GetState(ai.CurrentState);
 
@@ -32,7 +43,7 @@ public class EnemyAISystem : ISystem
             {
                 try
                 {
-                    state.OnUpdate(_world, entity, dt);
+                    state.OnUpdate(_world, entity, effectiveDt);
                 }
                 catch (Exception ex)
                 {

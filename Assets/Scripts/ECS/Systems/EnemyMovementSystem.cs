@@ -11,11 +11,11 @@ public class EnemyMovementSystem : ISystem
     // --- Config ---
     private const float WAYPOINT_TOLERANCE = 0.5f;
     private const float NO_PROGRESS_THRESHOLD = 0.1f;
-    private const float NO_PROGRESS_REPATH_TIME = 0.8f;  // Reduced from 2f - faster unstuck
-    private const float STUCK_REPATH_TIME = 0.6f;       // Reduced from 1.5f - faster unstuck
-    private const float DEFAULT_REPATH_INTERVAL = 0.8f;  // Reduced from 1f - more frequent updates
+    private const float NO_PROGRESS_REPATH_TIME = 0.5f;  // Reduced from 0.8f - faster unstuck
+    private const float STUCK_REPATH_TIME = 0.4f;        // Reduced from 0.6f - faster unstuck
+    private const float DEFAULT_REPATH_INTERVAL = 0.6f;  // Reduced from 0.8f - more frequent updates
     private const float RECALC_DISTANCE_THRESHOLD = 0.5f;
-    private const float STUCK_NUDGE_STRENGTH = 0.3f;     // Force to push enemy when stuck
+    private const float STUCK_NUDGE_STRENGTH = 0.4f;     // Increased from 0.3f - stronger push
 
     // --- GRAVITY ---
     private const float GRAVITY = -9.81f;
@@ -223,44 +223,49 @@ public class EnemyMovementSystem : ISystem
         }
 
         // --- Avoid multiple enemy crowding ----
-        Vector3 separation = Vector3.zero;
-        float checkRadius = 0.6f;
-
-        int cnt = Physics.OverlapSphereNonAlloc(trans.Position, checkRadius, _overlapBuffer);
-
-        for (int i = 0; i < cnt; i++)
+        // OPTIMIZATION: Only check separation every 5 frames to reduce physics overhead
+        if ((Time.frameCount + entity.Id) % 5 == 0)
         {
-            if (!_overlapBuffer[i].TryGetComponent(out EntityView ev))
+            Vector3 separation = Vector3.zero;
+            float checkRadius = 0.6f;
+
+            int cnt = Physics.OverlapSphereNonAlloc(trans.Position, checkRadius, _overlapBuffer);
+
+            for (int i = 0; i < cnt; i++)
             {
-                continue;
+                if (!_overlapBuffer[i].TryGetComponent(out EntityView ev))
+                {
+                    continue;
+                }
+
+                if (ev.EntityInstance.Equals(entity))
+                {
+                    continue;
+                }
+
+                if (!_world.Components.Has<EnemyComponent>(ev.EntityInstance))
+                {
+                    continue;
+                }
+
+                Vector3 dirAway = trans.Position - ev.transform.position;
+                dirAway.y = 0;
+
+                float sqr = dirAway.sqrMagnitude;
+                if (sqr < 0.0001f)
+                {
+                    continue;
+                }
+
+                separation += dirAway.normalized / Mathf.Sqrt(sqr);
             }
 
-            if (ev.EntityInstance.Equals(entity))
+            if (separation.sqrMagnitude > 0.0001f)
             {
-                continue;
+                // Multiply by 5 to compensate for checking every 5th frame
+                Vector3 sepMove = separation.normalized * movement.MoveSpeed * 0.5f * dt * 5f;
+                trans.Position += new Vector3(sepMove.x, 0, sepMove.z);
             }
-
-            if (!_world.Components.Has<EnemyComponent>(ev.EntityInstance))
-            {
-                continue;
-            }
-
-            Vector3 dirAway = trans.Position - ev.transform.position;
-            dirAway.y = 0;
-
-            float sqr = dirAway.sqrMagnitude;
-            if (sqr < 0.0001f)
-            {
-                continue;
-            }
-
-            separation += dirAway.normalized / Mathf.Sqrt(sqr);
-        }
-
-        if (separation.sqrMagnitude > 0.0001f)
-        {
-            Vector3 sepMove = separation.normalized * movement.MoveSpeed * 0.5f * dt;
-            trans.Position += new Vector3(sepMove.x, 0, sepMove.z); // Only horizontal separation
         }
 
         // Move towards waypoint (horizontal only)
@@ -351,14 +356,66 @@ public class EnemyMovementSystem : ISystem
                 
                 RequestRepath(entity, enemy);
                 enemy.NoProgressTimer = 0f;
+                
+                // Boss: Track consecutive stuck occurrences
+                if (enemy.IsBoss && _world.Components.TryGet(entity, out BossComponent boss))
+                {
+                    boss.ConsecutiveStuckChecks++;
+                    
+                    // If boss is stuck 3+ times in a row, teleport closer to target
+                    if (boss.ConsecutiveStuckChecks >= 3 && !enemy.TargetEntity.Equals(default))
+                    {
+                        TeleportBossNearTarget(entity, enemy, boss, trans);
+                        boss.ConsecutiveStuckChecks = 0;
+                    }
+                }
             }
         }
         else
         {
             enemy.NoProgressTimer = 0f;
+            
+            // Reset stuck counter when making progress
+            if (enemy.IsBoss && _world.Components.TryGet(entity, out BossComponent boss))
+            {
+                boss.ConsecutiveStuckChecks = 0;
+            }
         }
 
         enemy.LastAgentPosition = trans.Position;
+    }
+    
+    /// <summary>
+    /// Teleports boss near its target when stuck too long (last resort)
+    /// </summary>
+    private void TeleportBossNearTarget(EntityId entity, EnemyComponent enemy, BossComponent boss, TransformComponent trans)
+    {
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        
+        if (!registry.TryGet(enemy.TargetEntity, out EntityView targetView))
+        {
+            return;
+        }
+        
+        Vector3 targetPos = targetView.transform.position;
+        Vector3 dirToTarget = (targetPos - trans.Position).normalized;
+        
+        // Teleport 5 units away from target, in the direction the boss was trying to go
+        Vector3 teleportPos = targetPos - dirToTarget * 5f;
+        teleportPos.y = trans.Position.y; // Keep same Y
+        
+        trans.Position = teleportPos;
+        
+        // Update view
+        if (registry.TryGet(entity, out EntityView bossView))
+        {
+            bossView.transform.position = teleportPos;
+        }
+        
+        // Request new path immediately
+        RequestRepath(entity, enemy);
+        
+        Debug.Log($"[EnemyMovementSystem] Boss teleported to target area after being stuck");
     }
 
     private void CheckPeriodicRepath(EntityId entity, EnemyComponent enemy, TransformComponent trans)

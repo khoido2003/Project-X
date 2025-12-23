@@ -150,12 +150,19 @@ public class BossJumpAttackStateAI : IEnemyState
     {
         var boss = world.Components.Get<BossComponent>(entity);
         
-        // Spawn landing VFX
+        // Spawn landing VFX on server
         if (boss.JumpLandingVFXPrefab != null)
         {
             var vfx = Object.Instantiate(boss.JumpLandingVFXPrefab, enemyTf.Position, Quaternion.identity);
             vfx.Play();
             Object.Destroy(vfx.gameObject, 3f); // Cleanup after 3 seconds
+        }
+        
+        // Broadcast VFX to all clients
+        var registry = world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(entity, out EntityView view) && view.TryGetComponent(out EnemyNetworkSyncView syncView))
+        {
+            syncView.BroadcastBossJumpLandingVfxClientRpc(enemyTf.Position);
         }
         
         // Publish audio cue for the impact
