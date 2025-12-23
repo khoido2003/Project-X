@@ -42,7 +42,7 @@ MonoBehaviour:
   attacks:
   - attackName: Gun
     executionType: 1
-    damage: 30
+    damage: 50
     cooldown: 1
     range: 5
     animationTrigger: attack

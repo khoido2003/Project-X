@@ -51,6 +51,9 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
     [SerializeField]
     private Button m_cancelBtn;
+    
+    [SerializeField]
+    private Button m_exitRoomBtn;
 
     [SerializeField]
     private float m_timeToStartGame = 5;
@@ -94,17 +97,32 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     private int _lastCountdownPlayed = -1; // Track last countdown number played
 
     private readonly Color k_selectedColor = new Color32(74, 74, 74, 255);
+    
+    // Flag to prevent multiple shutdown calls
+    private bool _isShuttingDown = false;
 
     private void Start()
     {
         m_countdownContainer.gameObject.SetActive(false);
         m_timer = m_timeToStartGame;
         RemoveSelectedStates();
+        
+        // Setup exit room button
+        if (m_exitRoomBtn != null)
+        {
+            m_exitRoomBtn.onClick.AddListener(OnExitRoomClicked);
+        }
     }
 
     private void Update()
     {
         if (!IsServer)
+        {
+            return;
+        }
+        
+        // Don't process updates if we're shutting down
+        if (_isShuttingDown || !IsSpawned)
         {
             return;
         }
@@ -189,6 +207,12 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
     public void PlayerDisconnects(ulong clientId)
     {
+        // Ignore if already shutting down
+        if (_isShuttingDown)
+        {
+            return;
+        }
+        
         if (!ClientConnection.Instance.IsExtraClient(clientId))
         {
             return;
@@ -196,8 +220,8 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
 
         if (clientId == 0)
         {
+            // Host disconnected - this is handled by OnExitRoomClicked, skip here to avoid double shutdown
             NetworkManager.Singleton.OnClientDisconnectCallback -= PlayerDisconnects;
-            NetworkManager.Singleton.Shutdown();
             return;
         }
 
@@ -696,5 +720,140 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
         }
     }
 
+    #endregion
+    
+    /////////////////////////////////////////////////////////////////
+    
+    #region Exit Room
+    
+    /// <summary>
+    /// Called when exit room button is clicked
+    /// </summary>
+    public void OnExitRoomClicked()
+    {
+        // Prevent multiple clicks
+        if (_isShuttingDown)
+        {
+            return;
+        }
+        
+        _isShuttingDown = true;
+        
+        // Stop the countdown timer immediately
+        m_isTimerOn = false;
+        if (m_countdownContainer != null)
+        {
+            m_countdownContainer.SetActive(false);
+        }
+        
+        PlayButtonCancelSound();
+        
+        if (IsServer)
+        {
+            // Unsubscribe to prevent callback during shutdown
+            NetworkManager.Singleton.OnClientDisconnectCallback -= PlayerDisconnects;
+            
+            // Host is exiting - notify all clients to return to menu, then shutdown
+            if (IsSpawned)
+            {
+                HostExitingRoomClientRpc();
+            }
+            
+            // Give clients a moment to receive the RPC before shutting down
+            StartCoroutine(HostShutdownCoroutine());
+        }
+        else
+        {
+            // Client is exiting - just disconnect this client
+            ClientExitRoom();
+        }
+    }
+    
+    private System.Collections.IEnumerator HostShutdownCoroutine()
+    {
+        yield return new WaitForSeconds(0.3f);
+        
+        // Shutdown network
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+        
+        // Return to menu
+        yield return new WaitForSeconds(0.2f);
+        LoadingSceneManager.Instance.LoadScene(SceneName.Menu, false);
+    }
+    
+    private void ClientExitRoom()
+    {
+        // Notify server that we're leaving
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
+        {
+            RequestExitRoomServerRpc(NetworkManager.Singleton.LocalClientId);
+        }
+        
+        // Disconnect from server
+        StartCoroutine(ClientShutdownCoroutine());
+    }
+    
+    private System.Collections.IEnumerator ClientShutdownCoroutine()
+    {
+        yield return new WaitForSeconds(0.2f);
+        
+        // Shutdown network connection
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+        
+        // Return to menu
+        yield return new WaitForSeconds(0.2f);
+        LoadingSceneManager.Instance.LoadScene(SceneName.Menu, false);
+    }
+    
+    /// <summary>
+    /// Client requests to exit room - server handles cleanup
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestExitRoomServerRpc(ulong clientId)
+    {
+        // Server will handle this client's disconnect
+        // The OnClientDisconnectCallback will handle cleanup
+        NetworkManager.Singleton.DisconnectClient(clientId);
+    }
+    
+    /// <summary>
+    /// Notifies all clients that host is leaving - everyone must return to menu
+    /// </summary>
+    [ClientRpc]
+    private void HostExitingRoomClientRpc()
+    {
+        if (IsServer)
+        {
+            return; // Host handles its own exit
+        }
+        
+        // Client: Host is leaving, we need to return to menu
+        Debug.Log("[CharacterSelectionManager] Host is leaving the room, returning to menu...");
+        
+        StartCoroutine(ClientReturnToMenuCoroutine());
+    }
+    
+    private System.Collections.IEnumerator ClientReturnToMenuCoroutine()
+    {
+        yield return new WaitForSeconds(0.1f);
+        
+        // Shutdown network
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+        
+        yield return new WaitForSeconds(0.2f);
+        
+        // Return to menu
+        LoadingSceneManager.Instance.LoadScene(SceneName.Menu, false);
+    }
+    
     #endregion
 }

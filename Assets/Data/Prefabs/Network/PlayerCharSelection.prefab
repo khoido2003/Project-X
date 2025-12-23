@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3000936949
+  GlobalObjectIdHash: 1166088746
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -75,4 +75,4 @@ MonoBehaviour:
     m_InternalValue: -1
   m_playerId:
     m_InternalValue: -1
-  _changedCharacterCClip: {fileID: 0}
+  _changedCharacterCClip: {fileID: 8300000, guid: ee6412e3a66db4644b48dbc086bb463c, type: 3}

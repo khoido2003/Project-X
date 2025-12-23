@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinitionSO
   prefab: {fileID: 8343575081347477734, guid: b6c0514bbf501b544b172fa60a530f56, type: 3}
   enemyName: Melee Enemy
-  maxHealth: 100
+  maxHealth: 150
   moveSpeed: 5
   attackRange: 2
   attackCooldown: 1.4

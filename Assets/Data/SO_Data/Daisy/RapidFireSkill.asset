@@ -17,9 +17,9 @@ MonoBehaviour:
   category: 3
   isInstant: 1
   keyTrigger: Q
-  damage: 20
+  damage: 30
   castRange: 5
-  cooldown: 2
+  cooldown: 3
   hitVfxPrefab: {fileID: 198011925041146442, guid: 57e18706e2792ff4bb5561ed74b796e2, type: 3}
   skillVfxPrefab: {fileID: 198533653044838976, guid: b46264f9e12caed4cb53e7c2ad64aa54, type: 3}
   activateSound: {fileID: 8300000, guid: 78db9d561d1134f1c91be2940e267353, type: 3}
