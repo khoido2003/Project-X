@@ -92,6 +92,12 @@ public class NetworkGameStateManager : NetworkBehaviour
             _netCurrentRound.OnValueChanged += OnRoundChangedClient;
         }
 
+        // Subscribe to disconnect callback to handle host leaving
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+        }
+
         Debug.Log("[NetworkGameStateManager] Network spawned, waiting for World initialization");
     }
 
@@ -133,6 +139,37 @@ public class NetworkGameStateManager : NetworkBehaviour
         {
             _world.Events.Unsubscribe<EntityDeathEvent>(OnEntityDeath);
         }
+
+        // Unsubscribe from disconnect callback
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
+        }
+    }
+
+    /// <summary>
+    /// Called when any client disconnects. If the host (server) disconnects, return all clients to menu.
+    /// </summary>
+    private void OnClientDisconnect(ulong clientId)
+    {
+        // If we're a client and the server disconnected, return to menu
+        if (!IsServer && !NetworkManager.Singleton.IsConnectedClient)
+        {
+            Debug.LogWarning("[NetworkGameStateManager] Host disconnected! Returning to menu...");
+            ReturnToMainMenu();
+        }
+    }
+
+    private void ReturnToMainMenu()
+    {
+        // Shutdown network
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        // Load menu scene
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
     }
 
     private void Update()

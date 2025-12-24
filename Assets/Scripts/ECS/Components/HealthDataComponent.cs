@@ -6,4 +6,7 @@ public class HealthDataComponent
     public float MaxHealth;
     public float CurrentHealth;
     public bool IsDead = false;
+    
+    [Header("Status Flags")]
+    public bool IsUntargetable = false;
 }

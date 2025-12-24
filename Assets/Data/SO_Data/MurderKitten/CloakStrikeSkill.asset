@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8506ac647a69ee04fa2bc4fe35903710, type: 3}
+  m_Name: CloakStrikeSkill
+  m_EditorClassIdentifier: Assembly-CSharp::CloakStrikeSkillSO
+  assetId: a459d77b34c0dd74fb58ca51fdb3234b
+  skillName: CloakStrike
+  category: 6
+  isInstant: 1
+  keyTrigger: Space
+  damage: 150
+  castRange: 3
+  cooldown: 4
+  hitVfxPrefab: {fileID: 198011925041146442, guid: 319c6b2bec42ddf4d949a0bdc4f2ce3f, type: 3}
+  skillVfxPrefab: {fileID: 198835972586501196, guid: 954d39d59eaeec0469ac06d062aa9541, type: 3}
+  activateSound: {fileID: 8300000, guid: 479ff9f9c73984c1da4f7c304959325c, type: 3}
+  activationAnimationTrigger: skill1
+  cloakDuration: 3
+  bonusDamageMultiplier: 1
+  cloakVfxPrefab: {fileID: 9087239460587949263, guid: 258689e76c685be48ab94bc21e528012, type: 3}
+  uncloakVfxPrefab: {fileID: 198126008008065056, guid: fc1585323a621a4458c5502ad5125042, type: 3}
+  cloakSound: {fileID: 8300000, guid: 39abf9795214848c387079b7189738d1, type: 3}

@@ -141,6 +141,9 @@ public class EnemyChaseStateAI : IEnemyState
         {
             if (health.IsDead) continue;
             
+            // Skip untargetable players (e.g., cloaked Murder Kitten)
+            if (health.IsUntargetable) continue;
+            
             float dist = Vector3.Distance(enemyTf.Position, playerTf.Position);
             if (dist < nearestDist)
             {

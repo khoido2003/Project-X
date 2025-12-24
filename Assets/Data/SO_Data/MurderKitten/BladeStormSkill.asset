@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2c6865151f58a4fa1c5ee11d9edea7, type: 3}
+  m_Name: BladeStormSkill
+  m_EditorClassIdentifier: Assembly-CSharp::BladeStormSkillSO
+  assetId: d6421e50b857ec9418eb50eb606d6a4b
+  skillName: 
+  category: 8
+  isInstant: 0
+  keyTrigger: Q
+  damage: 50
+  castRange: 4
+  cooldown: 4
+  hitVfxPrefab: {fileID: 198976222948764990, guid: 00fbc55f7b4fda24c9bb9cf40bb521bb, type: 3}
+  skillVfxPrefab: {fileID: 198955616953408736, guid: b9109a354805ce14c86c39b4b20241bc, type: 3}
+  activateSound: {fileID: 8300000, guid: 32f54a152b3dc4816b80c0c452b6c619, type: 3}
+  activationAnimationTrigger: skill1
+  spinDuration: 2
+  damagePerTick: 10
+  tickInterval: 0.1
+  spinRadius: 3
+  moveSpeedMultiplier: 0.5
+  spinRotationSpeed: 1080
+  spinVfxPrefab: {fileID: 198468570143173514, guid: 00d80947d8680354e91b1f21de6e0f73, type: 3}
+  spinLoopSound: {fileID: 8300000, guid: 68bdf19a3da1647f5a75581818f4b45a, type: 3}
+  spinEndSound: {fileID: 8300000, guid: 9c143b22026d34c3ab00e2e25cd78eec, type: 3}

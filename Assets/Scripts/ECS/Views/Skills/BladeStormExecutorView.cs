@@ -10,6 +10,8 @@ public class BladeStormExecutorView : SkillExecutorView
     private bool _isSpinning = false;
     private ParticleSystem _activeSpinVfx;
     private HashSet<EntityId> _damagedThisTick = new();
+    private float _originalSpeed = -1f;
+    private AudioSource _spinAudio;
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
@@ -36,6 +38,12 @@ public class BladeStormExecutorView : SkillExecutorView
 
     private IEnumerator BladeStormRoutine(GameObject owner, BladeStormSkillSO skill)
     {
+        // If already spinning, stop previous and cleanup first
+        if (_isSpinning)
+        {
+            CleanupBladeStorm();
+        }
+
         _isSpinning = true;
 
         // Broadcast spin start to clients
@@ -49,23 +57,24 @@ public class BladeStormExecutorView : SkillExecutorView
             _activeSpinVfx.Play();
         }
 
-        // Apply movement slow
-        float originalSpeed = 1f;
+        // Apply movement slow - store original speed in class field
         if (WorldInstance.Components.TryGet(EntityInstance, out MovementDataComponent movement))
         {
-            originalSpeed = movement.MoveSpeed;
+            if (_originalSpeed < 0)  // Only store if not already stored
+            {
+                _originalSpeed = movement.MoveSpeed;
+            }
             movement.MoveSpeed *= skill.moveSpeedMultiplier;
         }
 
-        // Start spinning audio
-        AudioSource spinAudio = null;
-        if (skill.spinLoopSound != null)
+        // Start spinning audio - store in class field
+        if (skill.spinLoopSound != null && _spinAudio == null)
         {
-            spinAudio = owner.AddComponent<AudioSource>();
-            spinAudio.clip = skill.spinLoopSound;
-            spinAudio.loop = true;
-            spinAudio.volume = 0.5f;
-            spinAudio.Play();
+            _spinAudio = owner.AddComponent<AudioSource>();
+            _spinAudio.clip = skill.spinLoopSound;
+            _spinAudio.loop = true;
+            _spinAudio.volume = 0.5f;
+            _spinAudio.Play();
         }
 
         float elapsed = 0f;
@@ -89,26 +98,41 @@ public class BladeStormExecutorView : SkillExecutorView
             yield return null;
         }
 
-        // Cleanup
-        _isSpinning = false;
-
-        // Restore movement speed
-        if (WorldInstance.Components.TryGet(EntityInstance, out MovementDataComponent moveData))
-        {
-            moveData.MoveSpeed = originalSpeed;
-        }
-
-        // Stop spin audio
-        if (spinAudio != null)
-        {
-            spinAudio.Stop();
-            Destroy(spinAudio);
-        }
-
         // Play end sound
         if (skill.spinEndSound != null)
         {
             AudioHelper.PlaySound3D(WorldInstance, skill.spinEndSound, AudioCategory.Player, owner.transform.position);
+        }
+
+        // Cleanup everything
+        CleanupBladeStorm();
+
+        // Broadcast spin end
+        BladeStormVisualClientRpc(false, 0f);
+
+        FinishSkill(skill);
+    }
+
+    /// <summary>
+    /// Ensures all BladeStorm effects are cleaned up properly
+    /// </summary>
+    private void CleanupBladeStorm()
+    {
+        _isSpinning = false;
+
+        // Restore movement speed
+        if (_originalSpeed >= 0 && WorldInstance != null && WorldInstance.Components.TryGet(EntityInstance, out MovementDataComponent moveData))
+        {
+            moveData.MoveSpeed = _originalSpeed;
+            _originalSpeed = -1f;  // Reset
+        }
+
+        // Stop spin audio
+        if (_spinAudio != null)
+        {
+            _spinAudio.Stop();
+            Destroy(_spinAudio);
+            _spinAudio = null;
         }
 
         // Cleanup VFX
@@ -118,11 +142,6 @@ public class BladeStormExecutorView : SkillExecutorView
             Destroy(_activeSpinVfx.gameObject, 1f);
             _activeSpinVfx = null;
         }
-
-        // Broadcast spin end
-        BladeStormVisualClientRpc(false, 0f);
-
-        FinishSkill(skill);
     }
 
     private void ApplySpinDamage(Vector3 center, BladeStormSkillSO skill)
@@ -189,7 +208,7 @@ public class BladeStormExecutorView : SkillExecutorView
     {
         float elapsed = 0f;
         
-        // Get skill for VFX reference
+        // Get skill for VFX/Audio reference
         var skillBuffer = WorldInstance.Components.Get<SkillCastBufferComponent>(EntityInstance);
         if (skillBuffer.Skill is not BladeStormSkillSO skill)
         {
@@ -204,6 +223,18 @@ public class BladeStormExecutorView : SkillExecutorView
             clientVfx.Play();
         }
 
+        // Client-side audio for spin loop
+        AudioSource clientAudio = null;
+        if (skill.spinLoopSound != null)
+        {
+            clientAudio = gameObject.AddComponent<AudioSource>();
+            clientAudio.clip = skill.spinLoopSound;
+            clientAudio.loop = true;
+            clientAudio.volume = 0.5f;
+            clientAudio.spatialBlend = 1f;  // 3D sound
+            clientAudio.Play();
+        }
+
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -214,10 +245,24 @@ public class BladeStormExecutorView : SkillExecutorView
             yield return null;
         }
 
+        // Cleanup VFX
         if (clientVfx != null)
         {
             clientVfx.Stop();
             Destroy(clientVfx.gameObject, 1f);
+        }
+
+        // Cleanup Audio
+        if (clientAudio != null)
+        {
+            clientAudio.Stop();
+            Destroy(clientAudio);
+        }
+
+        // Play end sound on client
+        if (skill.spinEndSound != null)
+        {
+            AudioHelper.PlaySound3D(WorldInstance, skill.spinEndSound, AudioCategory.Player, transform.position);
         }
     }
 
@@ -229,6 +274,7 @@ public class BladeStormExecutorView : SkillExecutorView
     protected override void OnDestroy()
     {
         StopAllCoroutines();
+        CleanupBladeStorm();
         _damagedThisTick.Clear();
         base.OnDestroy();
     }

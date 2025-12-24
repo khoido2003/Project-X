@@ -73,6 +73,12 @@ public class EnemyVisionSystem : ISystem
                     continue;
                 }
 
+                // Skip untargetable players (e.g., cloaked Murder Kitten)
+                if (_world.Components.TryGet(candidate, out HealthDataComponent candidateHealth) && candidateHealth.IsUntargetable)
+                {
+                    continue;
+                }
+
                 Vector3 candidatePos = foundView.transform.position;
                 Vector3 dir = candidatePos - origin;
                 Vector3 dirFlat = new Vector3(dir.x, 0f, dir.z);

@@ -9030,6 +9030,7 @@ MonoBehaviour:
   characterData:
   - {fileID: 11400000, guid: 14fd96a3bc0a659488a2b441064ebf86, type: 2}
   - {fileID: 11400000, guid: 80f3a4406a07fe147ac777daaeb9de33, type: 2}
+  - {fileID: 11400000, guid: e1729ba927dc25d4f81337c66ad6a7d3, type: 2}
   playerSpawnPoints:
   - {fileID: 318673897}
   - {fileID: 280335427}
