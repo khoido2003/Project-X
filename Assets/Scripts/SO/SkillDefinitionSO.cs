@@ -14,7 +14,7 @@ public enum SkillCategory
     
     // Murder Kitten
     CloakStrike,
-    GrapplingClaw,
+    LifeDrain,
     BladeStorm,
 }
 

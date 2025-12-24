@@ -84,7 +84,7 @@ public class SkillPreviewView : EntityView
         {
             return;
         }
-        
+
         if (@event.IsActive)
         {
             ShowPreview(@event.Skill);
@@ -207,8 +207,10 @@ public class SkillPreviewView : EntityView
 
     private void TryCastSkill()
     {
-        Debug.Log($"[SkillPreviewView] TryCastSkill called for entity {EntityInstance.Id}, selectedSkillIndex: {selectedSkillIndex}");
-        
+        Debug.Log(
+            $"[SkillPreviewView] TryCastSkill called for entity {EntityInstance.Id}, selectedSkillIndex: {selectedSkillIndex}"
+        );
+
         if (!WorldInstance.Components.TryGet(EntityInstance, out CombatStateComponent state))
         {
             Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - no CombatStateComponent");
@@ -227,7 +229,7 @@ public class SkillPreviewView : EntityView
             Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - no current skill selected");
             return;
         }
-        
+
         // Check cooldown on client side to prevent spamming
         if (WorldInstance.Components.TryGet(EntityInstance, out SkillSetComponent skillSet))
         {
@@ -235,7 +237,9 @@ public class SkillPreviewView : EntityView
             {
                 if (Time.time < skillSet.CooldownUntil[selectedSkillIndex])
                 {
-                    Debug.Log($"[SkillPreviewView] TryCastSkill FAILED - skill on cooldown until {skillSet.CooldownUntil[selectedSkillIndex]}");
+                    Debug.Log(
+                        $"[SkillPreviewView] TryCastSkill FAILED - skill on cooldown until {skillSet.CooldownUntil[selectedSkillIndex]}"
+                    );
                     return;
                 }
             }
@@ -280,12 +284,16 @@ public class SkillPreviewView : EntityView
 
         if (WorldInstance.Components.TryGet(EntityInstance, out NetworkSyncComponent sync))
         {
-            Debug.Log($"[SkillPreviewView] Sending RequestSkillExecutionServerRpc for skill: {skill.skillName}, target: {target}, direction: {direction}");
+            Debug.Log(
+                $"[SkillPreviewView] Sending RequestSkillExecutionServerRpc for skill: {skill.skillName}, target: {target}, direction: {direction}"
+            );
             sync.SyncView.RequestSkillExecutionServerRpc(target, direction);
         }
         else
         {
-            Debug.LogWarning($"[SkillPreviewView] TryCastSkill FAILED - no NetworkSyncComponent for entity {EntityInstance.Id}");
+            Debug.LogWarning(
+                $"[SkillPreviewView] TryCastSkill FAILED - no NetworkSyncComponent for entity {EntityInstance.Id}"
+            );
         }
 
         // Clear skill selection after execution
@@ -297,7 +305,7 @@ public class SkillPreviewView : EntityView
     {
         // CRITICAL: Clean up any existing VFX first to prevent stacking
         HideSkillVfxEffect();
-        
+
         if (weaponVfxEffectSocket == null)
         {
             weaponVfxEffectSocket = GetComponentInChildren<SkillVfxEffectSocket>();

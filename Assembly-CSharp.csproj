@@ -85,6 +85,7 @@
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\DoorController.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\LookAtMouseView.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\WaveManager.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\LifeDrainExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyPathfindingSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\AnimationDataComponent.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\HealthHUD_UI.cs" />
@@ -116,7 +117,6 @@
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ExplosiveProjectileView.cs" />
     <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
-    <Compile Include="Assets\Scripts\ECS\Views\Skills\GrapplingClawExecutorView.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\CinemachineCameraService.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyRoom\BaseCharacterLobby.cs" />
@@ -230,6 +230,7 @@
     <Compile Include="Assets\Scripts\UI\GameWorldUI\PlayerRespawnUI.cs" />
     <Compile Include="Assets\Scripts\Utils\EnemyPatrolPointGizmo.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\SkillSlotUI.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\LifeDrainSkillSO.cs" />
     <Compile Include="Assets\Scripts\SO\MapConfigSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\CombatStateSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\RoomNameService.cs" />

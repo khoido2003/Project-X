@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -6,17 +7,21 @@ public class CloakStrikeExecutorView : SkillExecutorView
 {
     public override SkillCategory Category => SkillCategory.CloakStrike;
 
+    [Header("Cloak Visual")]
+    [SerializeField] private Material _cloakMaterial;
+
     private bool _isCloaked = false;
     private float _cloakEndTime;
     private float _bonusDamageMultiplier;
     private ParticleSystem _activeCloakVfx;
     private Renderer[] _renderers;
+    private Dictionary<Renderer, Material[]> _originalMaterials = new();
 
     protected override void Start()
     {
         base.Start();
         _renderers = GetComponentsInChildren<Renderer>();
-        
+
         // Subscribe to attack events to trigger empowered strike
         if (WorldInstance != null)
         {
@@ -47,6 +52,12 @@ public class CloakStrikeExecutorView : SkillExecutorView
         _isCloaked = true;
         _cloakEndTime = Time.time + skill.cloakDuration;
         _bonusDamageMultiplier = skill.bonusDamageMultiplier;
+
+        // Make character untargetable
+        if (WorldInstance.Components.TryGet(EntityInstance, out HealthDataComponent health))
+        {
+            health.IsUntargetable = true;
+        }
 
         // Broadcast cloak start to all clients
         CloakVisualClientRpc(true);
@@ -79,6 +90,12 @@ public class CloakStrikeExecutorView : SkillExecutorView
         if (!_isCloaked) return;
         
         _isCloaked = false;
+        
+        // Make character targetable again
+        if (WorldInstance.Components.TryGet(EntityInstance, out HealthDataComponent health))
+        {
+            health.IsUntargetable = false;
+        }
         
         // Broadcast uncloak to clients
         CloakVisualClientRpc(false);
@@ -130,17 +147,55 @@ public class CloakStrikeExecutorView : SkillExecutorView
     [ClientRpc]
     private void CloakVisualClientRpc(bool isCloaking)
     {
-        // Make character semi-transparent when cloaked
+        // Ensure renderers are populated (may not be set on client)
+        if (_renderers == null || _renderers.Length == 0)
+        {
+            _renderers = GetComponentsInChildren<Renderer>();
+        }
+
+        if (_cloakMaterial == null)
+        {
+            Debug.LogWarning("[CloakStrike] No cloak material assigned!");
+            return;
+        }
+
+        Debug.Log($"[CloakStrike] CloakVisualClientRpc - isCloaking: {isCloaking}, renderers: {_renderers?.Length ?? 0}");
+
         foreach (var renderer in _renderers)
         {
             if (renderer == null) continue;
-            
-            foreach (var mat in renderer.materials)
+
+            if (isCloaking)
             {
-                Color color = mat.color;
-                color.a = isCloaking ? 0.3f : 1f;
-                mat.color = color;
+                // Store original materials
+                _originalMaterials[renderer] = renderer.materials;
+
+                // Apply cloak material to all slots
+                Material[] cloakMats = new Material[renderer.materials.Length];
+                for (int i = 0; i < cloakMats.Length; i++)
+                {
+                    cloakMats[i] = _cloakMaterial;
+                }
+                renderer.materials = cloakMats;
             }
+            else
+            {
+                // Restore original materials
+                if (_originalMaterials.TryGetValue(renderer, out Material[] originalMats))
+                {
+                    renderer.materials = originalMats;
+                    Debug.Log($"[CloakStrike] Restored materials for {renderer.name}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[CloakStrike] No original materials found for {renderer.name}");
+                }
+            }
+        }
+
+        if (!isCloaking)
+        {
+            _originalMaterials.Clear();
         }
     }
 
@@ -163,6 +218,17 @@ public class CloakStrikeExecutorView : SkillExecutorView
         {
             WorldInstance.Events.Unsubscribe<AttackPerformedEvent>(OnAttackPerformed);
         }
+        
+        // Restore materials if destroyed while cloaked
+        foreach (var kvp in _originalMaterials)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.materials = kvp.Value;
+            }
+        }
+        _originalMaterials.Clear();
+        
         StopAllCoroutines();
         base.OnDestroy();
     }

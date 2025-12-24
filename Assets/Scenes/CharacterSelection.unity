@@ -9876,12 +9876,16 @@ PrefabInstance:
       objectReference: {fileID: 817570502}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: characterData.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: 'characterData.Array.data[1]'
       value: 
       objectReference: {fileID: 11400000, guid: 80f3a4406a07fe147ac777daaeb9de33, type: 2}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: 'characterData.Array.data[2]'
+      value: 
+      objectReference: {fileID: 11400000, guid: e1729ba927dc25d4f81337c66ad6a7d3, type: 2}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_playerStates.Array.data[0].playerState
       value: 1
