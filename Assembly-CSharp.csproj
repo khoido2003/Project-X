@@ -236,6 +236,7 @@
     <Compile Include="Assets\Scripts\ECS\Services\RoomNameService.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\MovementSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyPatrolStateAI.cs" />
+    <Compile Include="Assets\Scripts\Core\Managers\NetworkHeartbeatManager.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleURL.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyDeadStateAI.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\PlayerSpawnEvent.cs" />

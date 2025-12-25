@@ -356,9 +356,42 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     private void ServerUpdate()
     {
-        SyncTransform();
+        // OPTIMIZATION: Distance-based sync rate
+        // Far enemies sync less frequently to reduce bandwidth
+        int syncInterval = GetDistanceBasedSyncInterval();
+        
+        if (_currentTick % syncInterval == 0)
+        {
+            SyncTransform();
+        }
+        
         SyncEnemyState();
         SyncMovement();
+    }
+
+    /// <summary>
+    /// Returns sync interval based on distance to nearest player.
+    /// Close: every tick, Medium: every 2 ticks, Far: every 4 ticks
+    /// </summary>
+    private int GetDistanceBasedSyncInterval()
+    {
+        float nearestPlayerDist = float.MaxValue;
+        
+        // Find nearest player
+        foreach (var (playerEntity, player, playerTf) in 
+            _world.Components.Query<PlayerTagComponent, TransformComponent>())
+        {
+            float dist = Vector3.Distance(transform.position, playerTf.Position);
+            if (dist < nearestPlayerDist)
+            {
+                nearestPlayerDist = dist;
+            }
+        }
+        
+        // Distance thresholds
+        if (nearestPlayerDist > 40f) return 4;  // Very far: sync every 4 ticks (~15Hz)
+        if (nearestPlayerDist > 20f) return 2;  // Medium: sync every 2 ticks (~30Hz)
+        return 1;  // Close: sync every tick (~60Hz)
     }
 
     private void SyncTransform()

@@ -368,6 +368,9 @@ public class NetworkSyncView : NetworkBehaviour
 
     private void SyncScore()
     {
+        // OPTIMIZATION: Score rarely changes, sync every 10 ticks (~6Hz)
+        if (_currentTick % 10 != 0) return;
+        
         if (_world.Components.TryGet(_entity, out PlayerScoreComponent score))
         {
             var newState = new NetworkScoreState
