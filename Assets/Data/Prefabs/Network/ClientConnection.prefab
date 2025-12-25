@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3650802132
+  GlobalObjectIdHash: 2623358428
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -74,3 +74,5 @@ MonoBehaviour:
   m_maxConnections: 4
   m_characterDatas:
   - {fileID: 11400000, guid: 14fd96a3bc0a659488a2b441064ebf86, type: 2}
+  - {fileID: 11400000, guid: 80f3a4406a07fe147ac777daaeb9de33, type: 2}
+  - {fileID: 11400000, guid: e1729ba927dc25d4f81337c66ad6a7d3, type: 2}
