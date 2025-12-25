@@ -22,7 +22,7 @@ MonoBehaviour:
   cooldown: 1.5
   hitVfxPrefab: {fileID: 5683715703724972373, guid: e55b07d1dee51c947ba23ff5d4e3afbc, type: 3}
   skillVfxPrefab: {fileID: 198742971877052672, guid: c445b201205907b4f90b242a07f4dbc9, type: 3}
-  activateSound: {fileID: 0}
+  activateSound: {fileID: 8300000, guid: b7c25487a760d4c42977db86c30e9a65, type: 3}
   activationAnimationTrigger: skill1
   dashDistance: 5
   dashDuration: 0.5

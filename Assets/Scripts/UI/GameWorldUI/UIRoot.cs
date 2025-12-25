@@ -58,6 +58,23 @@ public class UIRoot : MonoBehaviour
             yield break;
         }
 
+        // Wait for skills to be populated via RPC
+        // On clients, SkillSetComponent is initially empty and populated by SyncCharacterDataClientRpc
+        if (world.Components.TryGet(localPlayer, out SkillSetComponent skillSet))
+        {
+            int skillWaitAttempts = 0;
+            while (skillSet.Skills.Count == 0 && skillWaitAttempts < 50) // 5 seconds max wait
+            {
+                skillWaitAttempts++;
+                yield return new WaitForSeconds(0.1f);
+            }
+
+            if (skillSet.Skills.Count == 0)
+            {
+                Debug.LogWarning("[GameUIManager] Skills not synced after 5 seconds, proceeding anyway");
+            }
+        }
+
         // Initialize UIs
         if (healthHUD != null)
         {

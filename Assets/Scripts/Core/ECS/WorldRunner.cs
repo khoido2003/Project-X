@@ -44,6 +44,12 @@ public class WorldRunner : NetworkBehaviour
 
     private void Awake()
     {
+        // PERFORMANCE: Disable debug logging in builds (not editor)
+        // This prevents massive performance overhead from Debug.Log calls
+        #if !UNITY_EDITOR
+        Debug.unityLogger.logEnabled = false;
+        #endif
+        
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);

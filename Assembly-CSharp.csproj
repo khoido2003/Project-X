@@ -128,6 +128,7 @@
     <Compile Include="Assets\Scripts\SO\Skills\BladeStormSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\CombatStateEvent.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\WorldRunner.cs" />
+    <Compile Include="Assets\Scripts\Core\LoggingConfigurer.cs" />
     <Compile Include="Assets\Scripts\SO\NetworkSO.cs" />
     <Compile Include="Assets\Scripts\Core\Network\Lobby\LobbyService.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\AStarPathfinder.cs" />
@@ -199,6 +200,7 @@
     <Compile Include="Assets\Scripts\ECS\Interfaces\IInputService.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\MenuManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\PiercingProjectileView.cs" />
+    <Compile Include="Assets\Scripts\Utils\DebugLogger.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\MovementView.cs" />
     <Compile Include="Assets\Scripts\Utils\GoToMenu.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\InputManager.cs" />

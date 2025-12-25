@@ -21,10 +21,7 @@ MonoBehaviour:
   - SoundType: 0
     Volume: 1
     Clips:
-    - {fileID: 8300000, guid: 1c1b1cfac043f4010872cadc9592e714, type: 3}
-    - {fileID: 8300000, guid: 03a32a7e1480245fa882ef8cf7627b9a, type: 3}
-    - {fileID: 8300000, guid: fac67cf65661843fcaf831c848e46a5d, type: 3}
-    - {fileID: 8300000, guid: e8e15a6dc1992406e9bf9fd158199864, type: 3}
+    - {fileID: 8300000, guid: e8313d9bdb043ca4d8e3f0f63ec12337, type: 3}
   - SoundType: 1
     Volume: 1
     Clips:

@@ -96,6 +96,25 @@ public class SkillSystem : ISystem
                 buffer.TargetPoint = targetPoint;
                 buffer.Direction = direction;
                 
+                // CLIENT-SIDE PREDICTION: Play animation/VFX immediately for responsive feel
+                // The SkillEffectTriggerEvent triggers animation and VFX in SkillExecutorView
+                bool isLocalPlayer = _world.Components.TryGet(@event.Entity, out NetworkOwnerComponent owner) && owner.IsLocalPlayer;
+                
+                if (isLocalPlayer && !NetworkManager.Singleton.IsServer)
+                {
+                    // Client prediction: Play animation immediately
+                    _world.Events.Publish(new SkillEffectTriggerEvent
+                    {
+                        Caster = @event.Entity,
+                        Skill = skill,
+                        TargetPoint = targetPoint,
+                        Direction = direction
+                    });
+                    
+                    // Apply cooldown locally for UI feedback
+                    skillSet.CooldownUntil[index] = Time.time + skill.cooldown;
+                }
+                
                 if (NetworkManager.Singleton.IsServer)
                 {
                     // Server executes directly
@@ -103,7 +122,7 @@ public class SkillSystem : ISystem
                 }
                 else
                 {
-                    // Client sends RPC to server for instant skills - include skill index to fix race condition
+                    // Client sends RPC to server for instant skills
                     if (_world.Components.TryGet(@event.Entity, out NetworkSyncComponent sync))
                     {
                         Debug.Log($"[SkillSystem] Client requesting instant skill {skill.skillName} execution via RPC (index: {index})");

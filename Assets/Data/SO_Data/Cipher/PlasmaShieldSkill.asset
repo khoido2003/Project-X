@@ -22,7 +22,7 @@ MonoBehaviour:
   cooldown: 10
   hitVfxPrefab: {fileID: 0}
   skillVfxPrefab: {fileID: 9182071414042874320, guid: d157ae1c06c365d4fb024376bdf83cab, type: 3}
-  activateSound: {fileID: 0}
+  activateSound: {fileID: 8300000, guid: a05dca5d510854a32a155ca2de68c427, type: 3}
   activationAnimationTrigger: 
   defenseBoost: 20
   boostDuration: 5

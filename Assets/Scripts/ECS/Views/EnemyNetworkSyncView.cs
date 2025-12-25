@@ -61,14 +61,31 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     private Quaternion _previousRotation;
     private Quaternion _targetRotation;
 
-    private float _lerpProgress;
+    private float _interpolationTime;
+    private float _interpolationDuration = 0.1f; // Time between expected network updates
+    
+    // OPTIMIZATION: Cache last synced animation values to throttle RPCs
+    // Only broadcasts when values actually change
+    private Dictionary<string, float> _lastSyncedAnimValues = new();
+    
+    // OPTIMIZATION: Cache last synced state values to throttle NetworkVariable updates
+    private EnemyState _lastSyncedState;
+    private bool _lastSyncedHasTarget;
+    private NetworkMovementState _lastSyncedMovement;
+    
     private bool _isInitialized = false;
     private bool _firstTransformReceived = false;
 
     // Network optimization: velocity-based dead reckoning
     private Vector3 _estimatedVelocity;
+    private Vector3 _smoothedVelocity; // Dampened velocity for smoother extrapolation
     private float _lastNetworkUpdateTime;
     private uint _lastReceivedTick;
+    
+    // Constants for interpolation tuning
+    private const float SNAP_DISTANCE_THRESHOLD = 5f; // Snap if too far (teleport)
+    private const float VELOCITY_SMOOTHING = 0.3f; // How much to smooth velocity changes
+    private const float MAX_EXTRAPOLATION_TIME = 0.15f; // Max time to extrapolate beyond target
 
     // Public setters for EnemyFactory to configure weapon data
     public void SetWeaponData(
@@ -200,6 +217,10 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                 ProjectileSpawnOffset = _projectileSpawnOffset,
             }
         );
+        
+        // Add empty AudioProfileComponent to prevent warnings when animation events publish audio cues
+        // Profile is null because we don't sync audio profiles over network - server handles enemy audio
+        _world.Components.Add(_entity, new AudioProfileComponent());
 
         // Subscribe to NetworkVariable changes
         _netTransform.OnValueChanged += OnNetTransformChanged;
@@ -215,7 +236,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         // OnValueChanged doesn't fire for values already set before subscription
         ApplyInitialNetworkValues();
 
-        Debug.Log($"[EnemyNetworkSyncView] Client created ECS entity {_entity.Id} for enemy at {pos}");
+        // Removed Debug.Log - was spamming during mass enemy spawns
     }
 
     public void Initialize(World world, EntityId entity)
@@ -285,45 +306,33 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         if (!_firstTransformReceived)
             return;
 
-        // OPTIMIZATION: Distance-based LOD for client interpolation
-        // Far enemies update less frequently to save CPU
-        Camera mainCam = Camera.main;
-        if (mainCam != null)
-        {
-            float distToCamera = Vector3.Distance(transform.position, mainCam.transform.position);
-            
-            // Very far enemies (>50m): update every 4 frames
-            if (distToCamera > 50f && Time.frameCount % 4 != 0)
-            {
-                return;
-            }
-            // Medium distance (>25m): update every 2 frames
-            else if (distToCamera > 25f && Time.frameCount % 2 != 0)
-            {
-                return;
-            }
-            // Close enemies: update every frame (no skip)
-        }
-            
-        // Adaptive lerp speed based on distance
-        float distance = Vector3.Distance(_previousPosition, _targetPosition);
-        float adaptiveSpeed = Mathf.Lerp(8f, 20f, Mathf.Clamp01(distance / 3f));
-        _lerpProgress += Time.deltaTime * adaptiveSpeed;
+        // Advance interpolation time
+        _interpolationTime += Time.deltaTime;
+        
+        // Calculate interpolation progress (0 to 1+)
+        float t = _interpolationDuration > 0.001f ? _interpolationTime / _interpolationDuration : 1f;
+        
+        if (!_world.Components.TryGet(_entity, out TransformComponent trans))
+            return;
 
-        if (_world.Components.TryGet(_entity, out TransformComponent trans))
+        if (t < 1f)
         {
-            if (_lerpProgress < 1f)
-            {
-                trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, _lerpProgress);
-            }
-            else
-            {
-                // Dead reckoning: continue in predicted direction
-                trans.Position = _targetPosition + _estimatedVelocity * (Time.time - _lastNetworkUpdateTime - 0.1f);
-            }
-
-            trans.Rotation = Quaternion.Slerp(_previousRotation, _targetRotation, Mathf.Clamp01(_lerpProgress));
+            // Standard interpolation toward target
+            trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, t);
         }
+        else
+        {
+            // DEAD RECKONING: Extrapolate beyond target using smoothed velocity
+            float extrapolationTime = Mathf.Min(_interpolationTime - _interpolationDuration, MAX_EXTRAPOLATION_TIME);
+            
+            // Use smoothed velocity with gradual dampening to prevent overshoot
+            float damping = 1f - Mathf.Clamp01(extrapolationTime / MAX_EXTRAPOLATION_TIME);
+            trans.Position = _targetPosition + _smoothedVelocity * extrapolationTime * damping;
+        }
+        
+        // Smooth rotation interpolation
+        float rotT = Mathf.Clamp01(t * 1.2f); // Rotation completes slightly faster
+        trans.Rotation = Quaternion.Slerp(_previousRotation, _targetRotation, rotT);
     }
 
     private void FixedUpdate()
@@ -333,6 +342,27 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        // CRITICAL: Destroy the client-side ECS entity to prevent memory leak!
+        // Without this, client entities accumulate and cause FPS degradation
+        if (!IsServer && _world != null && !_entity.Equals(default))
+        {
+            try
+            {
+                // Unregister views first
+                var registry = _world.Services.Resolve<EntityViewRegistry>();
+                foreach (EntityView view in GetComponentsInChildren<EntityView>(includeInactive: true))
+                {
+                    registry?.Unregister(view);
+                }
+                
+                _world.DestroyEntity(_entity);
+            }
+            catch (System.Exception ex)
+            {
+                // Silently ignore - entity might already be destroyed
+            }
+        }
+        
         if (IsServer)
         {
             _world.Events.Unsubscribe<HealthChangedEvent>(OnHealthChanged);
@@ -424,8 +454,19 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             if (_world.Components.TryGet(_entity, out EnemyComponent enemy))
             {
-                _netState.Value = enemy.CurrentState;
-                _netHasTarget.Value = !enemy.TargetEntity.Equals(default);
+                // OPTIMIZATION: Only sync if values actually changed
+                if (enemy.CurrentState != _lastSyncedState)
+                {
+                    _netState.Value = enemy.CurrentState;
+                    _lastSyncedState = enemy.CurrentState;
+                }
+                
+                bool hasTarget = !enemy.TargetEntity.Equals(default);
+                if (hasTarget != _lastSyncedHasTarget)
+                {
+                    _netHasTarget.Value = hasTarget;
+                    _lastSyncedHasTarget = hasTarget;
+                }
             }
         }
     }
@@ -436,13 +477,26 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
             {
-                _netMovement.Value = new NetworkMovementState
+                var newState = new NetworkMovementState
                 {
                     MoveDirection = movement.MoveDirection,
                     IsMoving = movement.IsMoving,
                     IsGrounded = movement.IsGrounded,
                     IsStunned = movement.IsStunned,
                 };
+                
+                // OPTIMIZATION: Only sync if values actually changed
+                bool changed = 
+                    newState.IsMoving != _lastSyncedMovement.IsMoving ||
+                    newState.IsGrounded != _lastSyncedMovement.IsGrounded ||
+                    newState.IsStunned != _lastSyncedMovement.IsStunned ||
+                    (newState.IsMoving && Vector3.SqrMagnitude(newState.MoveDirection - _lastSyncedMovement.MoveDirection) > 0.01f);
+                    
+                if (changed)
+                {
+                    _netMovement.Value = newState;
+                    _lastSyncedMovement = newState;
+                }
             }
         }
     }
@@ -462,10 +516,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        Debug.Log(
-            $"[EnemyNetworkSyncView] SyncAnimationClientRpc: entity {_entity.Id}, param: {paramName}, type: {type}"
-        );
-
+        // Removed Debug.Log - was spamming ~2k+ times per second causing FPS drop
         object deserializeValue = DeserializeValue(type, value);
 
         _world.Events.Publish(new AnimationParameterEvent(_entity, paramName, type, deserializeValue));
@@ -572,7 +623,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        Debug.Log($"[EnemyNetworkSync] Client Received damage visual: {amount}  at {hitpoint}");
+        // Removed Debug.Log - was spamming during combat
     }
 
     [ClientRpc]
@@ -649,7 +700,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     /// </summary>
     private void ApplyInitialNetworkValues()
     {
-        Debug.Log($"[EnemyNetworkSyncView] ApplyInitialNetworkValues for entity {_entity.Id}");
+        // Removed Debug.Log - spamming during enemy spawns
 
         // Apply transform
         var transformState = _netTransform.Value;
@@ -657,7 +708,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             trans.Position = transformState.Position;
             trans.Rotation = transformState.Rotation;
-            Debug.Log($"[EnemyNetworkSyncView] Applied initial transform: pos={transformState.Position}");
+            // Removed Debug.Log - spamming during enemy spawns
         }
         transform.SetPositionAndRotation(transformState.Position, transformState.Rotation);
         _targetPosition = transformState.Position;
@@ -705,8 +756,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        // Client can react to enemy having/losing target
-        Debug.Log($"[EnemyNetworkSync] Enemy {_entity} has target: {current}");
+        // Removed Debug.Log - was spamming on every target change
     }
 
     private void OnNetStateChanged(EnemyState prev, EnemyState current)
@@ -727,12 +777,12 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                 if (ragdollRef != null)
                 {
                     RagdollUtility.ActivateRagdoll(ragdollRef.gameObject);
-                    Debug.Log($"[EnemyNetworkSync] Client spawned ragdoll for enemy {_entity.Id}");
+                    // Only log important state changes like death
                 }
                 enemy.RagdollSpawned = true;
             }
 
-            Debug.Log($"[EnemyNetworkSync] Enemy {_entity} state changed: {prev} -> {current}");
+            // Removed frequent Debug.Log - was spamming on every state change
         }
     }
 
@@ -809,24 +859,66 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        // DEAD RECKONING: Calculate velocity from position delta for extrapolation
+        // Calculate time since last update for interpolation duration
+        float timeSinceLastUpdate = Time.time - _lastNetworkUpdateTime;
+        
+        // Use tick delta if available for more accurate timing
         if (_lastReceivedTick > 0 && current.Tick > _lastReceivedTick)
         {
             float tickDelta = (current.Tick - _lastReceivedTick) * Time.fixedDeltaTime;
-            if (tickDelta > 0.001f)
-            {
-                _estimatedVelocity = (current.Position - _targetPosition) / tickDelta;
-            }
+            _interpolationDuration = Mathf.Max(tickDelta, 0.016f); // Min 60Hz
+            
+            // Calculate new velocity and smooth it to reduce jitter
+            Vector3 newVelocity = (current.Position - _targetPosition) / tickDelta;
+            _estimatedVelocity = newVelocity;
+            _smoothedVelocity = Vector3.Lerp(_smoothedVelocity, newVelocity, VELOCITY_SMOOTHING);
         }
+        else
+        {
+            _interpolationDuration = Mathf.Max(timeSinceLastUpdate, 0.033f); // Fallback ~30Hz
+        }
+        
         _lastReceivedTick = current.Tick;
         _lastNetworkUpdateTime = Time.time;
+        
+        // Check for large position jump (teleport) - snap instead of interpolate
+        float distanceToNewTarget = Vector3.Distance(_targetPosition, current.Position);
+        if (distanceToNewTarget > SNAP_DISTANCE_THRESHOLD)
+        {
+            // Large jump - snap immediately
+            _previousPosition = current.Position;
+            _targetPosition = current.Position;
+            _previousRotation = current.Rotation;
+            _targetRotation = current.Rotation;
+            _smoothedVelocity = Vector3.zero;
+            _interpolationTime = _interpolationDuration; // Already at target
+            
+            if (_world.Components.TryGet(_entity, out TransformComponent trans))
+            {
+                trans.Position = current.Position;
+                trans.Rotation = current.Rotation;
+            }
+            return;
+        }
 
-        _previousPosition = _targetPosition;
+        // SMOOTH TRANSITION: Start from current VISUAL position, not old target
+        // This prevents snapping back when network updates arrive
+        if (_world.Components.TryGet(_entity, out TransformComponent tf))
+        {
+            _previousPosition = tf.Position;
+            _previousRotation = tf.Rotation;
+        }
+        else
+        {
+            _previousPosition = transform.position;
+            _previousRotation = transform.rotation;
+        }
+        
         _targetPosition = current.Position;
-        _previousRotation = _targetRotation;
         _targetRotation = current.Rotation;
-
-        _lerpProgress = 0f;
+        
+        // Reset interpolation time to start new interpolation from current position
+        _interpolationTime = 0f;
     }
 
     private void OnAttackExecutionRequest(AttackExecutionRequestEvent @event)
@@ -862,7 +954,30 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             return;
         }
 
-        SyncAnimationClientRpc(@event.ParameterName, @event.ParameterType, SerializeValue(@event.Value));
+        // OPTIMIZATION: Only sync if value actually changed
+        // This prevents ~300+ RPCs per frame with 100 enemies
+        float newValue = SerializeValue(@event.Value);
+        string key = @event.ParameterName;
+        
+        // Check if value changed (with small epsilon for floats)
+        if (_lastSyncedAnimValues.TryGetValue(key, out float lastValue))
+        {
+            // For triggers, always sync (they're one-shot)
+            if (@event.ParameterType == AnimationParameterType.Trigger)
+            {
+                // Triggers always sync
+            }
+            else if (Mathf.Abs(newValue - lastValue) < 0.01f)
+            {
+                // Value hasn't changed significantly, skip sync
+                return;
+            }
+        }
+        
+        // Cache the new value
+        _lastSyncedAnimValues[key] = newValue;
+        
+        SyncAnimationClientRpc(@event.ParameterName, @event.ParameterType, newValue);
     }
 
     private void OnHealthChanged(HealthChangedEvent @event)

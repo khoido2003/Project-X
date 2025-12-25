@@ -1,6 +1,10 @@
 using Unity.Netcode;
 using UnityEngine;
 
+/// <summary>
+/// Handles enemy visual movement on SERVER ONLY.
+/// On CLIENT, EnemyNetworkSyncView handles interpolation directly.
+/// </summary>
 public class EnemyMovementView : EntityView
 {
     public bool SmoothPosition = true;
@@ -9,58 +13,40 @@ public class EnemyMovementView : EntityView
     public float SnapThreshold = 0.5f;
 
     private Transform _tranform;
+    private bool _isServer;
 
     private void Awake()
     {
         _tranform = transform;
     }
+    
+    public override void Bind(World world, EntityId entity)
+    {
+        base.Bind(world, entity);
+        
+        // PERFORMANCE: Disable this script on clients
+        // EnemyNetworkSyncView handles client-side interpolation
+        _isServer = NetworkManager.Singleton?.IsServer == true;
+        if (!_isServer)
+        {
+            enabled = false;
+        }
+    }
 
     private void Update()
     {
-        if (WorldInstance == null || EntityInstance.Equals(default))
-        {
-            Debug.LogWarning($"[EnemyMovementView] Not bound - WorldInstance null: {WorldInstance == null}, EntityInstance default: {EntityInstance.Equals(default)}");
+        // Only run on server
+        if (!_isServer)
             return;
-        }
+            
+        if (WorldInstance == null || EntityInstance.Equals(default))
+            return;
 
         if (!WorldInstance.Components.TryGet(EntityInstance, out TransformComponent tf))
-        {
-            Debug.LogWarning($"[EnemyMovementView] No TransformComponent for entity {EntityInstance.Id}");
             return;
-        }
 
-        Vector3 targetPos = tf.Position;
-        Quaternion targetRotation = tf.Rotation;
-
-        // On server: instant sync, no interpolation
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
-            _tranform.SetPositionAndRotation(targetPos, targetRotation);
-            return;
-        }
-
-        // On client: smooth interpolation
-        if (SmoothPosition)
-        {
-            Vector3 current = _tranform.position;
-            float dist = Vector3.Distance(current, targetPos);
-            if (dist < SnapThreshold)
-            {
-                _tranform.position = targetPos;
-            }
-            else
-            {
-                _tranform.position = Vector3.Lerp(current, targetPos, Time.deltaTime * PositionLerpSpeed);
-            }
-            _tranform.rotation = Quaternion.Slerp(
-                _tranform.rotation,
-                targetRotation,
-                Time.deltaTime * RotationLerpSpeed
-            );
-        }
-        else
-        {
-            _tranform.SetPositionAndRotation(targetPos, targetRotation);
-        }
+        // SERVER: instant sync, no interpolation
+        _tranform.SetPositionAndRotation(tf.Position, tf.Rotation);
     }
 }
+

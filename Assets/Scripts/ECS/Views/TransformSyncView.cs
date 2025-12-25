@@ -1,13 +1,16 @@
 using Unity.Netcode;
 using UnityEngine;
 
+/// <summary>
+/// Syncs Transform for PLAYERS only.
+/// Enemies use EnemyNetworkSyncView for their transform sync.
+/// </summary>
 public class TransformSyncView : EntityView
 {
     private Transform _transform;
     private World _world;
-    private TransformComponent _transformComponent;
-
     private EntityId _entity;
+    private bool _isEnemy;
 
     public override void Bind(World world, EntityId entity)
     {
@@ -16,6 +19,15 @@ public class TransformSyncView : EntityView
         _world = world;
         _transform = transform;
         _entity = entity;
+        
+        // Check if this is an enemy - if so, disable this script
+        // Enemies use EnemyNetworkSyncView for transform sync
+        _isEnemy = world.Components.Has<EnemyComponent>(entity);
+        if (_isEnemy)
+        {
+            enabled = false;
+            return;
+        }
 
         if (!_world.Components.Has<TransformComponent>(_entity))
         {
@@ -25,45 +37,35 @@ public class TransformSyncView : EntityView
 
     private void LateUpdate()
     {
-        if (_world == null)
-        {
+        if (_world == null || _isEnemy)
             return;
-        }
 
         if (!_world.Components.TryGet(_entity, out TransformComponent trans))
-        {
             return;
-        }
 
         bool isServer = NetworkManager.Singleton?.IsServer == true;
         bool isLocalPlayer = _world.Components.TryGet(_entity, out NetworkOwnerComponent owner) && owner.IsLocalPlayer;
 
         if (isServer)
         {
-            // SERVER: Write from Unity Transform to ECS (CharacterController moves Unity Transform)
+            // SERVER: Write from Unity Transform to ECS
             trans.Position = _transform.position;
             trans.Rotation = _transform.rotation;
         }
         else
         {
             // CLIENT: Read from ECS and apply to Unity Transform
-            // NetworkSyncView updates ECS from NetworkVariables
-
             if (isLocalPlayer)
             {
-                // LOCAL PLAYER on CLIENT:
-                // - Position comes from server (ECS) since movement is server-authoritative
-                // - Rotation is LOCAL (handled by LookAtMouseView for responsive mouse look)
                 _transform.position = trans.Position;
                 // DON'T overwrite rotation - LookAtMouseView handles it locally
             }
             else
             {
-                // REMOTE PLAYERS on CLIENT:
-                // - Both position and rotation come from server (ECS)
                 _transform.position = trans.Position;
                 _transform.rotation = trans.Rotation;
             }
         }
     }
 }
+

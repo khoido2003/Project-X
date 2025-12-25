@@ -31,16 +31,18 @@ public class AudioProfileSystem : ISystem
 
         if (profile.Profile == null)
         {
-            // Try to get entity name for better error message
+            // Client-side enemies may have null profiles since we don't sync audio profiles over network
+            // Server handles enemy audio playback - silently skip on client
+            if (_world.Components.Has<EnemyComponent>(@event.Entity))
+            {
+                return; // Silent skip for enemies - server handles their audio
+            }
+            
+            // For players, log a warning since they should have profiles from CharacterData
             string entityName = $"Entity {@event.Entity.Id}";
             if (_world.Components.TryGet(@event.Entity, out CharacterSelectionComponent charSel))
             {
                 entityName = charSel.CharacterData?.characterName ?? entityName;
-            }
-            else if (_world.Components.Has<EnemyComponent>(@event.Entity))
-            {
-                // Can't easily get enemy name, but we can indicate it's an enemy
-                entityName = $"Enemy {@event.Entity.Id}";
             }
 
             Debug.LogWarning(
