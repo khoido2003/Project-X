@@ -37,7 +37,7 @@ MonoBehaviour:
     animationTrigger: attack
     totalAnimations: 2
     hitImpactVFX: {fileID: 7089567446671028007, guid: a3015979818be2645a5a7a5907241fe8, type: 3}
-    attackSound: {fileID: 0}
+    attackSound: {fileID: 8300000, guid: 8a3f5ba3f45ed7d478c7c824b149d5fe, type: 3}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 0
     projectileLifetime: 0
@@ -50,7 +50,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f3a53398fc9123f4b804ec8111e7164e, type: 2}
   audioProfile: {fileID: 11400000, guid: 6b71d1d5403a5e24badcdc590cff1a09, type: 2}
   clientId: 0
-  playerId: 0
-  isSelected: 1
+  playerId: -1
+  isSelected: 0
   enemiesDestroyed: 0
   totalDamages: 0

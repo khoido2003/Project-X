@@ -70,12 +70,26 @@ public class NetworkSyncView : NetworkBehaviour
     private Vector3 _targetPosition;
     private Quaternion _previousRotation = Quaternion.identity;
     private Quaternion _targerRotation = Quaternion.identity;
-    private float _lerpProgress;
+    private float _interpolationTime;
+    private float _interpolationDuration = 0.1f; // Time between expected network updates
     
     // Network optimization: velocity-based dead reckoning
     private Vector3 _estimatedVelocity;
+    private Vector3 _smoothedVelocity; // Dampened velocity for smoother extrapolation
     private float _lastNetworkUpdateTime;
     private uint _lastReceivedTick;
+    
+    // Constants for interpolation tuning
+    private const float SNAP_DISTANCE_THRESHOLD = 5f; // Snap if too far (teleport)
+    private const float VELOCITY_SMOOTHING = 0.3f; // How much to smooth velocity changes
+    private const float MAX_EXTRAPOLATION_TIME = 0.15f; // Max time to extrapolate beyond target
+    
+    // OPTIMIZATION: Cache last synced animation values to throttle RPCs
+    // Only broadcasts when values actually change
+    private Dictionary<string, float> _lastSyncedAnimValues = new();
+    
+    // OPTIMIZATION: Cache last synced movement state to throttle NetworkVariable updates
+    private NetworkMovementState _lastSyncedMovement;
 
     /////////////////////////////////////////////////////////////////////////////
 
@@ -419,13 +433,26 @@ public class NetworkSyncView : NetworkBehaviour
         {
             if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
             {
-                _netMovement.Value = new NetworkMovementState
+                var newState = new NetworkMovementState
                 {
                     MoveDirection = movement.MoveDirection,
                     IsMoving = movement.IsMoving,
                     IsGrounded = movement.IsGrounded,
                     IsStunned = movement.IsStunned,
                 };
+                
+                // OPTIMIZATION: Only sync if values actually changed
+                bool changed = 
+                    newState.IsMoving != _lastSyncedMovement.IsMoving ||
+                    newState.IsGrounded != _lastSyncedMovement.IsGrounded ||
+                    newState.IsStunned != _lastSyncedMovement.IsStunned ||
+                    (newState.IsMoving && Vector3.SqrMagnitude(newState.MoveDirection - _lastSyncedMovement.MoveDirection) > 0.01f);
+                    
+                if (changed)
+                {
+                    _netMovement.Value = newState;
+                    _lastSyncedMovement = newState;
+                }
             }
         }
     }
@@ -498,58 +525,62 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        // OPTIMIZATION: Adaptive lerp speed based on distance
-        // Faster when far (to catch up), slower when close (for smoothness)
-        float distance = Vector3.Distance(_previousPosition, _targetPosition);
-        float adaptiveSpeed = Mathf.Lerp(8f, 20f, Mathf.Clamp01(distance / 3f));
-        _lerpProgress += Time.deltaTime * adaptiveSpeed;
+        // Advance interpolation time
+        _interpolationTime += Time.deltaTime;
+        
+        // Calculate interpolation progress (0 to 1+)
+        float t = _interpolationDuration > 0.001f ? _interpolationTime / _interpolationDuration : 1f;
+        
+        if (!_world.Components.TryGet(_entity, out TransformComponent trans))
+            return;
 
-        // Update ECS TransformComponent, TransformSyncSystem will apply to Unity Transform
-        if (_world.Components.TryGet(_entity, out TransformComponent trans))
+        if (t < 1f)
         {
-            if (_lerpProgress < 1f)
-            {
-                // Standard interpolation to target
-                trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, _lerpProgress);
-            }
-            else
-            {
-                // DEAD RECKONING: Continue moving in predicted direction when lerp complete
-                // This prevents stuttering while waiting for next network update
-                trans.Position = _targetPosition + _estimatedVelocity * (Time.time - _lastNetworkUpdateTime - 0.1f);
-            }
+            // Standard interpolation toward target
+            trans.Position = Vector3.Lerp(_previousPosition, _targetPosition, t);
+        }
+        else
+        {
+            // DEAD RECKONING: Extrapolate beyond target using smoothed velocity
+            float extrapolationTime = Mathf.Min(_interpolationTime - _interpolationDuration, MAX_EXTRAPOLATION_TIME);
+            
+            // Use smoothed velocity with gradual dampening to prevent overshoot
+            float damping = 1f - Mathf.Clamp01(extrapolationTime / MAX_EXTRAPOLATION_TIME);
+            trans.Position = _targetPosition + _smoothedVelocity * extrapolationTime * damping;
+        }
+        
+        // Smooth rotation interpolation with validation
+        float rotT = Mathf.Clamp01(t * 1.2f); // Rotation completes slightly faster
+        
+        bool previousValid =
+            _previousRotation != Quaternion.identity
+            && !float.IsNaN(_previousRotation.x)
+            && !float.IsNaN(_previousRotation.y)
+            && !float.IsNaN(_previousRotation.z)
+            && !float.IsNaN(_previousRotation.w);
 
-            // Interpolate rotation with safety checks
-            bool previousValid =
-                _previousRotation != Quaternion.identity
-                && !float.IsNaN(_previousRotation.x)
-                && !float.IsNaN(_previousRotation.y)
-                && !float.IsNaN(_previousRotation.z)
-                && !float.IsNaN(_previousRotation.w);
+        bool targetValid =
+            _targerRotation != Quaternion.identity
+            && !float.IsNaN(_targerRotation.x)
+            && !float.IsNaN(_targerRotation.y)
+            && !float.IsNaN(_targerRotation.z)
+            && !float.IsNaN(_targerRotation.w);
 
-            bool targetValid =
-                _targerRotation != Quaternion.identity
-                && !float.IsNaN(_targerRotation.x)
-                && !float.IsNaN(_targerRotation.y)
-                && !float.IsNaN(_targerRotation.z)
-                && !float.IsNaN(_targerRotation.w);
-
-            if (previousValid && targetValid)
-            {
-                trans.Rotation = Quaternion.Slerp(_previousRotation, _targerRotation, Mathf.Clamp01(_lerpProgress));
-            }
-            else if (targetValid)
-            {
-                trans.Rotation = _targerRotation;
-            }
-            else if (previousValid)
-            {
-                trans.Rotation = _previousRotation;
-            }
-            else
-            {
-                trans.Rotation = Quaternion.identity;
-            }
+        if (previousValid && targetValid)
+        {
+            trans.Rotation = Quaternion.Slerp(_previousRotation, _targerRotation, rotT);
+        }
+        else if (targetValid)
+        {
+            trans.Rotation = _targerRotation;
+        }
+        else if (previousValid)
+        {
+            trans.Rotation = _previousRotation;
+        }
+        else
+        {
+            trans.Rotation = Quaternion.identity;
         }
     }
 
@@ -1498,26 +1529,65 @@ public class NetworkSyncView : NetworkBehaviour
         }
         else
         {
-            // DEAD RECKONING: Calculate velocity from position delta for extrapolation
+            // Calculate time since last update for interpolation duration
+            float timeSinceLastUpdate = Time.time - _lastNetworkUpdateTime;
+            
+            // Use tick delta if available for more accurate timing
             if (_lastReceivedTick > 0 && current.Tick > _lastReceivedTick)
             {
                 float tickDelta = (current.Tick - _lastReceivedTick) * Time.fixedDeltaTime;
-                if (tickDelta > 0.001f)
-                {
-                    _estimatedVelocity = (current.Position - _targetPosition) / tickDelta;
-                }
+                _interpolationDuration = Mathf.Max(tickDelta, 0.016f); // Min 60Hz
+                
+                // Calculate new velocity and smooth it to reduce jitter
+                Vector3 newVelocity = (current.Position - _targetPosition) / tickDelta;
+                _estimatedVelocity = newVelocity;
+                _smoothedVelocity = Vector3.Lerp(_smoothedVelocity, newVelocity, VELOCITY_SMOOTHING);
             }
+            else
+            {
+                _interpolationDuration = Mathf.Max(timeSinceLastUpdate, 0.033f); // Fallback ~30Hz
+            }
+            
             _lastReceivedTick = current.Tick;
             _lastNetworkUpdateTime = Time.time;
             
-            // Remote clients: interpolate for smooth appearance
-            _previousPosition = transform.position;
+            // Check for large position jump (teleport) - snap instead of interpolate
+            float distanceToNewTarget = Vector3.Distance(_targetPosition, current.Position);
+            if (distanceToNewTarget > SNAP_DISTANCE_THRESHOLD)
+            {
+                // Large jump - snap immediately
+                _previousPosition = current.Position;
+                _targetPosition = current.Position;
+                _previousRotation = current.Rotation;
+                _targerRotation = current.Rotation;
+                _smoothedVelocity = Vector3.zero;
+                _interpolationTime = _interpolationDuration;
+                
+                if (_world.Components.TryGet(_entity, out TransformComponent tf))
+                {
+                    tf.Position = current.Position;
+                    tf.Rotation = current.Rotation;
+                }
+                return;
+            }
+
+            // SMOOTH TRANSITION: Start from current VISUAL position, not old target
+            if (_world.Components.TryGet(_entity, out TransformComponent trans))
+            {
+                _previousPosition = trans.Position;
+                _previousRotation = trans.Rotation;
+            }
+            else
+            {
+                _previousPosition = transform.position;
+                _previousRotation = transform.rotation;
+            }
+            
             _targetPosition = current.Position;
-
-            _previousRotation = transform.rotation;
             _targerRotation = current.Rotation;
-
-            _lerpProgress = 0f;
+            
+            // Reset interpolation time to start new interpolation from current position
+            _interpolationTime = 0f;
         }
     }
 
@@ -1528,7 +1598,30 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        SyncAnimationClientRpc(@event.ParameterName, @event.ParameterType, SerializeValue(@event.Value));
+        // OPTIMIZATION: Only sync if value actually changed
+        // This prevents excessive RPCs every frame
+        float newValue = SerializeValue(@event.Value);
+        string key = @event.ParameterName;
+        
+        // Check if value changed (with small epsilon for floats)
+        if (_lastSyncedAnimValues.TryGetValue(key, out float lastValue))
+        {
+            // For triggers, always sync (they're one-shot)
+            if (@event.ParameterType == AnimationParameterType.Trigger)
+            {
+                // Triggers always sync
+            }
+            else if (Mathf.Abs(newValue - lastValue) < 0.01f)
+            {
+                // Value hasn't changed significantly, skip sync
+                return;
+            }
+        }
+        
+        // Cache the new value
+        _lastSyncedAnimValues[key] = newValue;
+        
+        SyncAnimationClientRpc(@event.ParameterName, @event.ParameterType, newValue);
     }
 
     private void OnCombatStateChanged(CombatStateChangedEvent @event)

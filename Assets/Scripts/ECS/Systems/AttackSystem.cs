@@ -16,20 +16,7 @@ public class AttackSystem : ISystem
 
     private void OnAttackRequest(AttackPressedInputEvent @event)
     {
-        if (!NetworkManager.Singleton.IsServer)
-        {
-            // Client: Only play animation for prediction
-            // Actual attack processing happens on server
-            return;
-        }
-
-        if (
-            _world.Components.TryGet(@event.Entity, out ActionFlagComponent flags) && flags.Get(ActionFlag.SkillPreview)
-        )
-        {
-            return;
-        }
-
+        // Check basic components first
         if (!_world.Components.TryGet(@event.Entity, out AttackDataComponent attack))
         {
             return;
@@ -49,25 +36,7 @@ public class AttackSystem : ISystem
         // Block attack if already attacking - prevents animation spam/reset
         if (state.CurrentState == CombatState.Attacking || attack.IsAttacking)
         {
-            return; // Attack in progress, block new attack input
-        }
-
-        // If stuck in CastingSkill state, force reset to Idle
-        if (state.CurrentState == CombatState.CastingSkill)
-        {
-            // Check if enough time has passed since last action
-            if (Time.time - state.LastActionTime > 2f)
-            {
-                state.CurrentState = CombatState.Idle;
-                state.LastActionTime = Time.time;
-                Debug.LogWarning(
-                    $"[AttackSystem] Force resetting stuck CastingSkill state for entity {@event.Entity.Id}"
-                );
-            }
-            else
-            {
-                return; // Still casting, block attack
-            }
+            return;
         }
 
         // Check cooldown
@@ -76,12 +45,63 @@ public class AttackSystem : ISystem
             return;
         }
 
-        // Ensure we have a valid attack direction (set by the client when requesting the attack)
+        // CLIENT-SIDE PREDICTION: Play animation immediately for responsive feel
+        // This runs on BOTH client and server for immediate feedback
+        bool isLocalPlayer = _world.Components.TryGet(@event.Entity, out NetworkOwnerComponent owner) && owner.IsLocalPlayer;
+        
+        if (isLocalPlayer || NetworkManager.Singleton.IsServer)
+        {
+            // Update local combat state for immediate visual feedback
+            state.CurrentState = CombatState.Attacking;
+            attack.IsAttacking = true;
+            
+            // Play attack animation immediately
+            int randomIndex = UnityEngine.Random.Range(0, weapon.TotalAttackAnimations);
+            _world.Events.Publish(
+                new AnimationParameterEvent(@event.Entity, "attackIndex", AnimationParameterType.Float, randomIndex)
+            );
+            _world.Events.Publish(
+                new AnimationParameterEvent(
+                    @event.Entity,
+                    weapon.AttackAnimationTrigger,
+                    AnimationParameterType.Trigger,
+                    null
+                )
+            );
+        }
+
+        // SERVER-ONLY: Process actual attack logic (damage, projectiles, etc.)
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            return; // Client stops here after playing animation
+        }
+
+        if (
+            _world.Components.TryGet(@event.Entity, out ActionFlagComponent flags) && flags.Get(ActionFlag.SkillPreview)
+        )
+        {
+            return;
+        }
+
+        // If stuck in CastingSkill state, force reset to Idle
+        if (state.CurrentState == CombatState.CastingSkill)
+        {
+            if (Time.time - state.LastActionTime > 2f)
+            {
+                state.CurrentState = CombatState.Idle;
+                state.LastActionTime = Time.time;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        // Ensure we have a valid attack direction
         Vector3 attackDir = attack.AttackDirection;
 
         if (attackDir.sqrMagnitude < 0.0001f)
         {
-            // Fallback to entity forward if no direction was provided
             if (_world.Components.TryGet(@event.Entity, out TransformComponent transform))
             {
                 attackDir = transform.Rotation * Vector3.forward;
@@ -105,31 +125,12 @@ public class AttackSystem : ISystem
 
         attack.AttackDirection = attackDir.normalized;
 
-        // Switch Combat State
+        // Switch Combat State (server authoritative)
         _world.Events.Publish(
             new EnterCombatStateEvent { Entity = @event.Entity, TargetState = CombatState.Attacking }
         );
 
-        attack.IsAttacking = true;
         attack.LastAttackTime = Time.time;
-
-        ////////////////////////////////////////////////////////
-
-        // ANIMATION
-        int randomIndex = Random.Range(0, weapon.TotalAttackAnimations);
-
-        _world.Events.Publish(
-            new AnimationParameterEvent(@event.Entity, "attackIndex", AnimationParameterType.Float, randomIndex)
-        );
-
-        _world.Events.Publish(
-            new AnimationParameterEvent(
-                @event.Entity,
-                weapon.AttackAnimationTrigger,
-                AnimationParameterType.Trigger,
-                null
-            )
-        );
     }
 
     public void FixedUpdate(float dt) { }

@@ -22,7 +22,7 @@ MonoBehaviour:
   cooldown: 2.5
   hitVfxPrefab: {fileID: 198202731371243394, guid: 65932b7368590234d8163da03c2055d8, type: 3}
   skillVfxPrefab: {fileID: 198958634261893940, guid: 4baff87aa850bb94fbaeecfbaaaa1ba1, type: 3}
-  activateSound: {fileID: 8300000, guid: e4fd63a576d0f468087e071e9ed6f04f, type: 3}
+  activateSound: {fileID: 8300000, guid: 8a3f5ba3f45ed7d478c7c824b149d5fe, type: 3}
   activationAnimationTrigger: skill2
   explosionRadius: 3
   explosionDamage: 40

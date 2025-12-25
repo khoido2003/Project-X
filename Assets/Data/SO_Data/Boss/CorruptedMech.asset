@@ -23,13 +23,13 @@ MonoBehaviour:
   hammerAnimationTrigger: attack
   totalHammerAnimations: 2
   hammerImpactVFX: {fileID: 198633821086180066, guid: 2fc2b4305b63e364b8dfa3b209f8ae8b, type: 3}
-  hammerSwingSound: {fileID: 8300000, guid: 0c81ae95d73724800ab386a76a55cf99, type: 3}
+  hammerSwingSound: {fileID: 8300000, guid: 8a3f5ba3f45ed7d478c7c824b149d5fe, type: 3}
   hammerSlamDamage: 100
   hammerSlamRadius: 5
   hammerSlamCooldown: 8
   hammerSlamTrigger: attack
   hammerSlamVFX: {fileID: 198011925041146442, guid: 319c6b2bec42ddf4d949a0bdc4f2ce3f, type: 3}
-  hammerSlamSound: {fileID: 8300000, guid: 78db9d561d1134f1c91be2940e267353, type: 3}
+  hammerSlamSound: {fileID: 8300000, guid: 8a3f5ba3f45ed7d478c7c824b149d5fe, type: 3}
   jumpAttackRange: 8
   jumpAttackMinRange: 5
   jumpAttackCooldown: 7
@@ -38,7 +38,7 @@ MonoBehaviour:
   jumpDuration: 0.6
   jumpAnimationTrigger: jumpAttack
   jumpLandingVFX: {fileID: 198106895250101352, guid: 876473f06ffd95c42b0cae78a94bc015, type: 3}
-  jumpSound: {fileID: 8300000, guid: 8b735966d1aff452c95425551476d49b, type: 3}
+  jumpSound: {fileID: 8300000, guid: 2989ff14cbdb5c24eb65d09c2b9caf08, type: 3}
   flamethrowerCooldown: 10
   flamethrowerDamagePerTick: 15
   flamethrowerTickInterval: 0.3
@@ -47,7 +47,7 @@ MonoBehaviour:
   flamethrowerDuration: 3
   flamethrowerTrigger: flamethrower
   flamethrowerVFX: {fileID: 198015459346078236, guid: 49a1555350ecbab47bd9957762c9e75b, type: 3}
-  flamethrowerSound: {fileID: 8300000, guid: 8efd4a726f8b3490bbee00b31df3d28b, type: 3}
+  flamethrowerSound: {fileID: 8300000, guid: 8d38828caa6e487408ba44479ae7d958, type: 3}
   isMovingParam: isMoving
   isRunningParam: isRunning
   moveXParam: moveX
@@ -61,4 +61,4 @@ MonoBehaviour:
     m_Bits: 1920
   audioProfile: {fileID: 11400000, guid: 347998f7f5459d744ab089e6fa8d7316, type: 2}
   enrageRoarSound: {fileID: 8300000, guid: b1ae84d271c6d40f1b3c036f3a8ada46, type: 3}
-  deathSound: {fileID: 8300000, guid: 13485403feb754f1facba07ba73ed72e, type: 3}
+  deathSound: {fileID: 8300000, guid: 388b66b9dae164b4aac20cc0afe9b91d, type: 3}
