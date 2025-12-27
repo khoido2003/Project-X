@@ -140,10 +140,50 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
             return;
         }
 
-        switch (m_sceneActive)
+        // Use coroutine to handle client initialization with spectator check delay
+        StartCoroutine(HandleClientSceneLoad(clientId, sceneName));
+
+        OnLoadingFinished?.Invoke();
+    }
+    
+    /// <summary>
+    /// Handle client scene load with a small delay to allow spectator RPC to arrive.
+    /// This fixes the race condition where spectator registration RPC arrives after OnLoadComplete.
+    /// </summary>
+    private IEnumerator HandleClientSceneLoad(ulong clientId, string sceneName)
+    {
+        // Parse the scene name to get the enum
+        if (!Enum.TryParse(sceneName, out SceneName loadedScene))
+        {
+            Debug.LogWarning($"[LoadingSceneManager] Unknown scene: {sceneName}");
+            yield break;
+        }
+        
+        // Skip Loading scene - we don't process players during loading
+        if (loadedScene == SceneName.Loading)
+        {
+            yield break;
+        }
+        
+        // Wait a small amount for spectator registration RPC to arrive
+        // This delay is necessary because RPCs are processed asynchronously
+        yield return new WaitForSeconds(0.3f);
+        
+        // Now check if this client is a spectator
+        bool isSpectator = SpectatorNetworkHandler.Instance != null && 
+                           SpectatorNetworkHandler.Instance.IsSpectator(clientId);
+        
+        Debug.Log($"[LoadingSceneManager] Client {clientId} loaded {sceneName}. IsSpectator: {isSpectator}");
+
+        switch (loadedScene)
         {
             case SceneName.CharacterSelection:
-                if (CharacterSelectionManager.Instance != null)
+                // Spectators skip character selection entirely
+                if (isSpectator)
+                {
+                    Debug.Log($"[LoadingSceneManager] Spectator {clientId} skipping character selection - no player object spawned");
+                }
+                else if (CharacterSelectionManager.Instance != null)
                 {
                     CharacterSelectionManager.Instance.ServerSceneInit(clientId);
                 }
@@ -156,15 +196,20 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
             case SceneName.Map_1:
             case SceneName.Map_2:
             case SceneName.Map_3:
-                Debug.Log($"Client {clientId} loaded into gameplay scene: {sceneName}");
+                if (isSpectator)
+                {
+                    Debug.Log($"[LoadingSceneManager] Spectator {clientId} loaded into gameplay scene: {sceneName}");
+                }
+                else
+                {
+                    Debug.Log($"[LoadingSceneManager] Player {clientId} loaded into gameplay scene: {sceneName}");
+                }
                 break;
 
             case SceneName.Victory:
             case SceneName.Defeat:
                 break;
         }
-
-        OnLoadingFinished?.Invoke();
     }
 
     private void PlaySceneMusic(SceneName sceneName)
@@ -184,6 +229,21 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
     private IEnumerator WaitForCharacterSelectionManager(ulong clientId)
     {
         yield return new WaitUntil(() => CharacterSelectionManager.Instance != null);
-        CharacterSelectionManager.Instance.ServerSceneInit(clientId);
+        
+        // Wait for spectator status to be known (same delay as HandleClientSceneLoad)
+        yield return new WaitForSeconds(0.3f);
+        
+        // Check if spectator - don't spawn player for spectators
+        bool isSpectator = SpectatorNetworkHandler.Instance != null && 
+                           SpectatorNetworkHandler.Instance.IsSpectator(clientId);
+        
+        if (!isSpectator)
+        {
+            CharacterSelectionManager.Instance.ServerSceneInit(clientId);
+        }
+        else
+        {
+            Debug.Log($"[LoadingSceneManager] Spectator {clientId} skipping ServerSceneInit");
+        }
     }
 }

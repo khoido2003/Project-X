@@ -33,9 +33,16 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
 
     private bool CanConnect(ulong clientId)
     {
+        // Spectators are always allowed to connect (they don't take player slots)
+        if (SpectatorNetworkHandler.Instance != null && SpectatorNetworkHandler.Instance.IsSpectator(clientId))
+        {
+            return true;
+        }
+        
         if (LoadingSceneManager.Instance.SceneActive == SceneName.CharacterSelection)
         {
-            int playersConnected = NetworkManager.Singleton.ConnectedClientsList.Count;
+            // Count only non-spectator players for max connection check
+            int playersConnected = GetActivePlayerCount();
 
             if (playersConnected > m_maxConnections)
             {
@@ -55,6 +62,23 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
                 return false;
             }
         }
+    }
+    
+    /// <summary>
+    /// Get count of connected players, excluding spectators.
+    /// </summary>
+    private int GetActivePlayerCount()
+    {
+        int count = 0;
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (SpectatorNetworkHandler.Instance == null || 
+                !SpectatorNetworkHandler.Instance.IsSpectator(client.ClientId))
+            {
+                count++;
+            }
+        }
+        return count;
     }
 
     private void RemoveClient(ulong clientId)

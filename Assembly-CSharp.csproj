@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\ECS\Views\Skills\BladeStormExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Events\AnimationEvent.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\TransformDataComponent.cs" />
+    <Compile Include="Assets\Scripts\Core\Spectator\SpectatorSpawner.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ActionFlagComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AnimationEventRelayView.cs" />
     <Compile Include="Assets\Scripts\Utils\LoadingFadeEffect.cs" />
@@ -119,8 +120,10 @@
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\CinemachineCameraService.cs" />
+    <Compile Include="Assets\Scripts\Core\Spectator\SpectatorController.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyRoom\BaseCharacterLobby.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\CloakStrikeExecutorView.cs" />
+    <Compile Include="Assets\Scripts\UI\Spectator\SpectatorUI.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\ExplosiveShotSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IEnemyState.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\RapidFireExecutorView.cs" />
@@ -197,6 +200,8 @@
     <Compile Include="Assets\Scripts\UI\GameWorldUI\SelectedSkill.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AimingRigView.cs" />
     <Compile Include="Assets\Scripts\Utils\UnityMainThreadDispatcher.cs" />
+    <Compile Include="Assets\Scripts\UI\Spectator\SpectatorCharacterSelectionUI.cs" />
+    <Compile Include="Assets\Scripts\Core\Spectator\SpectatorNetworkHandler.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IInputService.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\MenuManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\PiercingProjectileView.cs" />
@@ -247,6 +252,7 @@
     <Compile Include="Assets\Scripts\SO\SpawnConfigSO.cs" />
     <Compile Include="Assets\PlayerInputAction.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\SimpleCameraController.cs" />
+    <Compile Include="Assets\Scripts\Core\Network\ConnectionSettings.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ComponentStore.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\TransformSyncSystem.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\SkillBarUI.cs" />

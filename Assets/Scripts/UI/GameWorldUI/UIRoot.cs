@@ -9,6 +9,11 @@ public class UIRoot : MonoBehaviour
     [SerializeField]
     private SkillBarUI skillBarUI;
 
+    [Header("Spectator Mode")]
+    [SerializeField]
+    [Tooltip("Root object containing player-specific UI (hide for spectators)")]
+    private GameObject playerUIRoot;
+
     private World _world;
 
     private bool _isInitialized = false;
@@ -30,6 +35,31 @@ public class UIRoot : MonoBehaviour
         yield return null;
 
         World world = WorldRunner.Instance.World;
+
+        // Check if we're a spectator
+        bool isSpectator = ConnectionSettings.IsSpectator;
+
+        if (isSpectator)
+        {
+            // Spectator mode - hide player-specific UI
+            Debug.Log("[UIRoot] Spectator mode - hiding player UI");
+
+            if (playerUIRoot != null)
+            {
+                playerUIRoot.SetActive(false);
+            }
+            else
+            {
+                // Fallback: hide individual elements
+                if (healthHUD != null)
+                    healthHUD.gameObject.SetActive(false);
+                if (skillBarUI != null)
+                    skillBarUI.gameObject.SetActive(false);
+            }
+
+            _isInitialized = true;
+            yield break;
+        }
 
         // Wait for local player to be spawned
         EntityId localPlayer = default;

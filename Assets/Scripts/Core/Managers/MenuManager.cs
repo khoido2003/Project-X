@@ -33,6 +33,22 @@ public class MenuManager : MonoBehaviour
     [SerializeField]
     private Button m_quickGameBtn;
 
+    [Header("Spectator Mode")]
+    [SerializeField]
+    private Button m_watchMatchBtn;
+
+    [SerializeField]
+    private GameObject m_spectatorPanel;
+
+    [SerializeField]
+    private TMP_InputField m_spectatorIpInputField;
+
+    [SerializeField]
+    private Button m_spectatorConnectBtn;
+
+    [SerializeField]
+    private Button m_spectatorCancelBtn;
+
     [SerializeField]
     private UISoundConfig uiSoundConfig;
 
@@ -78,6 +94,23 @@ public class MenuManager : MonoBehaviour
             OnClickQuit();
         });
 
+        // Setup spectator button
+        if (m_watchMatchBtn != null)
+        {
+            m_watchMatchBtn.onClick.AddListener(OnClickWatchMatch);
+        }
+
+        // Setup spectator panel buttons
+        if (m_spectatorConnectBtn != null)
+        {
+            m_spectatorConnectBtn.onClick.AddListener(OnClickSpectatorConnect);
+        }
+
+        if (m_spectatorCancelBtn != null)
+        {
+            m_spectatorCancelBtn.onClick.AddListener(OnClickSpectatorCancel);
+        }
+
         // Setup join panel buttons if assigned
         if (m_connectBtn != null)
         {
@@ -89,15 +122,22 @@ public class MenuManager : MonoBehaviour
             m_cancelJoinBtn.onClick.AddListener(OnClickCancelJoin);
         }
 
-        // Hide join panel initially
+        // Hide panels initially
         if (m_joinPanel != null)
         {
             m_joinPanel.SetActive(false);
         }
 
+        if (m_spectatorPanel != null)
+        {
+            m_spectatorPanel.SetActive(false);
+        }
+
         m_hostBtn.gameObject.SetActive(false);
         m_joinBtn.gameObject.SetActive(false);
         m_quickGameBtn.gameObject.SetActive(false);
+        if (m_watchMatchBtn != null)
+            m_watchMatchBtn.gameObject.SetActive(false);
 
         yield return new WaitUntil(() => NetworkManager.Singleton.SceneManager != null);
         LoadingSceneManager.Instance.Init();
@@ -235,7 +275,156 @@ public class MenuManager : MonoBehaviour
         m_hostBtn.gameObject.SetActive(true);
         m_joinBtn.gameObject.SetActive(true);
         m_quickGameBtn.gameObject.SetActive(true);
+        if (m_watchMatchBtn != null)
+            m_watchMatchBtn.gameObject.SetActive(true);
     }
+
+    #region Spectator Mode
+
+    /// <summary>
+    /// Called when Watch Match button is clicked.
+    /// Shows the spectator IP input panel.
+    /// </summary>
+    public void OnClickWatchMatch()
+    {
+        PlayButtonClickSound();
+
+        if (m_spectatorPanel != null && m_spectatorIpInputField != null)
+        {
+            m_spectatorPanel.SetActive(true);
+            HideMainButtons();
+
+            // Set default IP if empty
+            if (string.IsNullOrEmpty(m_spectatorIpInputField.text))
+            {
+                m_spectatorIpInputField.text = "127.0.0.1";
+            }
+        }
+        else
+        {
+            // Fallback: direct connect with default IP
+            StartCoroutine(JoinAsSpectator("127.0.0.1"));
+        }
+    }
+
+    private void OnClickSpectatorConnect()
+    {
+        PlayButtonClickSound();
+
+        string ipAddress = m_spectatorIpInputField.text.Trim();
+        if (string.IsNullOrEmpty(ipAddress))
+        {
+            Debug.LogWarning("[MenuManager] Spectator IP address is empty!");
+            return;
+        }
+
+        if (m_spectatorPanel != null)
+        {
+            m_spectatorPanel.SetActive(false);
+        }
+
+        StartCoroutine(JoinAsSpectator(ipAddress));
+    }
+
+    private void OnClickSpectatorCancel()
+    {
+        PlayButtonClickSound();
+
+        if (m_spectatorPanel != null)
+        {
+            m_spectatorPanel.SetActive(false);
+        }
+
+        ShowMainButtons();
+    }
+
+    /// <summary>
+    /// Join as spectator - sets flag and connects directly to game scene.
+    /// </summary>
+    private IEnumerator JoinAsSpectator(string ipAddress)
+    {
+        LoadingFadeEffect.Instance.FadeAll();
+        yield return new WaitUntil(() => LoadingFadeEffect.s_canLoad);
+
+        // Set spectator flag BEFORE connecting
+        ConnectionSettings.IsSpectator = true;
+        ConnectionSettings.TargetIP = ipAddress;
+
+        // Configure transport
+        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        if (transport != null)
+        {
+            transport.SetConnectionData(ipAddress, m_port);
+            Debug.Log($"[MenuManager] Spectator connecting to {ipAddress}:{m_port}");
+        }
+
+        // Subscribe to connection events
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnSpectatorDisconnected;
+        NetworkManager.Singleton.OnClientConnectedCallback += OnSpectatorConnected;
+
+        NetworkManager.Singleton.StartClient();
+
+        // Wait for connection
+        yield return new WaitForSeconds(5f);
+
+        if (!NetworkManager.Singleton.IsConnectedClient)
+        {
+            Debug.LogWarning($"[MenuManager] Spectator failed to connect to {ipAddress}:{m_port}");
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnSpectatorDisconnected;
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnSpectatorConnected;
+            NetworkManager.Singleton.Shutdown();
+            ConnectionSettings.Reset();
+            LoadingFadeEffect.Instance.FadeOut();
+            ShowMainButtons();
+        }
+    }
+
+    private void OnSpectatorConnected(ulong clientId)
+    {
+        Debug.Log("[MenuManager] Spectator connected successfully!");
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnSpectatorDisconnected;
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnSpectatorConnected;
+        // Note: Scene will be loaded by the host's scene manager
+    }
+
+    private void OnSpectatorDisconnected(ulong clientId)
+    {
+        if (NetworkManager.Singleton != null && !NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogWarning("[MenuManager] Spectator disconnected from host.");
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnSpectatorDisconnected;
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnSpectatorConnected;
+            ConnectionSettings.Reset();
+
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.Shutdown();
+            }
+
+            LoadingFadeEffect.Instance.FadeOut();
+            LoadingSceneManager.Instance.LoadScene(SceneName.Menu, false);
+        }
+    }
+
+    private void HideMainButtons()
+    {
+        m_hostBtn.gameObject.SetActive(false);
+        m_joinBtn.gameObject.SetActive(false);
+        m_quickGameBtn.gameObject.SetActive(false);
+        if (m_watchMatchBtn != null)
+            m_watchMatchBtn.gameObject.SetActive(false);
+    }
+
+    private void ShowMainButtons()
+    {
+        m_hostBtn.gameObject.SetActive(true);
+        m_joinBtn.gameObject.SetActive(true);
+        m_quickGameBtn.gameObject.SetActive(true);
+        if (m_watchMatchBtn != null)
+            m_watchMatchBtn.gameObject.SetActive(true);
+    }
+
+    #endregion
 
     private IEnumerator Join(string ipAddress)
     {
