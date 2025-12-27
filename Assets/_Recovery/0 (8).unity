@@ -412,7 +412,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1156488530
+  GlobalObjectIdHash: 700000458
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1638,8 +1638,8 @@ SceneRoots:
   - {fileID: 276865559}
   - {fileID: 2134651691}
   - {fileID: 1108619320}
-  - {fileID: 437835215}
   - {fileID: 2221389384666078934}
   - {fileID: 224253090}
   - {fileID: 1854809888}
   - {fileID: 1644181005}
+  - {fileID: 437835215}
