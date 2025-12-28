@@ -45,13 +45,18 @@ public class PlasmaShieldExecutorView : SkillExecutorView
     /// </summary>
     protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
     {
+        Debug.Log($"[PlasmaShieldExecutorView] SpawnClientVisualEffect called, IsServer: {Unity.Netcode.NetworkManager.Singleton.IsServer}");
+        
         if (!(@event.Skill is PlasmaShieldSkillSO skill))
         {
+            Debug.LogWarning("[PlasmaShieldExecutorView] Skill is not PlasmaShieldSkillSO!");
             return;
         }
 
-        if (!WorldInstance.Services.Resolve<EntityViewRegistry>().TryGet(@event.Caster, out EntityView casterView))
+        var registry = WorldInstance.Services.Resolve<EntityViewRegistry>();
+        if (!registry.TryGet(@event.Caster, out EntityView casterView))
         {
+            Debug.LogWarning($"[PlasmaShieldExecutorView] Could not find EntityView for caster {@event.Caster.Id}!");
             return;
         }
 
@@ -60,6 +65,11 @@ public class PlasmaShieldExecutorView : SkillExecutorView
         {
             var shield = Instantiate(skill.shieldPrefab, casterView.transform);
             Destroy(shield.gameObject, skill.boostDuration);
+            Debug.Log($"[PlasmaShieldExecutorView] Spawned shield VFX on {casterView.gameObject.name} for {skill.boostDuration}s");
+        }
+        else
+        {
+            Debug.LogWarning("[PlasmaShieldExecutorView] shieldPrefab is null!");
         }
     }
 }

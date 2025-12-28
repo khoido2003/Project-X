@@ -24,16 +24,32 @@ public class SkillSlotUI : MonoBehaviour
     public void Initialize(SkillDefinitionSO skill)
     {
         Skill = skill;
-        cooldownFill.fillAmount = 0f;
+        
+        if (cooldownFill != null)
+        {
+            cooldownFill.fillAmount = 0f;
+        }
 
-        selectedSkill.gameObject.SetActive(false);
-        keyTrigger.text = skill.keyTrigger;
+        if (selectedSkill != null)
+        {
+            selectedSkill.gameObject.SetActive(false);
+        }
+        
+        if (keyTrigger != null)
+        {
+            keyTrigger.text = skill.keyTrigger;
+        }
     }
 
     public void TriggerCooldown(float duration)
     {
         _cooldownDuration = duration;
         _cooldownEndTime = Time.time + duration;
+        
+        if (cooldownFill != null)
+        {
+            cooldownFill.fillAmount = 1f;
+        }
     }
 
     public void UpdateCooldownVisual()

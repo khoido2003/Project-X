@@ -185,6 +185,28 @@ public class SkillSystem : ISystem
         );
         
         _world.Events.Publish(new SkillConfirmExecutionEvent(caster, skill, targetPoint, direction.normalized));
+        
+        // BROADCAST TO CLIENTS: This is critical for spectators to see instant skill effects!
+        // Without this, server-side instant skill execution is never synced to other clients.
+        if (_world.Components.TryGet(caster, out NetworkSyncComponent sync) && sync.SyncView != null)
+        {
+            // Find skill index for broadcasting
+            int skillIndex = -1;
+            if (_world.Components.TryGet(caster, out SkillSetComponent skillSet))
+            {
+                for (int i = 0; i < skillSet.Skills.Count; i++)
+                {
+                    if (skillSet.Skills[i] == skill)
+                    {
+                        skillIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            Debug.Log($"[SkillSystem] Server broadcasting instant skill {skill.skillName} (index: {skillIndex}) to all clients");
+            sync.SyncView.BroadcastInstantSkillClientRpc(targetPoint, direction.normalized, skillIndex);
+        }
     }
 
     private void OnAnimationRelayEvent(AnimationEventRelayEvent @event)

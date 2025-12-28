@@ -9,6 +9,60 @@ public class LifeDrainExecutorView : SkillExecutorView
 
     private ParticleSystem _activeDrainVfx;
     private HashSet<EntityId> _drainedThisTick = new();
+    private AudioSource _drainAudio;
+    private Coroutine _activeCoroutine;
+    private bool _isDraining = false;
+
+    protected override void Start()
+    {
+        base.Start();
+        
+        // Subscribe to death event to cleanup skill effects when player dies
+        if (WorldInstance != null)
+        {
+            WorldInstance.Events.Subscribe<EntityDeathEvent>(OnEntityDeath);
+        }
+    }
+
+    private void OnEntityDeath(EntityDeathEvent @event)
+    {
+        // Only cleanup if our entity died
+        if (@event.Entity != EntityInstance) return;
+        
+        // Stop the skill and cleanup all effects
+        if (_activeCoroutine != null)
+        {
+            StopCoroutine(_activeCoroutine);
+        }
+        CleanupLifeDrain();
+    }
+
+    /// <summary>
+    /// Force cleanup all Life Drain effects
+    /// </summary>
+    private void CleanupLifeDrain()
+    {
+        _isDraining = false;
+        _activeCoroutine = null;
+        
+        // Stop and destroy audio
+        if (_drainAudio != null)
+        {
+            _drainAudio.Stop();
+            Destroy(_drainAudio);
+            _drainAudio = null;
+        }
+        
+        // Cleanup VFX
+        if (_activeDrainVfx != null)
+        {
+            _activeDrainVfx.Stop();
+            Destroy(_activeDrainVfx.gameObject);
+            _activeDrainVfx = null;
+        }
+        
+        _drainedThisTick.Clear();
+    }
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
@@ -28,13 +82,22 @@ public class LifeDrainExecutorView : SkillExecutorView
             return;
         }
 
-        StartCoroutine(LifeDrainRoutine(view.gameObject, skill));
+        // Stop any existing coroutine before starting new one
+        if (_activeCoroutine != null)
+        {
+            StopCoroutine(_activeCoroutine);
+            CleanupLifeDrain();
+        }
+        
+        _activeCoroutine = StartCoroutine(LifeDrainRoutine(view.gameObject, skill));
 
         base.ExecuteSkill(@event);
     }
 
     private IEnumerator LifeDrainRoutine(GameObject owner, LifeDrainSkillSO skill)
     {
+        _isDraining = true;
+        
         // Broadcast drain start to clients
         LifeDrainVisualClientRpc(true, skill.drainDuration);
 
@@ -46,15 +109,14 @@ public class LifeDrainExecutorView : SkillExecutorView
             _activeDrainVfx.Play();
         }
 
-        // Start draining audio
-        AudioSource drainAudio = null;
-        if (skill.drainLoopSound != null)
+        // Start draining audio - use class field for cleanup on death
+        if (skill.drainLoopSound != null && _drainAudio == null)
         {
-            drainAudio = owner.AddComponent<AudioSource>();
-            drainAudio.clip = skill.drainLoopSound;
-            drainAudio.loop = true;
-            drainAudio.volume = 0.5f;
-            drainAudio.Play();
+            _drainAudio = owner.AddComponent<AudioSource>();
+            _drainAudio.clip = skill.drainLoopSound;
+            _drainAudio.loop = true;
+            _drainAudio.volume = 0.5f;
+            _drainAudio.Play();
         }
 
         float tickInterval = skill.drainDuration / skill.tickCount;
@@ -62,6 +124,9 @@ public class LifeDrainExecutorView : SkillExecutorView
 
         for (int i = 0; i < skill.tickCount; i++)
         {
+            // Early exit if skill was interrupted (death, etc.)
+            if (!_isDraining) yield break;
+            
             float healedThisTick = ApplyDrainDamage(owner.transform.position, skill);
             totalHealed += healedThisTick;
             _drainedThisTick.Clear();
@@ -72,19 +137,8 @@ public class LifeDrainExecutorView : SkillExecutorView
         // Final heal summary log
         Debug.Log($"[LifeDrain] Total healed: {totalHealed}");
 
-        // Cleanup
-        if (drainAudio != null)
-        {
-            drainAudio.Stop();
-            Destroy(drainAudio);
-        }
-
-        if (_activeDrainVfx != null)
-        {
-            _activeDrainVfx.Stop();
-            Destroy(_activeDrainVfx.gameObject, 1f);
-            _activeDrainVfx = null;
-        }
+        // Cleanup using the shared method
+        CleanupLifeDrain();
 
         // Broadcast drain end
         LifeDrainVisualClientRpc(false, 0f);
@@ -230,8 +284,13 @@ public class LifeDrainExecutorView : SkillExecutorView
 
     protected override void OnDestroy()
     {
+        if (WorldInstance != null)
+        {
+            WorldInstance.Events.Unsubscribe<EntityDeathEvent>(OnEntityDeath);
+        }
+        
         StopAllCoroutines();
-        _drainedThisTick.Clear();
+        CleanupLifeDrain();
         base.OnDestroy();
     }
 }
