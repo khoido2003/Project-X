@@ -118,6 +118,7 @@
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ExplosiveProjectileView.cs" />
     <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
+    <Compile Include="Assets\Scripts\UI\Spectator\SpectatorSkillBarUI.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleButtonAction.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\CinemachineCameraService.cs" />
     <Compile Include="Assets\Scripts\Core\Spectator\SpectatorController.cs" />

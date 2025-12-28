@@ -237,6 +237,20 @@ public class NetworkSyncView : NetworkBehaviour
 
         Debug.Log($"[NetworkSyncView] Client entity {clientEntity.Id} components added, requesting character data...");
 
+        // Initialize interpolation variables for remote players (spectators or non-owners)
+        // This prevents the character from appearing at (0,0,0) before the first network update
+        if (!isLocalPlayer)
+        {
+            _previousPosition = transform.position;
+            _targetPosition = transform.position;
+            _previousRotation = transform.rotation;
+            _targerRotation = transform.rotation;
+            _interpolationTime = _interpolationDuration; // Start at "completed" so we use current position
+            _lastNetworkUpdateTime = Time.time;
+            
+            Debug.Log($"[NetworkSyncView] Initialized interpolation for remote player at {transform.position}");
+        }
+
         // Request character data from server BEFORE publishing spawn event
         // This ensures camera and other systems get correct data
         if (!IsServer)
@@ -1232,6 +1246,64 @@ public class NetworkSyncView : NetworkBehaviour
         );
     }
 
+    /// <summary>
+    /// Broadcasts instant skill execution from server to all clients.
+    /// This is specifically for skills with isInstant=true that are executed directly on the server
+    /// (like PlasmaShield when host uses it) - these bypass the normal RequestSkillExecutionServerRpc path.
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastInstantSkillClientRpc(Vector3 targetPoint, Vector3 direction, int skillIndex)
+    {
+        // Server already handled this locally
+        if (IsServer)
+        {
+            return;
+        }
+        
+        // Skip if this is the owner - they already played prediction locally
+        if (IsOwner)
+        {
+            return;
+        }
+
+        Debug.Log($"[NetworkSyncView] BroadcastInstantSkillClientRpc received, Entity: {_entity.Id}, skillIndex: {skillIndex}");
+
+        if (_world == null || _entity.Equals(default))
+        {
+            Debug.LogWarning("[NetworkSyncView] BroadcastInstantSkillClientRpc: World or entity not initialized");
+            return;
+        }
+
+        // Look up skill from entity's skill set
+        SkillDefinitionSO skill = null;
+        if (_world.Components.TryGet(_entity, out SkillSetComponent skillSet))
+        {
+            if (skillIndex >= 0 && skillIndex < skillSet.Skills.Count)
+            {
+                skill = skillSet.Skills[skillIndex];
+            }
+        }
+
+        if (skill == null)
+        {
+            Debug.LogWarning($"[NetworkSyncView] BroadcastInstantSkillClientRpc: Could not find skill for index {skillIndex}");
+            return;
+        }
+
+        Debug.Log($"[NetworkSyncView] Publishing instant skill effect for {skill.skillName}, category: {skill.category}");
+
+        // Publish the SkillEffectTriggerEvent so clients (including spectators) play the VFX
+        _world.Events.Publish(
+            new SkillEffectTriggerEvent
+            {
+                Caster = _entity,
+                Skill = skill,
+                TargetPoint = targetPoint,
+                Direction = direction,
+            }
+        );
+    }
+
     [ClientRpc]
     public void BroadcastSkillEffectClientRpc(SkillCategory category, Vector3 targetPoint, Vector3 direction)
     {
@@ -1362,29 +1434,41 @@ public class NetworkSyncView : NetworkBehaviour
     [ClientRpc]
     public void BroadcastPlayerRespawnClientRpc(Vector3 spawnPosition)
     {
-        if (!IsOwner)
+        if (IsServer)
         {
             return;
         }
 
-        Debug.Log($"[Client] Player respawned at {spawnPosition}");
+        Debug.Log($"[Client] Player respawned at {spawnPosition} (IsOwner: {IsOwner})");
 
-        // Hide respawn UI
-        if (respawnUI == null)
+        // Only show respawn UI to the owning player
+        if (IsOwner)
         {
-            Debug.LogError("respawnUI is null!");
-
-            return;
+            if (respawnUI != null)
+            {
+                respawnUI.HideRespawnTimer();
+            }
         }
-
-        respawnUI.HideRespawnTimer();
 
         // Show the character GameObject and teleport to spawn position
-        var registry = _world.Services.Resolve<EntityViewRegistry>();
-        if (registry.TryGet(_entity, out EntityView view))
+        // This must run for ALL clients (including spectators) so they see the player again!
+        var registry = _world?.Services.Resolve<EntityViewRegistry>();
+        if (registry != null && registry.TryGet(_entity, out EntityView view))
         {
             view.gameObject.SetActive(true);
             view.transform.position = spawnPosition;
+            
+            // Also update the ECS transform component so interpolation works correctly
+            if (_world.Components.TryGet(_entity, out TransformComponent trans))
+            {
+                trans.Position = spawnPosition;
+            }
+            
+            // Reset health display component for non-owners
+            if (_world.Components.TryGet(_entity, out HealthDataComponent health))
+            {
+                health.IsDead = false;
+            }
         }
     }
 

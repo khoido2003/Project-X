@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -174,8 +175,38 @@ public class SpectatorSpawner : MonoBehaviour
                     listener.enabled = false;
                 }
                 
+                // Disable CinemachineBrain on disabled cameras to prevent it from controlling spectator camera
+                CinemachineBrain brain = cam.GetComponent<CinemachineBrain>();
+                if (brain != null)
+                {
+                    brain.enabled = false;
+                    Debug.Log($"[SpectatorSpawner] Disabled CinemachineBrain on: {cam.gameObject.name}");
+                }
+                
                 Debug.Log($"[SpectatorSpawner] Disabled camera: {cam.gameObject.name}");
             }
+        }
+        
+        // Disable ALL Cinemachine Brains in the scene that could interfere
+        CinemachineBrain[] allBrains = FindObjectsByType<CinemachineBrain>(FindObjectsSortMode.None);
+        foreach (CinemachineBrain brain in allBrains)
+        {
+            // Don't disable brain on spectator camera (if it has one)
+            if (spectatorCam != null && brain.gameObject == spectatorCam.gameObject)
+            {
+                continue;
+            }
+            
+            brain.enabled = false;
+            Debug.Log($"[SpectatorSpawner] Disabled CinemachineBrain: {brain.gameObject.name}");
+        }
+        
+        // Disable ALL Cinemachine Virtual Cameras to prevent them from activating
+        CinemachineCamera[] allVirtualCameras = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None);
+        foreach (CinemachineCamera vcam in allVirtualCameras)
+        {
+            vcam.enabled = false;
+            Debug.Log($"[SpectatorSpawner] Disabled CinemachineCamera: {vcam.gameObject.name}");
         }
         
         // Disable ALL other AudioListeners in the scene too

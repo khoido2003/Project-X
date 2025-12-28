@@ -26,7 +26,98 @@ public class CloakStrikeExecutorView : SkillExecutorView
         if (WorldInstance != null)
         {
             WorldInstance.Events.Subscribe<AttackPerformedEvent>(OnAttackPerformed);
+            WorldInstance.Events.Subscribe<EntityDeathEvent>(OnEntityDeath);
         }
+    }
+
+    private void OnEntityDeath(EntityDeathEvent @event)
+    {
+        // Only cleanup if our entity died
+        if (@event.Entity != EntityInstance) return;
+        
+        // Force cleanup cloak effects without triggering normal end logic
+        StopAllCoroutines();
+        ForceCleanupCloak();
+    }
+
+    /// <summary>
+    /// Force cleanup all cloak effects - used when player dies during cloak
+    /// </summary>
+    private void ForceCleanupCloak()
+    {
+        _isCloaked = false;
+        
+        // Restore untargetable state
+        if (WorldInstance != null && WorldInstance.Components.TryGet(EntityInstance, out HealthDataComponent health))
+        {
+            health.IsUntargetable = false;
+        }
+        
+        // Cleanup VFX
+        if (_activeCloakVfx != null)
+        {
+            _activeCloakVfx.Stop();
+            Destroy(_activeCloakVfx.gameObject);
+            _activeCloakVfx = null;
+        }
+        
+        // Restore materials locally
+        RestoreMaterials();
+        
+        // Broadcast uncloak to clients to restore their materials
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            CloakVisualClientRpc(false);
+        }
+    }
+
+    /// <summary>
+    /// Stores original materials and applies cloak material to all renderers
+    /// </summary>
+    private void ApplyCloakMaterial()
+    {
+        // Ensure renderers are populated
+        if (_renderers == null || _renderers.Length == 0)
+        {
+            _renderers = GetComponentsInChildren<Renderer>();
+        }
+
+        if (_cloakMaterial == null)
+        {
+            Debug.LogWarning("[CloakStrike] No cloak material assigned!");
+            return;
+        }
+
+        foreach (var renderer in _renderers)
+        {
+            if (renderer == null) continue;
+
+            // Only store if not already stored (prevents overwriting original with cloak material)
+            if (!_originalMaterials.ContainsKey(renderer))
+            {
+                _originalMaterials[renderer] = renderer.materials;
+            }
+
+            // Apply cloak material to all slots
+            Material[] cloakMats = new Material[renderer.materials.Length];
+            for (int i = 0; i < cloakMats.Length; i++)
+            {
+                cloakMats[i] = _cloakMaterial;
+            }
+            renderer.materials = cloakMats;
+        }
+    }
+
+    private void RestoreMaterials()
+    {
+        foreach (var kvp in _originalMaterials)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.materials = kvp.Value;
+            }
+        }
+        _originalMaterials.Clear();
     }
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
@@ -61,6 +152,10 @@ public class CloakStrikeExecutorView : SkillExecutorView
 
         // Broadcast cloak start to all clients
         CloakVisualClientRpc(true);
+        
+        // ALSO apply cloak material locally on server for host player visibility
+        // This is redundant with RPC in host mode but ensures materials are stored
+        ApplyCloakMaterial();
 
         // Spawn cloak VFX on server
         if (skill.cloakVfxPrefab != null)
@@ -96,6 +191,9 @@ public class CloakStrikeExecutorView : SkillExecutorView
         {
             health.IsUntargetable = false;
         }
+        
+        // Restore materials locally on server
+        RestoreMaterials();
         
         // Broadcast uncloak to clients
         CloakVisualClientRpc(false);
@@ -147,6 +245,13 @@ public class CloakStrikeExecutorView : SkillExecutorView
     [ClientRpc]
     private void CloakVisualClientRpc(bool isCloaking)
     {
+        // Server already handles materials locally via ApplyCloakMaterial/RestoreMaterials
+        // Skip RPC logic on server when uncloaking to prevent race condition
+        if (!isCloaking && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+        
         // Ensure renderers are populated (may not be set on client)
         if (_renderers == null || _renderers.Length == 0)
         {
@@ -159,7 +264,7 @@ public class CloakStrikeExecutorView : SkillExecutorView
             return;
         }
 
-        Debug.Log($"[CloakStrike] CloakVisualClientRpc - isCloaking: {isCloaking}, renderers: {_renderers?.Length ?? 0}");
+        Debug.Log($"[CloakStrike] CloakVisualClientRpc - isCloaking: {isCloaking}, renderers: {_renderers?.Length ?? 0}, IsServer: {NetworkManager.Singleton?.IsServer}");
 
         foreach (var renderer in _renderers)
         {
@@ -167,8 +272,11 @@ public class CloakStrikeExecutorView : SkillExecutorView
 
             if (isCloaking)
             {
-                // Store original materials
-                _originalMaterials[renderer] = renderer.materials;
+                // Only store if not already stored (prevents overwriting original with cloak material)
+                if (!_originalMaterials.ContainsKey(renderer))
+                {
+                    _originalMaterials[renderer] = renderer.materials;
+                }
 
                 // Apply cloak material to all slots
                 Material[] cloakMats = new Material[renderer.materials.Length];
@@ -180,15 +288,10 @@ public class CloakStrikeExecutorView : SkillExecutorView
             }
             else
             {
-                // Restore original materials
+                // Restore original materials (client only since server returns early)
                 if (_originalMaterials.TryGetValue(renderer, out Material[] originalMats))
                 {
                     renderer.materials = originalMats;
-                    Debug.Log($"[CloakStrike] Restored materials for {renderer.name}");
-                }
-                else
-                {
-                    Debug.LogWarning($"[CloakStrike] No original materials found for {renderer.name}");
                 }
             }
         }
@@ -217,17 +320,11 @@ public class CloakStrikeExecutorView : SkillExecutorView
         if (WorldInstance != null)
         {
             WorldInstance.Events.Unsubscribe<AttackPerformedEvent>(OnAttackPerformed);
+            WorldInstance.Events.Unsubscribe<EntityDeathEvent>(OnEntityDeath);
         }
         
         // Restore materials if destroyed while cloaked
-        foreach (var kvp in _originalMaterials)
-        {
-            if (kvp.Key != null)
-            {
-                kvp.Key.materials = kvp.Value;
-            }
-        }
-        _originalMaterials.Clear();
+        RestoreMaterials();
         
         StopAllCoroutines();
         base.OnDestroy();

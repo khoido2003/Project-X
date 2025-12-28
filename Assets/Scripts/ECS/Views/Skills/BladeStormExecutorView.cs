@@ -12,6 +12,31 @@ public class BladeStormExecutorView : SkillExecutorView
     private HashSet<EntityId> _damagedThisTick = new();
     private float _originalSpeed = -1f;
     private AudioSource _spinAudio;
+    private Coroutine _activeCoroutine;
+
+    protected override void Start()
+    {
+        base.Start();
+        
+        // Subscribe to death event to cleanup skill effects when player dies
+        if (WorldInstance != null)
+        {
+            WorldInstance.Events.Subscribe<EntityDeathEvent>(OnEntityDeath);
+        }
+    }
+
+    private void OnEntityDeath(EntityDeathEvent @event)
+    {
+        // Only cleanup if our entity died
+        if (@event.Entity != EntityInstance) return;
+        
+        // Stop the skill and cleanup all effects
+        if (_activeCoroutine != null)
+        {
+            StopCoroutine(_activeCoroutine);
+        }
+        CleanupBladeStorm();
+    }
 
     protected override void ExecuteSkill(SkillConfirmExecutionEvent @event)
     {
@@ -31,18 +56,20 @@ public class BladeStormExecutorView : SkillExecutorView
             return;
         }
 
-        StartCoroutine(BladeStormRoutine(view.gameObject, skill));
+        // Stop any existing coroutine before starting new one
+        if (_activeCoroutine != null)
+        {
+            StopCoroutine(_activeCoroutine);
+            CleanupBladeStorm();
+        }
+        
+        _activeCoroutine = StartCoroutine(BladeStormRoutine(view.gameObject, skill));
 
         base.ExecuteSkill(@event);
     }
 
     private IEnumerator BladeStormRoutine(GameObject owner, BladeStormSkillSO skill)
     {
-        // If already spinning, stop previous and cleanup first
-        if (_isSpinning)
-        {
-            CleanupBladeStorm();
-        }
 
         _isSpinning = true;
 
@@ -57,13 +84,20 @@ public class BladeStormExecutorView : SkillExecutorView
             _activeSpinVfx.Play();
         }
 
-        // Apply movement slow - store original speed in class field
+        // Apply movement slow - CRITICAL: Must restore first if already slowed, then re-apply
         if (WorldInstance.Components.TryGet(EntityInstance, out MovementDataComponent movement))
         {
-            if (_originalSpeed < 0)  // Only store if not already stored
+            // If we already have a stored original speed, restore it first before applying new slow
+            // This handles the case where skill is interrupted or re-used
+            if (_originalSpeed >= 0)
             {
-                _originalSpeed = movement.MoveSpeed;
+                movement.MoveSpeed = _originalSpeed;
             }
+            
+            // Now store the current (restored or original) speed
+            _originalSpeed = movement.MoveSpeed;
+            
+            // Apply the slow multiplier
             movement.MoveSpeed *= skill.moveSpeedMultiplier;
         }
 
@@ -119,6 +153,7 @@ public class BladeStormExecutorView : SkillExecutorView
     private void CleanupBladeStorm()
     {
         _isSpinning = false;
+        _activeCoroutine = null;
 
         // Restore movement speed
         if (_originalSpeed >= 0 && WorldInstance != null && WorldInstance.Components.TryGet(EntityInstance, out MovementDataComponent moveData))
@@ -273,6 +308,11 @@ public class BladeStormExecutorView : SkillExecutorView
 
     protected override void OnDestroy()
     {
+        if (WorldInstance != null)
+        {
+            WorldInstance.Events.Unsubscribe<EntityDeathEvent>(OnEntityDeath);
+        }
+        
         StopAllCoroutines();
         CleanupBladeStorm();
         _damagedThisTick.Clear();

@@ -72,10 +72,19 @@ public class SpectatorController : MonoBehaviour
 
     public SpectatorMode CurrentMode => _currentMode;
     public string FollowingPlayerName { get; private set; } = "";
+    
+    /// <summary>
+    /// Returns the EntityId of the currently followed player (only valid in PlayerFollow mode)
+    /// </summary>
+    public EntityId FollowedPlayerEntity => 
+        _currentPlayerIndex >= 0 && _currentPlayerIndex < _playerEntities.Count 
+            ? _playerEntities[_currentPlayerIndex] 
+            : default;
 
     // Events for UI
     public Action<SpectatorMode> OnModeChanged;
     public Action<string> OnFollowTargetChanged;
+    public Action<EntityId> OnFollowedEntityChanged;
 
     private void Awake()
     {
@@ -343,6 +352,7 @@ public class SpectatorController : MonoBehaviour
             }
 
             OnFollowTargetChanged?.Invoke(FollowingPlayerName);
+            OnFollowedEntityChanged?.Invoke(targetEntity);
             Debug.Log($"[SpectatorController] Now following: {FollowingPlayerName}");
         }
     }

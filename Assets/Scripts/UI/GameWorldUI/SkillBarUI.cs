@@ -16,6 +16,7 @@ public class SkillBarUI : MonoBehaviour
     public void Bind(World world)
     {
         _world = world;
+        
         _world.Events.Subscribe<SkillExecutionFinishedEvent>(OnSkillExecutionFinishedEvent);
         _world.Events.Subscribe<SkillPressedInputEvent>(OnSkillPressedInputEvent);
         _world.Events.Subscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
@@ -40,6 +41,10 @@ public class SkillBarUI : MonoBehaviour
         {
             CreateSkillSlots(skillSet.Skills);
         }
+        else
+        {
+            Debug.LogError("[SkillBarUI] Player has no SkillSetComponent!");
+        }
     }
 
     private void Update()
@@ -50,8 +55,9 @@ public class SkillBarUI : MonoBehaviour
 
     private void CreateSkillSlots(List<SkillDefinitionSO> skills)
     {
-        foreach (var skill in skills)
+        for (int i = 0; i < skills.Count; i++)
         {
+            var skill = skills[i];
             var slot = Instantiate(skillSlotPrefab, skillContainer);
             slot.Initialize(skill);
             _slots.Add(slot);
@@ -88,19 +94,27 @@ public class SkillBarUI : MonoBehaviour
 
     private int GetSkillIndex(SkillDefinitionSO skill)
     {
+        if (skill == null)
+        {
+            return -1;
+        }
+        
         for (int i = 0; i < _slots.Count; i++)
         {
-            if (_slots[i].Skill == skill)
+            // Match by category since object references might differ between server/client
+            if (_slots[i].Skill != null && _slots[i].Skill.category == skill.category)
             {
                 return i;
             }
         }
+        
         return -1;
     }
 
     // Called on CLIENT when skill effect is triggered via RPC - this triggers cooldown on client
     private void OnSkillEffectTriggerEvent(SkillEffectTriggerEvent @event)
     {
+        // Check if this is for our player
         if (!_playerEntity.Equals(@event.Caster))
         {
             return;

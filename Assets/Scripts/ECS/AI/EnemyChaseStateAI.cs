@@ -41,6 +41,14 @@ public class EnemyChaseStateAI : IEnemyState
             return;
         }
 
+        // Drop target if player becomes untargetable (e.g., cloaked)
+        if (world.Components.TryGet(enemy.TargetEntity, out HealthDataComponent targetHealth) && targetHealth.IsUntargetable)
+        {
+            enemy.TargetEntity = default;
+            EnemyAIHelpers.ChangeState(world, entity, EnemyState.Patrol);
+            return;
+        }
+
         Vector3 targetPos = targetView.transform.position;
 
         float distance = Vector3.Distance(targetPos, enemyTf.Position);
