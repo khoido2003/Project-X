@@ -22,11 +22,9 @@ public class EnemyChaseStateAI : IEnemyState
         var enemyTf = world.Components.Get<TransformComponent>(entity);
         enemy.StateTime += dt;
 
-        // Boss: Dynamically switch to nearest player during chase
-        if (enemy.IsBoss)
-        {
-            UpdateBossTargetToNearest(world, entity, enemy, enemyTf);
-        }
+        // ALL enemies dynamically switch to nearest player during chase
+        // This prevents players from hiding while another is being chased
+        UpdateTargetToNearest(world, entity, enemy, enemyTf);
 
         if (enemy.TargetEntity.Equals(default))
         {
@@ -41,12 +39,15 @@ public class EnemyChaseStateAI : IEnemyState
             return;
         }
 
-        // Drop target if player becomes untargetable (e.g., cloaked)
-        if (world.Components.TryGet(enemy.TargetEntity, out HealthDataComponent targetHealth) && targetHealth.IsUntargetable)
+        // Drop target if player becomes untargetable (e.g., cloaked) or dead
+        if (world.Components.TryGet(enemy.TargetEntity, out HealthDataComponent targetHealth))
         {
-            enemy.TargetEntity = default;
-            EnemyAIHelpers.ChangeState(world, entity, EnemyState.Patrol);
-            return;
+            if (targetHealth.IsUntargetable || targetHealth.IsDead)
+            {
+                enemy.TargetEntity = default;
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.Patrol);
+                return;
+            }
         }
 
         Vector3 targetPos = targetView.transform.position;
@@ -98,10 +99,60 @@ public class EnemyChaseStateAI : IEnemyState
             }
         }
 
+        // Check if stuck trying to reach current target - switch to alternative if available
+        // Uses NoProgressTimer from EnemyMovementSystem to detect stuck state
+        // Only switch after 5 seconds of no progress (give time for pathfinding to work)
+        if (enemy.NoProgressTimer > 5f)
+        {
+            if (TrySwitchToAlternativeTarget(world, entity, enemy, enemyTf))
+            {
+                enemy.NoProgressTimer = 0f; // Reset timer after switching
+                RequestPathToTarget(world, entity);
+                return;
+            }
+        }
+
         if (Time.time - enemy.LastRequestTime > enemy.RequestCooldown)
         {
             RequestPathToTarget(world, entity);
         }
+    }
+    
+    /// <summary>
+    /// Tries to switch to a different alive player when stuck reaching current target.
+    /// Returns true if successfully switched to a new target.
+    /// </summary>
+    private bool TrySwitchToAlternativeTarget(World world, EntityId entity, EnemyComponent enemy, TransformComponent enemyTf)
+    {
+        EntityId currentTarget = enemy.TargetEntity;
+        EntityId bestAlternative = default;
+        float bestDist = float.MaxValue;
+        
+        foreach (var (playerEntity, player, playerTf, health) in
+            world.Components.Query<PlayerTagComponent, TransformComponent, HealthDataComponent>())
+        {
+            // Skip dead or untargetable players
+            if (health.IsDead || health.IsUntargetable) continue;
+            
+            // Skip current target (we're already stuck trying to reach them)
+            if (playerEntity.Equals(currentTarget)) continue;
+            
+            float dist = Vector3.Distance(enemyTf.Position, playerTf.Position);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestAlternative = playerEntity;
+            }
+        }
+        
+        if (!bestAlternative.Equals(default))
+        {
+            enemy.TargetEntity = bestAlternative;
+            Debug.Log($"[EnemyChaseStateAI] Entity {entity.Id} switched target due to stuck - new target: {bestAlternative.Id}");
+            return true;
+        }
+        
+        return false;
     }
 
     private void RequestPathToTarget(World world, EntityId entity)
@@ -137,9 +188,10 @@ public class EnemyChaseStateAI : IEnemyState
     }
     
     /// <summary>
-    /// Updates boss target to the nearest alive player during chase
+    /// Updates enemy target to the nearest alive player during chase.
+    /// All enemies now dynamically switch to closest player to prevent hiding.
     /// </summary>
-    private void UpdateBossTargetToNearest(World world, EntityId entity, EnemyComponent enemy, TransformComponent enemyTf)
+    private void UpdateTargetToNearest(World world, EntityId entity, EnemyComponent enemy, TransformComponent enemyTf)
     {
         float nearestDist = float.MaxValue;
         EntityId nearestPlayer = default;
@@ -160,7 +212,7 @@ public class EnemyChaseStateAI : IEnemyState
             }
         }
 
-        // Switch to nearest if different from current (and there is a valid target)
+        // Switch to nearest player (even if different from current target)
         if (!nearestPlayer.Equals(default) && !nearestPlayer.Equals(enemy.TargetEntity))
         {
             enemy.TargetEntity = nearestPlayer;
@@ -169,6 +221,11 @@ public class EnemyChaseStateAI : IEnemyState
             world.Events.Publish(new EnemyPathRequestEvent(entity, 
                 world.Components.Get<TransformComponent>(nearestPlayer).Position, 
                 enemy.StoppingDistance));
+        }
+        else if (!nearestPlayer.Equals(default) && enemy.TargetEntity.Equals(default))
+        {
+            // No current target but found a player - set it
+            enemy.TargetEntity = nearestPlayer;
         }
     }
 }

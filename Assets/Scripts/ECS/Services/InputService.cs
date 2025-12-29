@@ -115,7 +115,12 @@ public class InputService : MonoBehaviour, IInputService
 
         Ray ray = _mainCamera.ScreenPointToRay(InputManager.Instance.GetMouseScreeenPosition());
 
-        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, mouseLayerMask))
+        // First, try to hit enemies (for accurate aiming at targets)
+        // Using a combined mask of mouseLayerMask (ground) + Enemy layer
+        int enemyLayer = LayerMask.GetMask("Enemy");
+        int combinedMask = mouseLayerMask | enemyLayer;
+        
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, combinedMask))
         {
             return hit.point;
         }

@@ -16,7 +16,7 @@ MonoBehaviour:
   skillName: Rapid Fire
   category: 3
   isInstant: 1
-  keyTrigger: Q
+  keyTrigger: Space
   damage: 25
   castRange: 6
   cooldown: 3

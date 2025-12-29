@@ -47,12 +47,15 @@ public class EnemyAttackStateAI : IEnemyState
             return;
         }
 
-        // Drop target if player becomes untargetable (cloaked)
-        if (world.Components.TryGet(enemy.TargetEntity, out HealthDataComponent targetHealth) && targetHealth.IsUntargetable)
+        // Drop target if player becomes untargetable (cloaked) or dead
+        if (world.Components.TryGet(enemy.TargetEntity, out HealthDataComponent targetHealth))
         {
-            enemy.TargetEntity = default;
-            EnemyAIHelpers.ChangeState(world, entity, EnemyState.Patrol);
-            return;
+            if (targetHealth.IsUntargetable || targetHealth.IsDead)
+            {
+                enemy.TargetEntity = default;
+                EnemyAIHelpers.ChangeState(world, entity, EnemyState.Patrol);
+                return;
+            }
         }
 
         TransformComponent enemyTransform = world.Components.Get<TransformComponent>(entity);

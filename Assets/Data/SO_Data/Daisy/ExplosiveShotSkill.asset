@@ -16,7 +16,7 @@ MonoBehaviour:
   skillName: ExplosiveShot
   category: 4
   isInstant: 0
-  keyTrigger: Space
+  keyTrigger: Q
   damage: 120
   castRange: 5
   cooldown: 2.5

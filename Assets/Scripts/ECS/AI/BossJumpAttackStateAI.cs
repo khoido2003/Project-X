@@ -136,8 +136,8 @@ public class BossJumpAttackStateAI : IEnemyState
             >()
         )
         {
-            // Skip untargetable players (e.g., cloaked Murder Kitten)
-            if (health.IsUntargetable) continue;
+            // Skip untargetable or dead players
+            if (health.IsUntargetable || health.IsDead) continue;
             
             float dist = Vector3.Distance(enemyTf.Position, playerTf.Position);
 

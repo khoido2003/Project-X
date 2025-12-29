@@ -45,8 +45,8 @@ MonoBehaviour:
     areaRadius: 0
     areaDuration: 0
   skills:
-  - {fileID: 11400000, guid: db101c2f6e3a9064fa6c2533fbcaea46, type: 2}
   - {fileID: 11400000, guid: e4149f0c8851e2a428776cd8791bf163, type: 2}
+  - {fileID: 11400000, guid: db101c2f6e3a9064fa6c2533fbcaea46, type: 2}
   - {fileID: 11400000, guid: a1520e4226922d04a833de1b05f932f4, type: 2}
   audioProfile: {fileID: 11400000, guid: 03e229b1384b22e4e940bd950f76ac59, type: 2}
   clientId: 0
