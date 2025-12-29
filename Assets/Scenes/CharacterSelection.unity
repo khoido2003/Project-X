@@ -6578,6 +6578,22 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 6780308229552552970, guid: 65cecce75c1d1964292d710ebc55d997, type: 3}
+      propertyPath: m_Color.a
+      value: 0.8509804
+      objectReference: {fileID: 0}
+    - target: {fileID: 6780308229552552970, guid: 65cecce75c1d1964292d710ebc55d997, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6780308229552552970, guid: 65cecce75c1d1964292d710ebc55d997, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6780308229552552970, guid: 65cecce75c1d1964292d710ebc55d997, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7842846546094278299, guid: 65cecce75c1d1964292d710ebc55d997, type: 3}
       propertyPath: m_AdditionalShaderChannelsFlag
       value: 25

@@ -78,6 +78,12 @@ public class EnemyVisionSystem : ISystem
                 {
                     continue;
                 }
+                
+                // Skip dead players - they cannot be targeted
+                if (candidateHealth != null && candidateHealth.IsDead)
+                {
+                    continue;
+                }
 
                 Vector3 candidatePos = foundView.transform.position;
                 Vector3 dir = candidatePos - origin;

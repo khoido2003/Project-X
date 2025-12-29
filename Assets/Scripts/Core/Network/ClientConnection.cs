@@ -39,7 +39,9 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
             return true;
         }
         
-        if (LoadingSceneManager.Instance.SceneActive == SceneName.CharacterSelection)
+        // During character selection or loading transition, allow connection based on max players
+        SceneName currentScene = LoadingSceneManager.Instance.SceneActive;
+        if (currentScene == SceneName.CharacterSelection || currentScene == SceneName.Loading)
         {
             // Count only non-spectator players for max connection check
             int playersConnected = GetActivePlayerCount();
@@ -59,6 +61,7 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
             }
             else
             {
+                Debug.LogWarning($"[ClientConnection] Client {clientId} rejected - no character selected. Scene: {currentScene}");
                 return false;
             }
         }

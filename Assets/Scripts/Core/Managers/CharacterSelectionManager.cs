@@ -342,6 +342,12 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     {
         if (!characterData[characterSelected].isSelected)
         {
+            // Set on server immediately (don't rely on ClientRpc for server-side data)
+            // This prevents race conditions with network latency (e.g., Radmin VPN)
+            characterData[characterSelected].isSelected = true;
+            characterData[characterSelected].clientId = clientId;
+            characterData[characterSelected].playerId = playerId;
+            
             PlayerReadyClientRpc(clientId, playerId, characterSelected);
 
             StartGameTimer();
@@ -616,9 +622,13 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
     [ClientRpc]
     private void PlayerReadyClientRpc(ulong clientId, int playerId, int characterSelected)
     {
-        characterData[characterSelected].isSelected = true;
-        characterData[characterSelected].clientId = clientId;
-        characterData[characterSelected].playerId = playerId;
+        // Server already set characterData in PlayerReady(), only update on clients
+        if (!IsServer)
+        {
+            characterData[characterSelected].isSelected = true;
+            characterData[characterSelected].clientId = clientId;
+            characterData[characterSelected].playerId = playerId;
+        }
         m_playerStates[playerId].playerState = ConnectionState.ready;
 
         if (clientId == NetworkManager.Singleton.LocalClientId)

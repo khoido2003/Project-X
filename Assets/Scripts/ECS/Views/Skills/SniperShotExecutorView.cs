@@ -63,24 +63,7 @@ public class SniperShotExecutorView : SkillExecutorView
             Destroy(chargeVfx.gameObject);
         }
 
-        // Calculate direction
-        Vector3 shotDirection = direction;
-        if (shotDirection.sqrMagnitude < 0.001f)
-        {
-            // If no direction, try to aim at target point
-            if (targetPoint.sqrMagnitude > 0.001f)
-            {
-                shotDirection = (targetPoint - casterTransform.position).normalized;
-            }
-            else
-            {
-                shotDirection = casterTransform.forward;
-            }
-        }
-        shotDirection.y = 0f;
-        shotDirection = shotDirection.normalized;
-
-        // Find projectile spawn position
+        // Find projectile spawn position FIRST (gun muzzle)
         Transform spawnTransform = casterTransform;
         ProjectileSpawnPos spawnPosComponent = casterTransform.GetComponentInChildren<ProjectileSpawnPos>();
 
@@ -94,6 +77,31 @@ public class SniperShotExecutorView : SkillExecutorView
         {
             spawnPos = casterTransform.position + new Vector3(0f, 1.3f, 0f);
         }
+
+        // Calculate direction FROM gun muzzle position TO target
+        // This fixes the parallax offset issue where projectile didn't appear to come from the gun
+        Vector3 shotDirection;
+        if (targetPoint.sqrMagnitude > 0.001f)
+        {
+            // Calculate direction from spawn position to target point
+            // Project to same height to get horizontal direction
+            Vector3 targetHorizontal = new Vector3(targetPoint.x, spawnPos.y, targetPoint.z);
+            shotDirection = (targetHorizontal - spawnPos).normalized;
+        }
+        else if (direction.sqrMagnitude > 0.001f)
+        {
+            // If we have a direction, calculate a far target point and aim from spawn pos
+            Vector3 farTarget = casterTransform.position + direction.normalized * 100f;
+            farTarget.y = spawnPos.y;
+            shotDirection = (farTarget - spawnPos).normalized;
+        }
+        else
+        {
+            shotDirection = casterTransform.forward;
+        }
+        
+        shotDirection.y = 0f;
+        shotDirection = shotDirection.normalized;
 
         Quaternion spawnRot = Quaternion.LookRotation(shotDirection, Vector3.up);
 

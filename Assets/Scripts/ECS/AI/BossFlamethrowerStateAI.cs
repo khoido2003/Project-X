@@ -118,8 +118,8 @@ public class BossFlamethrowerStateAI : IEnemyState
             >()
         )
         {
-            // Skip untargetable players (e.g., cloaked Murder Kitten)
-            if (health.IsUntargetable) continue;
+            // Skip untargetable or dead players
+            if (health.IsUntargetable || health.IsDead) continue;
             
             Vector3 toPlayer = playerTf.Position - enemyTf.Position;
             float dist = toPlayer.magnitude;
