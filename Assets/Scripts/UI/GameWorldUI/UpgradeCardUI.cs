@@ -63,7 +63,7 @@ public class UpgradeCardUI : MonoBehaviour
         }
     }
 
-    public void Setup(UpgradeOption upgrade, int index, UpgradeCardContainerUI parentUI)
+    public void Setup(UpgradeOption upgrade, int index, UpgradeCardContainerUI parentUI, bool isSpectatorMode = false)
     {
         _upgrade = upgrade;
         _cardIndex = index;
@@ -95,6 +95,12 @@ public class UpgradeCardUI : MonoBehaviour
             int rarityIndex = Mathf.Clamp(upgrade.RarityTier, 0, rarityColors.Length - 1);
 
             cardBackground.color = rarityColors[rarityIndex];
+        }
+        
+        // Disable button for spectators
+        if (selectBtn != null)
+        {
+            selectBtn.interactable = !isSpectatorMode;
         }
     }
 

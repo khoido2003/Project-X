@@ -13853,6 +13853,7 @@ MonoBehaviour:
     isPercentage: 1
   upgradeChoicesPerRound: 3
   _upgradeCardUI: {fileID: 1799485030}
+  _spectatorUpgradeCardUI: {fileID: 1799485030}
 --- !u!4 &2003502437
 Transform:
   m_ObjectHideFlags: 0

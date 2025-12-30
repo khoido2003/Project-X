@@ -45,10 +45,20 @@ public class SpectatorController : MonoBehaviour
 
     [Header("Bounds")]
     [SerializeField]
-    private float _minHeight = 2f;
+    private float _minHeight = 2f; // Increased from 2f to prevent going too low
 
     [SerializeField]
-    private float _maxHeight = 50f;
+    private float _maxHeight = 4f; // Reduced from 50f to prevent seeing void
+    
+    [Header("Map Bounds (XZ)")]
+    [SerializeField]
+    private Vector2 _mapCenter = Vector2.zero; // Map center at 0,0
+    
+    [SerializeField]
+    private Vector2 _mapSize = new Vector2(70f, 70f); // 70x70 map
+    
+    [SerializeField]
+    private float _boundsPadding = 5f; // Allow slight overshoot for smooth edges
 
     // Internal state
     private World _world;
@@ -111,8 +121,35 @@ public class SpectatorController : MonoBehaviour
 
         _world = WorldRunner.Instance.World;
         RefreshPlayerList();
+        
+        // Subscribe to phase changes to request upgrade options when entering upgrade phase
+        if (NetworkGameStateManager.Instance != null)
+        {
+            NetworkGameStateManager.Instance.OnPhaseChanged += OnGamePhaseChanged;
+        }
 
         Debug.Log("[SpectatorController] Initialized - Press Tab to switch modes");
+    }
+    
+    private void OnDestroy()
+    {
+        // Unsubscribe from phase changes
+        if (NetworkGameStateManager.Instance != null)
+        {
+            NetworkGameStateManager.Instance.OnPhaseChanged -= OnGamePhaseChanged;
+        }
+    }
+    
+    private void OnGamePhaseChanged(GamePhase newPhase, int round)
+    {
+        // If we're following a player and entering upgrade phase, request their upgrade options
+        if (newPhase == GamePhase.UpgradePhase && 
+            _currentMode == SpectatorMode.PlayerFollow && 
+            !FollowedPlayerEntity.Equals(default))
+        {
+            Debug.Log($"[SpectatorController] Phase changed to UpgradePhase (round {round}) while following - requesting upgrade options");
+            RequestUpgradeOptionsForFollowedPlayer(FollowedPlayerEntity);
+        }
     }
 
     private void Update()
@@ -157,8 +194,9 @@ public class SpectatorController : MonoBehaviour
 
     private void ToggleMode()
     {
+        SpectatorMode previousMode = _currentMode;
         _currentMode = _currentMode == SpectatorMode.Overview ? SpectatorMode.PlayerFollow : SpectatorMode.Overview;
-
+        
         if (_currentMode == SpectatorMode.PlayerFollow)
         {
             // Try to find a player to follow
@@ -168,9 +206,14 @@ public class SpectatorController : MonoBehaviour
                 UpdateFollowTarget();
             }
         }
+        else if (_currentMode == SpectatorMode.Overview)
+        {
+            // Reset cursor state when going back to overview
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
 
         OnModeChanged?.Invoke(_currentMode);
-        Debug.Log($"[SpectatorController] Switched to {_currentMode} mode");
     }
 
     #region Overview Mode
@@ -258,8 +301,14 @@ public class SpectatorController : MonoBehaviour
             newPos.y -= scroll * zoomSpeed; // Scroll up = zoom in (move down), scroll down = zoom out (move up)
         }
 
-        // Clamp height
+        // Clamp height (Y)
         newPos.y = Mathf.Clamp(newPos.y, _minHeight, _maxHeight);
+        
+        // Clamp XZ position to map bounds
+        float halfWidth = (_mapSize.x / 2f) + _boundsPadding;
+        float halfHeight = (_mapSize.y / 2f) + _boundsPadding;
+        newPos.x = Mathf.Clamp(newPos.x, _mapCenter.x - halfWidth, _mapCenter.x + halfWidth);
+        newPos.z = Mathf.Clamp(newPos.z, _mapCenter.y - halfHeight, _mapCenter.y + halfHeight);
 
         transform.position = newPos;
     }
@@ -354,6 +403,36 @@ public class SpectatorController : MonoBehaviour
             OnFollowTargetChanged?.Invoke(FollowingPlayerName);
             OnFollowedEntityChanged?.Invoke(targetEntity);
             Debug.Log($"[SpectatorController] Now following: {FollowingPlayerName}");
+            
+            // Request upgrade options if we're in upgrade phase
+            RequestUpgradeOptionsForFollowedPlayer(targetEntity);
+        }
+    }
+    
+    /// <summary>
+    /// Requests upgrade options from the server for the followed player if in upgrade phase.
+    /// </summary>
+    private void RequestUpgradeOptionsForFollowedPlayer(EntityId targetEntity)
+    {
+        // Check if we're in upgrade phase
+        if (NetworkGameStateManager.Instance == null ||
+            NetworkGameStateManager.Instance.CurrentPhase != GamePhase.UpgradePhase)
+        {
+            return;
+        }
+        
+        // Get the clientId of the followed player
+        if (!_world.Components.TryGet(targetEntity, out NetworkOwnerComponent owner))
+        {
+            Debug.LogWarning("[SpectatorController] Could not get NetworkOwnerComponent for followed player");
+            return;
+        }
+        
+        // Request upgrade options from server
+        if (NetworkUpgradeSystem.Instance != null)
+        {
+            Debug.Log($"[SpectatorController] Requesting upgrade options for player {owner.ClientId} during upgrade phase");
+            NetworkUpgradeSystem.Instance.SpectatorRequestUpgradeOptionsServerRpc(owner.ClientId);
         }
     }
 

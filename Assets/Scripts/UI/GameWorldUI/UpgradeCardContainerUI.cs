@@ -27,6 +27,7 @@ public class UpgradeCardContainerUI : MonoBehaviour
     private float _timeRemaining;
     private bool _hasSelected;
     private float _displayTimer;
+    private bool _isSpectatorMode;
 
     private void Awake()
     {
@@ -60,19 +61,18 @@ public class UpgradeCardContainerUI : MonoBehaviour
             timerFillBar.value = timeRemaining / maxTime;
         }
 
-        // Only auto-select after minimum display time
+        // Only auto-select after minimum display time (not for spectators)
         // This prevents immediate auto-select due to NetworkVariable sync timing
-        // RPC with options can arrive before PhaseTimeRemaining is synced
         const float MIN_DISPLAY_TIME = 2.0f;
         if (
-            timeRemaining <= 0.1f
+            !_isSpectatorMode
+            && timeRemaining <= 0.1f
             && _displayTimer >= MIN_DISPLAY_TIME
             && _currentOptions != null
             && _currentOptions.Length > 0
             && !_hasSelected
         )
         {
-            Debug.Log("[UpgradeCardUI] Time expired, auto-selecting first upgrade");
             SelectUpgrade(0);
         }
 
@@ -85,16 +85,14 @@ public class UpgradeCardContainerUI : MonoBehaviour
             && _isShowing
         )
         {
-            Debug.Log("[UpgradeCardUI] Phase changed, hiding upgrade panel");
             HideUpgradeOptions();
         }
     }
 
-    public void ShowUpgradeOptions(UpgradeOption[] options)
+    public void ShowUpgradeOptions(UpgradeOption[] options, bool isSpectatorMode = false)
     {
         if (options == null || options.Length == 0)
         {
-            Debug.LogError("[UpgradeCardUI] Received null or empty options!");
             return;
         }
 
@@ -102,6 +100,7 @@ public class UpgradeCardContainerUI : MonoBehaviour
         _isShowing = true;
         _hasSelected = false;
         _displayTimer = 0f;
+        _isSpectatorMode = isSpectatorMode;
 
         if (upgradePanel != null)
         {
@@ -109,7 +108,6 @@ public class UpgradeCardContainerUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[UpgradeCardUI] upgradePanel is null!");
             return;
         }
 
@@ -117,7 +115,7 @@ public class UpgradeCardContainerUI : MonoBehaviour
         {
             if (i < options.Length)
             {
-                upgradeCards[i].Setup(options[i], i, this);
+                upgradeCards[i].Setup(options[i], i, this, isSpectatorMode);
                 upgradeCards[i].gameObject.SetActive(true);
             }
             else
@@ -131,17 +129,14 @@ public class UpgradeCardContainerUI : MonoBehaviour
         {
             AudioHelper.PlaySound(uiSoundConfig.upgradeCardAppear, AudioCategory.UI, uiSoundConfig.uiSoundVolume);
         }
-
-        Debug.Log($"[UpgradeCardUI] Showing {options.Length} upgrade options");
     }
 
     public void HideUpgradeOptions()
     {
         _isShowing = false;
         _currentOptions = null;
+        _isSpectatorMode = false;
         upgradePanel.SetActive(false);
-
-        Debug.Log("[UpgradeCardUI] Hidden upgrade options");
     }
 
     public void SelectUpgrade(int cardIndex)
