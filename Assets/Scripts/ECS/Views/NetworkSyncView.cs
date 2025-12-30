@@ -1413,22 +1413,31 @@ public class NetworkSyncView : NetworkBehaviour
     [ClientRpc]
     public void BroadcastRespawnTimerClientRpc(float respawnDelay)
     {
-        // Only show respawn UI to the owning player
-        if (!IsOwner)
+        // Show respawn UI to the owning player
+        if (IsOwner)
         {
+            if (respawnUI != null)
+            {
+                respawnUI.ShowRespawnTimer(respawnDelay);
+            }
             return;
         }
-
-        Debug.Log($"[Client] Player will respawn in {respawnDelay}");
-
-        if (respawnUI == null)
+        
+        // Also show to spectators following this player
+        var spectatorController = FindObjectOfType<SpectatorController>();
+        if (spectatorController != null && 
+            spectatorController.CurrentMode == SpectatorController.SpectatorMode.PlayerFollow)
         {
-            Debug.LogError("respawnUI is null!");
-
-            return;
+            // Check if spectator is following this specific player
+            EntityId followedEntity = spectatorController.FollowedPlayerEntity;
+            if (!followedEntity.Equals(default) && followedEntity.Equals(_entity))
+            {
+                if (respawnUI != null)
+                {
+                    respawnUI.ShowRespawnTimer(respawnDelay);
+                }
+            }
         }
-
-        respawnUI.ShowRespawnTimer(respawnDelay);
     }
 
     [ClientRpc]
@@ -1439,14 +1448,29 @@ public class NetworkSyncView : NetworkBehaviour
             return;
         }
 
-        Debug.Log($"[Client] Player respawned at {spawnPosition} (IsOwner: {IsOwner})");
-
-        // Only show respawn UI to the owning player
+        // Hide respawn UI for the owning player
         if (IsOwner)
         {
             if (respawnUI != null)
             {
                 respawnUI.HideRespawnTimer();
+            }
+        }
+        else
+        {
+            // Also hide for spectators following this player
+            var spectatorController = FindObjectOfType<SpectatorController>();
+            if (spectatorController != null && 
+                spectatorController.CurrentMode == SpectatorController.SpectatorMode.PlayerFollow)
+            {
+                EntityId followedEntity = spectatorController.FollowedPlayerEntity;
+                if (!followedEntity.Equals(default) && followedEntity.Equals(_entity))
+                {
+                    if (respawnUI != null)
+                    {
+                        respawnUI.HideRespawnTimer();
+                    }
+                }
             }
         }
 
