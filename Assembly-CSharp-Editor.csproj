@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Editor\SpectatorCharacterSelectionUICreator.cs" />
     <Compile Include="Assets\Scripts\Editor\SpectatorCameraRigCreator.cs" />
+    <Compile Include="Assets\Scripts\Editor\SettingsUICreator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
