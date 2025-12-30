@@ -188,6 +188,7 @@
     <Compile Include="Assets\Scripts\SO\Audio\SceneAudioConfig.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyRoom\LobbyCharacterController2.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\WeaponDataComponent.cs" />
+    <Compile Include="Assets\Scripts\Core\Managers\SettingsManager.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyIdleStateAI.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyRoom\VacuumController.cs" />
     <Compile Include="Assets\Scripts\Utils\ProjectileSpawnPos.cs" />
@@ -218,6 +219,7 @@
     <Compile Include="Assets\Scripts\ECS\Events\InputEvent.cs" />
     <Compile Include="Assets\Scripts\SO\Audio\UISoundConfig.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\GameResultUI.cs" />
+    <Compile Include="Assets\Scripts\UI\Settings\SettingsUI.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\TimeService.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAIHelpers.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\LoadingSceneManager.cs" />
