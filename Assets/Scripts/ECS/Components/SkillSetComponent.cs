@@ -8,7 +8,8 @@ public class SkillSetComponent
 
     public SkillSetComponent(List<SkillDefinitionSO> skills)
     {
-        Skills = skills;
+        // Create a NEW list to avoid mutating the original ScriptableObject's skills list
+        Skills = new List<SkillDefinitionSO>(skills);
         CooldownUntil = new float[skills.Count];
     }
 }
