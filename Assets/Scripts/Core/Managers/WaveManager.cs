@@ -495,10 +495,14 @@ public class WaveManager : MonoBehaviour
         {
             round = round,
             enemyCount = enemyCount,
-            spawnInterval = Mathf.Max(0.3f, 0.5f - (round * 0.05f)), // Slower spawn rate
-            healthMultiplier = 1f + (round * 0.4f),
-            damageMultiplier = 1f + (round * 0.3f),
-            speedMultiplier = 1f + (round * 0.15f),
+            spawnInterval = Mathf.Max(0.3f, 0.5f - (round * 0.05f)),
+            // Cap scaling to prevent extreme late-game damage:
+            // Health: +10% per round, max +100%
+            // Damage: +5% per round, max +20%
+            // Speed: +5% per round, max +30%
+            healthMultiplier = 1f + Mathf.Min(round * 0.1f, 1f),
+            damageMultiplier = 1f + Mathf.Min(round * 0.05f, 0.2f),
+            speedMultiplier = 1f + Mathf.Min(round * 0.05f, 0.3f),
             enemyTypes = waveConfigs[0].enemyTypes,
         };
     }
@@ -518,7 +522,28 @@ public class WaveManager : MonoBehaviour
         target.fieldOfView = source.fieldOfView;
         target.checkInterval = source.checkInterval;
         target.detectionMask = source.detectionMask;
-        target.attacks = new List<AttackDefinition>(source.attacks);
+        
+        // Deep copy attacks to prevent modifying the original ScriptableObject
+        target.attacks = new List<AttackDefinition>();
+        foreach (var sourceAttack in source.attacks)
+        {
+            target.attacks.Add(new AttackDefinition
+            {
+                attackName = sourceAttack.attackName,
+                executionType = sourceAttack.executionType,
+                damage = sourceAttack.damage,
+                cooldown = sourceAttack.cooldown,
+                range = sourceAttack.range,
+                animationTrigger = sourceAttack.animationTrigger,
+                totalAnimations = sourceAttack.totalAnimations,
+                attackSound = sourceAttack.attackSound,
+                hitImpactVFX = sourceAttack.hitImpactVFX,
+                projectilePrefab = sourceAttack.projectilePrefab,
+                projectileSpeed = sourceAttack.projectileSpeed,
+                projectileLifetime = sourceAttack.projectileLifetime,
+                projectileSpawnOffset = sourceAttack.projectileSpawnOffset
+            });
+        }
 
         // Animation parameters
         target.isMovingParam = source.isMovingParam;
