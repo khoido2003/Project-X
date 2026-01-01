@@ -555,7 +555,13 @@ public class NetworkGameStateManager : NetworkBehaviour
         List<PlayerResult> results = new();
 
         // IMPORTANT: Only include actual players (not enemies that might have scores)
-        foreach (var (entity, score, owner, _) in _world.Components.Query<PlayerScoreComponent, NetworkOwnerComponent, PlayerTagComponent>())
+        foreach (
+            var (entity, score, owner, _) in _world.Components.Query<
+                PlayerScoreComponent,
+                NetworkOwnerComponent,
+                PlayerTagComponent
+            >()
+        )
         {
             string playerName = $"Player_{owner.ClientId}";
             if (_world.Components.TryGet(entity, out CharacterSelectionComponent characterSelection))

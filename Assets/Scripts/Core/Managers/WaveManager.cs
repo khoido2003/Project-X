@@ -22,7 +22,7 @@ public class WaveManager : MonoBehaviour
 
     [SerializeField]
     private int bossSpawnRound = 2;
-    
+
     [SerializeField]
     private float bossFightTimeLimit = 120f; // 2 minutes max for boss fight
 
@@ -56,7 +56,7 @@ public class WaveManager : MonoBehaviour
     private Coroutine _bossFightTimerCoroutine;
     private bool _bossSpawned = false;
     private EntityId _bossEntityId;
-    
+
     public event System.Action OnBossFightTimeout;
 
     private void Start()
@@ -176,12 +176,12 @@ public class WaveManager : MonoBehaviour
     private IEnumerator BossFightTimerCoroutine()
     {
         yield return new WaitForSeconds(bossFightTimeLimit);
-        
+
         // Time's up! Kill the boss and end the fight
         if (_bossSpawned && _world != null)
         {
             Debug.Log("[WaveManager] Boss fight timeout! Ending boss round.");
-            
+
             // Force kill the boss
             if (_world.Components.TryGet(_bossEntityId, out HealthDataComponent health))
             {
@@ -189,7 +189,7 @@ public class WaveManager : MonoBehaviour
                 health.IsDead = true;
                 _world.Events.Publish(new EntityDeathEvent { Entity = _bossEntityId });
             }
-            
+
             OnBossFightTimeout?.Invoke();
         }
     }
@@ -198,18 +198,18 @@ public class WaveManager : MonoBehaviour
     {
         _bossSpawned = false;
         _bossEntityId = default;
-        
+
         if (_bossFightTimerCoroutine != null)
         {
             StopCoroutine(_bossFightTimerCoroutine);
             _bossFightTimerCoroutine = null;
         }
     }
-    
+
     public bool IsBossAlive()
     {
         if (!_bossSpawned) return false;
-        
+
         if (_world.Components.TryGet(_bossEntityId, out HealthDataComponent health))
         {
             return !health.IsDead && health.CurrentHealth > 0;

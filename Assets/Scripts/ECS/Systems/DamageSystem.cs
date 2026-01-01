@@ -81,7 +81,7 @@ public class DamageSystem : ISystem
             return;
         }
         */
-        
+
         float actualDamage = @event.Amount;
 
         // Apply defense buffs (shield)
