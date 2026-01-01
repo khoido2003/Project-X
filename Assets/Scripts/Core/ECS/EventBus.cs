@@ -64,10 +64,10 @@ public class EventBus
         int count = list.Count;
         if (count == 0)
             return;
-        
+
         // Create a snapshot to avoid mutation issues while iterating
         var snapshot = list.ToArray();
-        
+
         for (int i = 0; i < snapshot.Length; i++)
         {
             try
@@ -75,7 +75,7 @@ public class EventBus
                 var del = snapshot[i];
                 if (del == null)
                     continue;
-                
+
                 if (del is Action<T> handler)
                 {
                     handler.Invoke(evt);

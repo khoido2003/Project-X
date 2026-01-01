@@ -43,14 +43,14 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     [SerializeField]
     private string _attackAnimationTrigger = "attack";
-    
+
     [Header("Boss VFX (Configure on Boss Prefab)")]
     [SerializeField]
     private ParticleSystem _bossJumpLandingVFX;
-    
+
     [SerializeField]
     private ParticleSystem _bossFlamethrowerVFX;
-    
+
     // Active flamethrower VFX instance (for start/stop)
     private ParticleSystem _activeFlameVFX;
 
@@ -63,16 +63,16 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
     private float _interpolationTime;
     private float _interpolationDuration = 0.1f; // Time between expected network updates
-    
+
     // OPTIMIZATION: Cache last synced animation values to throttle RPCs
     // Only broadcasts when values actually change
     private Dictionary<string, float> _lastSyncedAnimValues = new();
-    
+
     // OPTIMIZATION: Cache last synced state values to throttle NetworkVariable updates
     private EnemyState _lastSyncedState;
     private bool _lastSyncedHasTarget;
     private NetworkMovementState _lastSyncedMovement;
-    
+
     private bool _isInitialized = false;
     private bool _firstTransformReceived = false;
 
@@ -81,7 +81,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     private Vector3 _smoothedVelocity; // Dampened velocity for smoother extrapolation
     private float _lastNetworkUpdateTime;
     private uint _lastReceivedTick;
-    
+
     // Constants for interpolation tuning
     private const float SNAP_DISTANCE_THRESHOLD = 5f; // Snap if too far (teleport)
     private const float VELOCITY_SMOOTHING = 0.3f; // How much to smooth velocity changes
@@ -217,7 +217,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                 ProjectileSpawnOffset = _projectileSpawnOffset,
             }
         );
-        
+
         // Add empty AudioProfileComponent to prevent warnings when animation events publish audio cues
         // Profile is null because we don't sync audio profiles over network - server handles enemy audio
         _world.Components.Add(_entity, new AudioProfileComponent());
@@ -308,10 +308,10 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
         // Advance interpolation time
         _interpolationTime += Time.deltaTime;
-        
+
         // Calculate interpolation progress (0 to 1+)
         float t = _interpolationDuration > 0.001f ? _interpolationTime / _interpolationDuration : 1f;
-        
+
         if (!_world.Components.TryGet(_entity, out TransformComponent trans))
             return;
 
@@ -324,12 +324,12 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             // DEAD RECKONING: Extrapolate beyond target using smoothed velocity
             float extrapolationTime = Mathf.Min(_interpolationTime - _interpolationDuration, MAX_EXTRAPOLATION_TIME);
-            
+
             // Use smoothed velocity with gradual dampening to prevent overshoot
             float damping = 1f - Mathf.Clamp01(extrapolationTime / MAX_EXTRAPOLATION_TIME);
             trans.Position = _targetPosition + _smoothedVelocity * extrapolationTime * damping;
         }
-        
+
         // Smooth rotation interpolation
         float rotT = Mathf.Clamp01(t * 1.2f); // Rotation completes slightly faster
         trans.Rotation = Quaternion.Slerp(_previousRotation, _targetRotation, rotT);
@@ -354,7 +354,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                 {
                     registry?.Unregister(view);
                 }
-                
+
                 _world.DestroyEntity(_entity);
             }
             catch (System.Exception ex)
@@ -362,7 +362,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                 // Silently ignore - entity might already be destroyed
             }
         }
-        
+
         if (IsServer)
         {
             _world.Events.Unsubscribe<HealthChangedEvent>(OnHealthChanged);
@@ -389,12 +389,12 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         // OPTIMIZATION: Distance-based sync rate
         // Far enemies sync less frequently to reduce bandwidth
         int syncInterval = GetDistanceBasedSyncInterval();
-        
+
         if (_currentTick % syncInterval == 0)
         {
             SyncTransform();
         }
-        
+
         SyncEnemyState();
         SyncMovement();
     }
@@ -406,10 +406,11 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     private int GetDistanceBasedSyncInterval()
     {
         float nearestPlayerDist = float.MaxValue;
-        
+
         // Find nearest player
-        foreach (var (playerEntity, player, playerTf) in 
-            _world.Components.Query<PlayerTagComponent, TransformComponent>())
+        foreach (
+            var (playerEntity, player, playerTf) in _world.Components.Query<PlayerTagComponent, TransformComponent>()
+        )
         {
             float dist = Vector3.Distance(transform.position, playerTf.Position);
             if (dist < nearestPlayerDist)
@@ -417,11 +418,13 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                 nearestPlayerDist = dist;
             }
         }
-        
+
         // Distance thresholds
-        if (nearestPlayerDist > 40f) return 4;  // Very far: sync every 4 ticks (~15Hz)
-        if (nearestPlayerDist > 20f) return 2;  // Medium: sync every 2 ticks (~30Hz)
-        return 1;  // Close: sync every tick (~60Hz)
+        if (nearestPlayerDist > 40f)
+            return 4; // Very far: sync every 4 ticks (~15Hz)
+        if (nearestPlayerDist > 20f)
+            return 2; // Medium: sync every 2 ticks (~30Hz)
+        return 1; // Close: sync every tick (~60Hz)
     }
 
     private void SyncTransform()
@@ -460,7 +463,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                     _netState.Value = enemy.CurrentState;
                     _lastSyncedState = enemy.CurrentState;
                 }
-                
+
                 bool hasTarget = !enemy.TargetEntity.Equals(default);
                 if (hasTarget != _lastSyncedHasTarget)
                 {
@@ -484,14 +487,17 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                     IsGrounded = movement.IsGrounded,
                     IsStunned = movement.IsStunned,
                 };
-                
+
                 // OPTIMIZATION: Only sync if values actually changed
-                bool changed = 
-                    newState.IsMoving != _lastSyncedMovement.IsMoving ||
-                    newState.IsGrounded != _lastSyncedMovement.IsGrounded ||
-                    newState.IsStunned != _lastSyncedMovement.IsStunned ||
-                    (newState.IsMoving && Vector3.SqrMagnitude(newState.MoveDirection - _lastSyncedMovement.MoveDirection) > 0.01f);
-                    
+                bool changed =
+                    newState.IsMoving != _lastSyncedMovement.IsMoving
+                    || newState.IsGrounded != _lastSyncedMovement.IsGrounded
+                    || newState.IsStunned != _lastSyncedMovement.IsStunned
+                    || (
+                        newState.IsMoving
+                        && Vector3.SqrMagnitude(newState.MoveDirection - _lastSyncedMovement.MoveDirection) > 0.01f
+                    );
+
                 if (changed)
                 {
                     _netMovement.Value = newState;
@@ -652,7 +658,8 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     [ClientRpc]
     public void BroadcastBossJumpLandingVfxClientRpc(Vector3 position)
     {
-        if (IsServer) return;
+        if (IsServer)
+            return;
 
         // Use serialized prefab from this view (available on prefab, works on clients!)
         if (_bossJumpLandingVFX != null)
@@ -669,7 +676,8 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     [ClientRpc]
     public void BroadcastBossFlamethrowerVfxClientRpc(bool isStarting)
     {
-        if (IsServer) return;
+        if (IsServer)
+            return;
 
         if (isStarting && _bossFlamethrowerVFX != null)
         {
@@ -861,13 +869,13 @@ public class EnemyNetworkSyncView : NetworkBehaviour
 
         // Calculate time since last update for interpolation duration
         float timeSinceLastUpdate = Time.time - _lastNetworkUpdateTime;
-        
+
         // Use tick delta if available for more accurate timing
         if (_lastReceivedTick > 0 && current.Tick > _lastReceivedTick)
         {
             float tickDelta = (current.Tick - _lastReceivedTick) * Time.fixedDeltaTime;
             _interpolationDuration = Mathf.Max(tickDelta, 0.016f); // Min 60Hz
-            
+
             // Calculate new velocity and smooth it to reduce jitter
             Vector3 newVelocity = (current.Position - _targetPosition) / tickDelta;
             _estimatedVelocity = newVelocity;
@@ -877,10 +885,10 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         {
             _interpolationDuration = Mathf.Max(timeSinceLastUpdate, 0.033f); // Fallback ~30Hz
         }
-        
+
         _lastReceivedTick = current.Tick;
         _lastNetworkUpdateTime = Time.time;
-        
+
         // Check for large position jump (teleport) - snap instead of interpolate
         float distanceToNewTarget = Vector3.Distance(_targetPosition, current.Position);
         if (distanceToNewTarget > SNAP_DISTANCE_THRESHOLD)
@@ -892,7 +900,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             _targetRotation = current.Rotation;
             _smoothedVelocity = Vector3.zero;
             _interpolationTime = _interpolationDuration; // Already at target
-            
+
             if (_world.Components.TryGet(_entity, out TransformComponent trans))
             {
                 trans.Position = current.Position;
@@ -913,10 +921,10 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             _previousPosition = transform.position;
             _previousRotation = transform.rotation;
         }
-        
+
         _targetPosition = current.Position;
         _targetRotation = current.Rotation;
-        
+
         // Reset interpolation time to start new interpolation from current position
         _interpolationTime = 0f;
     }
@@ -958,7 +966,7 @@ public class EnemyNetworkSyncView : NetworkBehaviour
         // This prevents ~300+ RPCs per frame with 100 enemies
         float newValue = SerializeValue(@event.Value);
         string key = @event.ParameterName;
-        
+
         // Check if value changed (with small epsilon for floats)
         if (_lastSyncedAnimValues.TryGetValue(key, out float lastValue))
         {
@@ -973,10 +981,10 @@ public class EnemyNetworkSyncView : NetworkBehaviour
                 return;
             }
         }
-        
+
         // Cache the new value
         _lastSyncedAnimValues[key] = newValue;
-        
+
         SyncAnimationClientRpc(@event.ParameterName, @event.ParameterType, newValue);
     }
 

@@ -5,6 +5,7 @@ public enum SpawnType
     Player,
     Enemy,
     Boss,
+    Buff,
 }
 
 public class SpawnPoint : MonoBehaviour
@@ -21,6 +22,7 @@ public class SpawnPoint : MonoBehaviour
             SpawnType.Player => Color.green,
             SpawnType.Enemy => Color.orange,
             SpawnType.Boss => Color.red,
+            SpawnType.Buff => Color.cyan,
 
             _ => Color.white,
         };

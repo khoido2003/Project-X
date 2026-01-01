@@ -111,11 +111,13 @@
     <Compile Include="Assets\Scripts\ECS\Systems\HealthRegenSystem.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\UpdateCollectibleCount.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\TransformSyncView.cs" />
+    <Compile Include="Assets\Scripts\SO\BuffSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Helpers\LoadingSceneHelper.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleXPBar.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\GrapplingClawSkillSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\PlayerRespawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ExplosiveProjectileView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\BuffPickupComponent.cs" />
     <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
     <Compile Include="Assets\Scripts\UI\Spectator\SpectatorSkillBarUI.cs" />
@@ -177,6 +179,7 @@
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleOscillateSliders.cs" />
     <Compile Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\BuffHandlerView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyVisionSystem.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CheckCodeEntered.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\BossJumpAttackStateAI.cs" />
@@ -267,6 +270,7 @@
     <Compile Include="Assets\Scripts\ECS\Factories\EnemyFactory.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\NetworkUpgradeSystem.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\HomerunSwingSkillSO.cs" />
+    <Compile Include="Assets\Scripts\Core\Managers\BuffSpawnerManager.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\UpgradeCardUI.cs" />
     <Compile Include="Assets\Scripts\Utils\Paralax.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\EntityManager.cs" />

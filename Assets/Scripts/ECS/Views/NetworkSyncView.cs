@@ -72,22 +72,22 @@ public class NetworkSyncView : NetworkBehaviour
     private Quaternion _targerRotation = Quaternion.identity;
     private float _interpolationTime;
     private float _interpolationDuration = 0.1f; // Time between expected network updates
-    
+
     // Network optimization: velocity-based dead reckoning
     private Vector3 _estimatedVelocity;
     private Vector3 _smoothedVelocity; // Dampened velocity for smoother extrapolation
     private float _lastNetworkUpdateTime;
     private uint _lastReceivedTick;
-    
+
     // Constants for interpolation tuning
     private const float SNAP_DISTANCE_THRESHOLD = 5f; // Snap if too far (teleport)
     private const float VELOCITY_SMOOTHING = 0.3f; // How much to smooth velocity changes
     private const float MAX_EXTRAPOLATION_TIME = 0.15f; // Max time to extrapolate beyond target
-    
+
     // OPTIMIZATION: Cache last synced animation values to throttle RPCs
     // Only broadcasts when values actually change
     private Dictionary<string, float> _lastSyncedAnimValues = new();
-    
+
     // OPTIMIZATION: Cache last synced movement state to throttle NetworkVariable updates
     private NetworkMovementState _lastSyncedMovement;
 
@@ -218,10 +218,7 @@ public class NetworkSyncView : NetworkBehaviour
                 BaseRange = _baseRange,
             }
         );
-        world.Components.Add(
-            clientEntity,
-            new SkillSetComponent(new System.Collections.Generic.List<SkillDefinitionSO>())
-        );
+        world.Components.Add(clientEntity, new SkillSetComponent(new List<SkillDefinitionSO>()));
         world.Components.Add(clientEntity, new SkillCastBufferComponent());
         world.Components.Add(clientEntity, new AudioProfileComponent());
         world.Components.Add(clientEntity, new CharacterSelectionComponent());
@@ -245,9 +242,9 @@ public class NetworkSyncView : NetworkBehaviour
             _targetPosition = transform.position;
             _previousRotation = transform.rotation;
             _targerRotation = transform.rotation;
-            _interpolationTime = _interpolationDuration; // Start at "completed" so we use current position
+            _interpolationTime = _interpolationDuration;
             _lastNetworkUpdateTime = Time.time;
-            
+
             Debug.Log($"[NetworkSyncView] Initialized interpolation for remote player at {transform.position}");
         }
 
@@ -397,8 +394,9 @@ public class NetworkSyncView : NetworkBehaviour
     private void SyncScore()
     {
         // OPTIMIZATION: Score rarely changes, sync every 10 ticks (~6Hz)
-        if (_currentTick % 10 != 0) return;
-        
+        if (_currentTick % 10 != 0)
+            return;
+
         if (_world.Components.TryGet(_entity, out PlayerScoreComponent score))
         {
             var newState = new NetworkScoreState
@@ -409,9 +407,11 @@ public class NetworkSyncView : NetworkBehaviour
             };
 
             // Only update if changed
-            if (_netScore.Value.TotalScore != newState.TotalScore ||
-                _netScore.Value.PlayerKills != newState.PlayerKills ||
-                _netScore.Value.EnemyKills != newState.EnemyKills)
+            if (
+                _netScore.Value.TotalScore != newState.TotalScore
+                || _netScore.Value.PlayerKills != newState.PlayerKills
+                || _netScore.Value.EnemyKills != newState.EnemyKills
+            )
             {
                 _netScore.Value = newState;
             }
@@ -454,14 +454,17 @@ public class NetworkSyncView : NetworkBehaviour
                     IsGrounded = movement.IsGrounded,
                     IsStunned = movement.IsStunned,
                 };
-                
+
                 // OPTIMIZATION: Only sync if values actually changed
-                bool changed = 
-                    newState.IsMoving != _lastSyncedMovement.IsMoving ||
-                    newState.IsGrounded != _lastSyncedMovement.IsGrounded ||
-                    newState.IsStunned != _lastSyncedMovement.IsStunned ||
-                    (newState.IsMoving && Vector3.SqrMagnitude(newState.MoveDirection - _lastSyncedMovement.MoveDirection) > 0.01f);
-                    
+                bool changed =
+                    newState.IsMoving != _lastSyncedMovement.IsMoving
+                    || newState.IsGrounded != _lastSyncedMovement.IsGrounded
+                    || newState.IsStunned != _lastSyncedMovement.IsStunned
+                    || (
+                        newState.IsMoving
+                        && Vector3.SqrMagnitude(newState.MoveDirection - _lastSyncedMovement.MoveDirection) > 0.01f
+                    );
+
                 if (changed)
                 {
                     _netMovement.Value = newState;
@@ -541,10 +544,10 @@ public class NetworkSyncView : NetworkBehaviour
 
         // Advance interpolation time
         _interpolationTime += Time.deltaTime;
-        
+
         // Calculate interpolation progress (0 to 1+)
         float t = _interpolationDuration > 0.001f ? _interpolationTime / _interpolationDuration : 1f;
-        
+
         if (!_world.Components.TryGet(_entity, out TransformComponent trans))
             return;
 
@@ -557,15 +560,15 @@ public class NetworkSyncView : NetworkBehaviour
         {
             // DEAD RECKONING: Extrapolate beyond target using smoothed velocity
             float extrapolationTime = Mathf.Min(_interpolationTime - _interpolationDuration, MAX_EXTRAPOLATION_TIME);
-            
+
             // Use smoothed velocity with gradual dampening to prevent overshoot
             float damping = 1f - Mathf.Clamp01(extrapolationTime / MAX_EXTRAPOLATION_TIME);
             trans.Position = _targetPosition + _smoothedVelocity * extrapolationTime * damping;
         }
-        
+
         // Smooth rotation interpolation with validation
         float rotT = Mathf.Clamp01(t * 1.2f); // Rotation completes slightly faster
-        
+
         bool previousValid =
             _previousRotation != Quaternion.identity
             && !float.IsNaN(_previousRotation.x)
@@ -1185,7 +1188,7 @@ public class NetworkSyncView : NetworkBehaviour
                 }
             }
         }
-        
+
         BroadcastSkillExecutionClientRpc(targetPoint, validatedDirection, skillIndexToSend);
     }
 
@@ -1205,7 +1208,7 @@ public class NetworkSyncView : NetworkBehaviour
         // Look up skill from SkillSetComponent using the index
         // This is more reliable than using buffer.Skill which may not be set on client for instant skills
         SkillDefinitionSO skill = null;
-        
+
         if (skillIndex >= 0 && _world.Components.TryGet(_entity, out SkillSetComponent skillSet))
         {
             if (skillIndex < skillSet.Skills.Count)
@@ -1213,7 +1216,7 @@ public class NetworkSyncView : NetworkBehaviour
                 skill = skillSet.Skills[skillIndex];
             }
         }
-        
+
         // Fallback to buffer.Skill if index lookup fails
         if (skill == null)
         {
@@ -1259,14 +1262,16 @@ public class NetworkSyncView : NetworkBehaviour
         {
             return;
         }
-        
+
         // Skip if this is the owner - they already played prediction locally
         if (IsOwner)
         {
             return;
         }
 
-        Debug.Log($"[NetworkSyncView] BroadcastInstantSkillClientRpc received, Entity: {_entity.Id}, skillIndex: {skillIndex}");
+        Debug.Log(
+            $"[NetworkSyncView] BroadcastInstantSkillClientRpc received, Entity: {_entity.Id}, skillIndex: {skillIndex}"
+        );
 
         if (_world == null || _entity.Equals(default))
         {
@@ -1286,11 +1291,15 @@ public class NetworkSyncView : NetworkBehaviour
 
         if (skill == null)
         {
-            Debug.LogWarning($"[NetworkSyncView] BroadcastInstantSkillClientRpc: Could not find skill for index {skillIndex}");
+            Debug.LogWarning(
+                $"[NetworkSyncView] BroadcastInstantSkillClientRpc: Could not find skill for index {skillIndex}"
+            );
             return;
         }
 
-        Debug.Log($"[NetworkSyncView] Publishing instant skill effect for {skill.skillName}, category: {skill.category}");
+        Debug.Log(
+            $"[NetworkSyncView] Publishing instant skill effect for {skill.skillName}, category: {skill.category}"
+        );
 
         // Publish the SkillEffectTriggerEvent so clients (including spectators) play the VFX
         _world.Events.Publish(
@@ -1422,11 +1431,13 @@ public class NetworkSyncView : NetworkBehaviour
             }
             return;
         }
-        
+
         // Also show to spectators following this player
-        var spectatorController = FindObjectOfType<SpectatorController>();
-        if (spectatorController != null && 
-            spectatorController.CurrentMode == SpectatorController.SpectatorMode.PlayerFollow)
+        var spectatorController = FindFirstObjectByType<SpectatorController>();
+        if (
+            spectatorController != null
+            && spectatorController.CurrentMode == SpectatorController.SpectatorMode.PlayerFollow
+        )
         {
             // Check if spectator is following this specific player
             EntityId followedEntity = spectatorController.FollowedPlayerEntity;
@@ -1459,9 +1470,11 @@ public class NetworkSyncView : NetworkBehaviour
         else
         {
             // Also hide for spectators following this player
-            var spectatorController = FindObjectOfType<SpectatorController>();
-            if (spectatorController != null && 
-                spectatorController.CurrentMode == SpectatorController.SpectatorMode.PlayerFollow)
+            var spectatorController = FindFirstObjectByType<SpectatorController>();
+            if (
+                spectatorController != null
+                && spectatorController.CurrentMode == SpectatorController.SpectatorMode.PlayerFollow
+            )
             {
                 EntityId followedEntity = spectatorController.FollowedPlayerEntity;
                 if (!followedEntity.Equals(default) && followedEntity.Equals(_entity))
@@ -1481,13 +1494,13 @@ public class NetworkSyncView : NetworkBehaviour
         {
             view.gameObject.SetActive(true);
             view.transform.position = spawnPosition;
-            
+
             // Also update the ECS transform component so interpolation works correctly
             if (_world.Components.TryGet(_entity, out TransformComponent trans))
             {
                 trans.Position = spawnPosition;
             }
-            
+
             // Reset health display component for non-owners
             if (_world.Components.TryGet(_entity, out HealthDataComponent health))
             {
@@ -1639,13 +1652,13 @@ public class NetworkSyncView : NetworkBehaviour
         {
             // Calculate time since last update for interpolation duration
             float timeSinceLastUpdate = Time.time - _lastNetworkUpdateTime;
-            
+
             // Use tick delta if available for more accurate timing
             if (_lastReceivedTick > 0 && current.Tick > _lastReceivedTick)
             {
                 float tickDelta = (current.Tick - _lastReceivedTick) * Time.fixedDeltaTime;
                 _interpolationDuration = Mathf.Max(tickDelta, 0.016f); // Min 60Hz
-                
+
                 // Calculate new velocity and smooth it to reduce jitter
                 Vector3 newVelocity = (current.Position - _targetPosition) / tickDelta;
                 _estimatedVelocity = newVelocity;
@@ -1655,10 +1668,10 @@ public class NetworkSyncView : NetworkBehaviour
             {
                 _interpolationDuration = Mathf.Max(timeSinceLastUpdate, 0.033f); // Fallback ~30Hz
             }
-            
+
             _lastReceivedTick = current.Tick;
             _lastNetworkUpdateTime = Time.time;
-            
+
             // Check for large position jump (teleport) - snap instead of interpolate
             float distanceToNewTarget = Vector3.Distance(_targetPosition, current.Position);
             if (distanceToNewTarget > SNAP_DISTANCE_THRESHOLD)
@@ -1670,7 +1683,7 @@ public class NetworkSyncView : NetworkBehaviour
                 _targerRotation = current.Rotation;
                 _smoothedVelocity = Vector3.zero;
                 _interpolationTime = _interpolationDuration;
-                
+
                 if (_world.Components.TryGet(_entity, out TransformComponent tf))
                 {
                     tf.Position = current.Position;
@@ -1690,10 +1703,10 @@ public class NetworkSyncView : NetworkBehaviour
                 _previousPosition = transform.position;
                 _previousRotation = transform.rotation;
             }
-            
+
             _targetPosition = current.Position;
             _targerRotation = current.Rotation;
-            
+
             // Reset interpolation time to start new interpolation from current position
             _interpolationTime = 0f;
         }
@@ -1710,7 +1723,7 @@ public class NetworkSyncView : NetworkBehaviour
         // This prevents excessive RPCs every frame
         float newValue = SerializeValue(@event.Value);
         string key = @event.ParameterName;
-        
+
         // Check if value changed (with small epsilon for floats)
         if (_lastSyncedAnimValues.TryGetValue(key, out float lastValue))
         {
@@ -1725,10 +1738,10 @@ public class NetworkSyncView : NetworkBehaviour
                 return;
             }
         }
-        
+
         // Cache the new value
         _lastSyncedAnimValues[key] = newValue;
-        
+
         SyncAnimationClientRpc(@event.ParameterName, @event.ParameterType, newValue);
     }
 
@@ -2025,6 +2038,72 @@ public class NetworkSyncView : NetworkBehaviour
         _world.Events.Publish(new PlayerSpawnEvent(_entity, gameObject, transform));
 
         Debug.Log($"[NetworkSyncView] Client fully synced character {characterName} at position {spawnPosition}");
+    }
+
+    #endregion
+
+    //////////////////////////////////////////////////
+
+    #region Buff Synchronization
+
+    /// <summary>
+    /// Called by BuffHandlerView on server to sync health buff to all clients.
+    /// </summary>
+    public void ApplyHealthBuffFromServer(float healAmount)
+    {
+        if (!IsServer) return;
+
+        if (_world.Components.TryGet(_entity, out HealthDataComponent health))
+        {
+            health.CurrentHealth = Mathf.Min(health.CurrentHealth + healAmount, health.MaxHealth);
+            _netHealth.Value = new NetworkHealthState { Current = health.CurrentHealth, Max = health.MaxHealth };
+            _world.Events.Publish(new HealthChangedEvent(_entity, health.CurrentHealth, health.MaxHealth));
+        }
+    }
+
+    /// <summary>
+    /// Called by BuffHandlerView on server to sync speed buff to all clients.
+    /// </summary>
+    public void ApplySpeedBuffFromServer(float percentage, float duration)
+    {
+        if (!IsServer) return;
+
+        if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
+        {
+            float multiplier = 1 + (percentage / 100f);
+            movement.MoveSpeed *= multiplier;
+        }
+
+        BroadcastSpeedBuffClientRpc(percentage, duration);
+        StartCoroutine(RevertSpeedBuffAfterDelay(percentage, duration));
+    }
+
+    [ClientRpc]
+    private void BroadcastSpeedBuffClientRpc(float percentage, float duration)
+    {
+        if (IsServer) return;
+        if (_world == null || _entity.Equals(default)) return;
+
+        if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
+        {
+            float multiplier = 1 + (percentage / 100f);
+            movement.MoveSpeed *= multiplier;
+        }
+
+        StartCoroutine(RevertSpeedBuffAfterDelay(percentage, duration));
+    }
+
+    private System.Collections.IEnumerator RevertSpeedBuffAfterDelay(float percentage, float duration)
+    {
+        yield return new WaitForSeconds(duration);
+
+        if (_world == null || _entity.Equals(default)) yield break;
+
+        if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
+        {
+            float multiplier = 1 + (percentage / 100f);
+            movement.MoveSpeed /= multiplier;
+        }
     }
 
     #endregion

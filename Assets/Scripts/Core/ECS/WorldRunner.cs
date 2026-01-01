@@ -46,10 +46,10 @@ public class WorldRunner : NetworkBehaviour
     {
         // PERFORMANCE: Disable debug logging in builds (not editor)
         // This prevents massive performance overhead from Debug.Log calls
-        #if !UNITY_EDITOR
+#if !UNITY_EDITOR
         Debug.unityLogger.logEnabled = false;
-        #endif
-        
+#endif
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -232,7 +232,6 @@ public class WorldRunner : NetworkBehaviour
                 availableIndices.Add(i);
             }
         }
-
         if (availableIndices.Count == 0)
         {
             Debug.LogWarning("All spawn points used! Reusing a random one");
@@ -332,15 +331,15 @@ public class WorldRunner : NetworkBehaviour
         World.Systems.AddSystem(new TransformSyncSystem(), World);
         World.Systems.AddSystem(new AudioSystem(), World);
         World.Systems.AddSystem(new AudioProfileSystem(), World);
-        
+
         // InputSystem must run on ALL clients to handle local input
         // It sends RPCs to server (RequestAttackServerRpc, skill casts, etc.)
         World.Systems.AddSystem(new InputSystem(), World);
-        
+
         // SkillSystem must run on ALL clients for skill preview and local feedback
         // Actual skill execution is validated by server, but preview runs locally
         World.Systems.AddSystem(new SkillSystem(), World);
-        
+
         // NOTE: Server-only systems are registered in InitServerSystems() called from OnNetworkSpawn()
         // because IsServer is only valid after network starts
     }
@@ -350,27 +349,26 @@ public class WorldRunner : NetworkBehaviour
         // Spawning
         _spawnSystem = new SpawnSystem(spawnConfig);
         World.Systems.AddSystem(_spawnSystem, World);
-        
+
         // Core gameplay (SkillSystem is initialized in InitSystems for all clients)
         World.Systems.AddSystem(new MovementSystem(), World);
         World.Systems.AddSystem(new HealthSystem(), World);
         World.Systems.AddSystem(new AttackSystem(), World);
         World.Systems.AddSystem(new DamageSystem(), World);
         World.Systems.AddSystem(new CombatStateSystem(), World);
-        
+
         // Status effects
         World.Systems.AddSystem(new StunSystem(), World);
         World.Systems.AddSystem(new KnockbackSystem(), World);
         World.Systems.AddSystem(new HealthRegenSystem(), World);
         World.Systems.AddSystem(new PlayerRespawnSystem(), World);
-        
+
         // Enemy AI
         World.Systems.AddSystem(new EnemyVisionSystem(), World);
         World.Systems.AddSystem(new EnemyPathfindingSystem(), World);
         World.Systems.AddSystem(new EnemyMovementSystem(), World);
         World.Systems.AddSystem(new EnemyAISystem(), World);
-        
+
         EnemyAIHelpers.RegisterDefaultStates();
     }
-
 }

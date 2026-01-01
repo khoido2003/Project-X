@@ -2882,6 +2882,7 @@ GameObject:
   - component: {fileID: 5394597680818752307}
   - component: {fileID: 7447544904137708884}
   - component: {fileID: 4437720116726688543}
+  - component: {fileID: 2789049304557450646}
   m_Layer: 8
   m_Name: MurderKitten
   m_TagString: Untagged
@@ -2967,7 +2968,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2213211658
+  GlobalObjectIdHash: 518407433
   InScenePlacedSourceGlobalObjectIdHash: 1055608539
   DeferredDespawnTick: 0
   Ownership: 1
@@ -3132,6 +3133,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c22be3f6ee3e2d748a335ae2c92be8ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LifeDrainExecutorView
+--- !u!114 &2789049304557450646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5408295053290319734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a154981084d4d4e4aa484f34170e1b37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuffHandlerView
 --- !u!1 &5555532243374060460
 GameObject:
   m_ObjectHideFlags: 0
