@@ -93,11 +93,15 @@ public class PlayerRespawnSystem : ISystem
         if (_world.Components.TryGet(entity, out NetworkSyncComponent sync))
         {
             sync.SyncView.BroadcastPlayerRespawnClientRpc(spawnPos);
+            
+            // Grant invincibility after respawn
+            sync.SyncView.StartInvincibilityFromServer(GameConstants.INVINCIBILITY_DURATION);
         }
 
         _world.Events.Publish(new HealthChangedEvent(entity, health.CurrentHealth, health.MaxHealth));
         _world.Events.Publish(new PlayerRespawnedEvent(entity));
     }
+
 
     private Vector3 GetRespawnPosition()
     {

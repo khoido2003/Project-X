@@ -73,7 +73,7 @@ public class NetworkUpgradeSystem : NetworkBehaviour
 
     [SerializeField]
     private UpgradeCardContainerUI _upgradeCardUI;
-    
+
     [Header("Spectator UI (Optional)")]
     [SerializeField]
     private UpgradeCardContainerUI _spectatorUpgradeCardUI;
@@ -86,7 +86,7 @@ public class NetworkUpgradeSystem : NetworkBehaviour
     public static NetworkUpgradeSystem Instance { get; private set; }
 
     private bool _isInitialized = false;
-    
+
     // Cache of current upgrade options per player (for late-joining spectators)
     private Dictionary<ulong, UpgradeOption[]> _currentPlayerUpgradeOptions = new();
 
@@ -128,9 +128,9 @@ public class NetworkUpgradeSystem : NetworkBehaviour
             _upgradeDatabase[_nextUpgradeId] = upgrade;
             _nextUpgradeId++;
         }
-        
+
         // Subscribe to spectator mode changes to hide upgrade UI in overview mode
-        var spectatorController = FindObjectOfType<SpectatorController>();
+        var spectatorController = FindFirstObjectByType<SpectatorController>();
         if (spectatorController != null)
         {
             spectatorController.OnModeChanged += OnSpectatorModeChanged;
@@ -139,7 +139,7 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         _isInitialized = true;
         Debug.Log($"[UpgradeSystem] Initialized with {_upgradeDatabase.Count} upgrades");
     }
-    
+
     private void OnSpectatorModeChanged(SpectatorController.SpectatorMode newMode)
     {
         // Hide upgrade UI when spectator switches to overview mode
@@ -149,8 +149,11 @@ public class NetworkUpgradeSystem : NetworkBehaviour
             {
                 _spectatorUpgradeCardUI.HideUpgradeOptions();
             }
-            else if (_upgradeCardUI != null && SpectatorNetworkHandler.Instance != null &&
-                     SpectatorNetworkHandler.Instance.IsSpectator(NetworkManager.Singleton.LocalClientId))
+            else if (
+                _upgradeCardUI != null
+                && SpectatorNetworkHandler.Instance != null
+                && SpectatorNetworkHandler.Instance.IsSpectator(NetworkManager.Singleton.LocalClientId)
+            )
             {
                 _upgradeCardUI.HideUpgradeOptions();
             }
@@ -225,32 +228,44 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         }
 
         var optionsArray = options.ToArray();
-        
+
         // Cache options for late-joining spectators
         _currentPlayerUpgradeOptions[clientId] = optionsArray;
 
+        // Grant invincibility for entire upgrade phase so player can't die while selecting
+        // This will be extended/reset when they actually select an upgrade
+        if (_world.Components.TryGet(entity, out NetworkSyncComponent sync))
+        {
+            sync.SyncView.StartInvincibilityFromServer(GameConstants.UPGRADE_PHASE_DURATION);
+        }
+
         SendUpgradeOptionsClientRpc(clientId, optionsArray);
-        
+
         // Also broadcast to all spectators so they can view upgrade choices
         BroadcastUpgradeOptionsToSpectatorsClientRpc(clientId, optionsArray);
     }
-    
+
+
     /// <summary>
     /// Called when a spectator starts following a player during upgrade phase.
     /// Sends any cached upgrade options to them.
     /// </summary>
     public void RequestUpgradeOptionsForSpectator(ulong targetPlayerClientId)
     {
-        if (!IsServer) return;
-        
+        if (!IsServer)
+            return;
+
         // Check if we have cached options for this player
-        if (_currentPlayerUpgradeOptions.TryGetValue(targetPlayerClientId, out UpgradeOption[] options) && options != null)
+        if (
+            _currentPlayerUpgradeOptions.TryGetValue(targetPlayerClientId, out UpgradeOption[] options)
+            && options != null
+        )
         {
             Debug.Log($"[UpgradeSystem] Sending cached upgrade options for player {targetPlayerClientId} to spectator");
             BroadcastUpgradeOptionsToSpectatorsClientRpc(targetPlayerClientId, options);
         }
     }
-    
+
     /// <summary>
     /// Clears cached upgrade options (call when upgrade phase ends)
     /// </summary>
@@ -411,26 +426,28 @@ public class NetworkUpgradeSystem : NetworkBehaviour
     //////////////////////////////////////////////////////////////////////////
 
     #region RPCs
-    
+
     /// <summary>
     /// Called by spectator when they start following a player during upgrade phase.
     /// </summary>
     [ServerRpc(RequireOwnership = false)]
     public void SpectatorRequestUpgradeOptionsServerRpc(ulong targetPlayerClientId, ServerRpcParams rpcParams = default)
     {
-        if (!_isInitialized) return;
-        
+        if (!_isInitialized)
+            return;
+
         // Verify sender is a spectator
         ulong requesterId = rpcParams.Receive.SenderClientId;
-        if (SpectatorNetworkHandler.Instance == null || 
-            !SpectatorNetworkHandler.Instance.IsSpectator(requesterId))
+        if (SpectatorNetworkHandler.Instance == null || !SpectatorNetworkHandler.Instance.IsSpectator(requesterId))
         {
             return;
         }
-        
+
         // Check if we're in upgrade phase and have cached options
-        if (NetworkGameStateManager.Instance != null && 
-            NetworkGameStateManager.Instance.CurrentPhase == GamePhase.UpgradePhase)
+        if (
+            NetworkGameStateManager.Instance != null
+            && NetworkGameStateManager.Instance.CurrentPhase == GamePhase.UpgradePhase
+        )
         {
             RequestUpgradeOptionsForSpectator(targetPlayerClientId);
         }
@@ -469,11 +486,19 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         // Apply upgrade
         ApplyUpgrades(playerEntity, upgradeId, rolledValue);
 
+        // Grant invincibility after upgrade selection
+        if (_world.Components.TryGet(playerEntity, out NetworkSyncComponent sync))
+        {
+            sync.SyncView.StartInvincibilityFromServer(GameConstants.INVINCIBILITY_DURATION);
+        }
+
         // Confirm to client
         ConfirmUpgradeClientRpc(clientId, upgradeId);
-        
+
         // Broadcast to spectators that player made a selection
-        string upgradeName = _upgradeDatabase.ContainsKey(upgradeId) ? _upgradeDatabase[upgradeId].upgradeName : "Unknown";
+        string upgradeName = _upgradeDatabase.ContainsKey(upgradeId)
+            ? _upgradeDatabase[upgradeId].upgradeName
+            : "Unknown";
         BroadcastUpgradeSelectionToSpectatorsClientRpc(clientId, upgradeName, rarityTier);
 
         Debug.Log($"[UpgradeSystem] Applied upgrade {upgradeId} to client {clientId}");
@@ -517,9 +542,9 @@ public class NetworkUpgradeSystem : NetworkBehaviour
     }
 
     #endregion
-    
+
     #region Spectator RPCs
-    
+
     /// <summary>
     /// Broadcasts upgrade options to all spectators.
     /// Spectators will show the UI if they are following the target player.
@@ -529,21 +554,26 @@ public class NetworkUpgradeSystem : NetworkBehaviour
     {
         // Check if spectator is following this player - if SpectatorController exists, we ARE a spectator
         var spectatorController = FindObjectOfType<SpectatorController>();
-        
+
         // SpectatorController only exists on spectator clients, so this is a reliable check
-        if (spectatorController == null) return;
-        
-        if (spectatorController.CurrentMode != SpectatorController.SpectatorMode.PlayerFollow) return;
-        
+        if (spectatorController == null)
+            return;
+
+        if (spectatorController.CurrentMode != SpectatorController.SpectatorMode.PlayerFollow)
+            return;
+
         // Check if spectator is following this specific player
         EntityId followedEntity = spectatorController.FollowedPlayerEntity;
-        if (followedEntity.Equals(default)) return;
-        
+        if (followedEntity.Equals(default))
+            return;
+
         // Get the clientId of the followed player to compare
-        if (!_world.Components.TryGet(followedEntity, out NetworkOwnerComponent followedOwner)) return;
-        
-        if (followedOwner.ClientId != targetPlayerClientId) return;
-        
+        if (!_world.Components.TryGet(followedEntity, out NetworkOwnerComponent followedOwner))
+            return;
+
+        if (followedOwner.ClientId != targetPlayerClientId)
+            return;
+
         // Show upgrade UI to spectator (with buttons disabled)
         if (_spectatorUpgradeCardUI != null)
         {
@@ -555,12 +585,16 @@ public class NetworkUpgradeSystem : NetworkBehaviour
             _upgradeCardUI.ShowUpgradeOptions(options, isSpectatorMode: true);
         }
     }
-    
+
     /// <summary>
     /// Broadcasts player's upgrade selection to spectators.
     /// </summary>
     [ClientRpc]
-    private void BroadcastUpgradeSelectionToSpectatorsClientRpc(ulong targetPlayerClientId, string upgradeName, int rarityTier)
+    private void BroadcastUpgradeSelectionToSpectatorsClientRpc(
+        ulong targetPlayerClientId,
+        string upgradeName,
+        int rarityTier
+    )
     {
         // Check using SpectatorController (exists only on spectator clients)
         var spectatorController = FindObjectOfType<SpectatorController>();
@@ -568,25 +602,27 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         {
             return; // Not a spectator
         }
-        
+
         if (spectatorController.CurrentMode != SpectatorController.SpectatorMode.PlayerFollow)
         {
             return;
         }
-        
+
         // Compare by clientId (same logic as BroadcastUpgradeOptionsToSpectatorsClientRpc)
         EntityId followedEntity = spectatorController.FollowedPlayerEntity;
         if (followedEntity.Equals(default))
         {
             return;
         }
-        
-        if (!_world.Components.TryGet(followedEntity, out NetworkOwnerComponent followedOwner) ||
-            followedOwner.ClientId != targetPlayerClientId)
+
+        if (
+            !_world.Components.TryGet(followedEntity, out NetworkOwnerComponent followedOwner)
+            || followedOwner.ClientId != targetPlayerClientId
+        )
         {
             return;
         }
-        
+
         // Hide upgrade UI and log selection
         if (_spectatorUpgradeCardUI != null)
         {
@@ -596,12 +632,12 @@ public class NetworkUpgradeSystem : NetworkBehaviour
         {
             _upgradeCardUI.HideUpgradeOptions();
         }
-        
+
         string[] rarityNames = { "Common", "Uncommon", "Rare", "Epic" };
         string rarityName = rarityTier >= 0 && rarityTier < rarityNames.Length ? rarityNames[rarityTier] : "Unknown";
         Debug.Log($"[UpgradeSystem] Spectator: Player selected [{rarityName}] {upgradeName}");
     }
-    
+
     #endregion
 
     ////////////////////////////////////////////////////////////////////////////

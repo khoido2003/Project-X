@@ -56,6 +56,7 @@ GameObject:
   - component: {fileID: 5329789389201210581}
   - component: {fileID: 8510749509602240122}
   - component: {fileID: 229671703053995689}
+  - component: {fileID: -525442088376972251}
   m_Layer: 8
   m_Name: Daisy
   m_TagString: Untagged
@@ -334,6 +335,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a154981084d4d4e4aa484f34170e1b37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffHandlerView
+--- !u!114 &-525442088376972251
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2679261005080247242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1e6e827eb0439b4fad8333b38578e40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InvincibilityView
+  _invincibilityMaterial: {fileID: 2100000, guid: bef6af73bb692814596e5d324d919010, type: 2}
+  _targetRenderers: []
 --- !u!1 &2972720399291164892
 GameObject:
   m_ObjectHideFlags: 0

@@ -362,6 +362,7 @@ public class WorldRunner : NetworkBehaviour
         World.Systems.AddSystem(new KnockbackSystem(), World);
         World.Systems.AddSystem(new HealthRegenSystem(), World);
         World.Systems.AddSystem(new PlayerRespawnSystem(), World);
+        World.Systems.AddSystem(new InvincibilitySystem(), World);
 
         // Enemy AI
         World.Systems.AddSystem(new EnemyVisionSystem(), World);

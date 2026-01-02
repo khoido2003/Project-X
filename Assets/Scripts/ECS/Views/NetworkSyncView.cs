@@ -2107,4 +2107,97 @@ public class NetworkSyncView : NetworkBehaviour
     }
 
     #endregion
+
+    #region Invincibility RPCs
+
+    /// <summary>
+    /// Starts invincibility on server and broadcasts to all clients.
+    /// Called by PlayerRespawnSystem and NetworkUpgradeSystem.
+    /// </summary>
+    public void StartInvincibilityFromServer(float duration)
+    {
+        if (!IsServer) return;
+
+        // Set invincibility on server
+        if (_world.Components.TryGet(_entity, out HealthDataComponent health))
+        {
+            health.IsInvincible = true;
+        }
+
+        // Add or update invincibility component
+        if (!_world.Components.TryGet(_entity, out InvincibilityComponent invincibility))
+        {
+            invincibility = new InvincibilityComponent();
+            _world.Components.Add(_entity, invincibility);
+        }
+        invincibility.IsActive = true;
+        invincibility.RemainingDuration = duration;
+        invincibility.TotalDuration = duration;
+
+        Debug.Log($"[NetworkSyncView] Started invincibility for entity {_entity.Id}, duration: {duration}s");
+
+        // Publish event for server-side visual (host player)
+        _world.Events.Publish(new InvincibilityStartEvent(_entity, duration));
+
+        // Broadcast to all clients
+        BroadcastInvincibilityStartClientRpc(duration);
+    }
+
+    /// <summary>
+    /// Broadcasts invincibility start to all clients.
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastInvincibilityStartClientRpc(float duration)
+    {
+        // Server already processed
+        if (IsServer) return;
+
+        if (_world == null || _entity.Equals(default))
+        {
+            Debug.LogWarning("[NetworkSyncView] BroadcastInvincibilityStartClientRpc: World or entity not initialized");
+            return;
+        }
+
+        // Update local health component
+        if (_world.Components.TryGet(_entity, out HealthDataComponent health))
+        {
+            health.IsInvincible = true;
+        }
+
+        Debug.Log($"[NetworkSyncView] Client received invincibility start for entity {_entity.Id}");
+
+        // Publish event for visual effect
+        _world.Events.Publish(new InvincibilityStartEvent(_entity, duration));
+    }
+
+    /// <summary>
+    /// Broadcasts invincibility end to all clients.
+    /// Called by InvincibilitySystem when timer expires.
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastInvincibilityEndClientRpc()
+    {
+        // Server already processed
+        if (IsServer) return;
+
+        if (_world == null || _entity.Equals(default))
+        {
+            Debug.LogWarning("[NetworkSyncView] BroadcastInvincibilityEndClientRpc: World or entity not initialized");
+            return;
+        }
+
+        // Update local health component
+        if (_world.Components.TryGet(_entity, out HealthDataComponent health))
+        {
+            health.IsInvincible = false;
+        }
+
+        Debug.Log($"[NetworkSyncView] Client received invincibility end for entity {_entity.Id}");
+
+        // Publish event for visual effect
+        _world.Events.Publish(new InvincibilityEndEvent(_entity));
+    }
+
+    #endregion
 }
+

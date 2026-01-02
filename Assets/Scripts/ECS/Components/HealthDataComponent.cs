@@ -9,4 +9,5 @@ public class HealthDataComponent
     
     [Header("Status Flags")]
     public bool IsUntargetable = false;
+    public bool IsInvincible = false;
 }

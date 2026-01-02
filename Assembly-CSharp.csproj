@@ -172,6 +172,7 @@
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\AnimatorActionData.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\CharacterSelectionManager.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IObjectPoolService.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\InvincibilityView.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\PlasmaShieldSkillSO.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\HealthBarUI.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\LoadSceneByIndex.cs" />
@@ -183,6 +184,7 @@
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyVisionSystem.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CheckCodeEntered.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\BossJumpAttackStateAI.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\InvincibilityComponent.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\ThirdPersonController\Scripts\ThirdPersonController.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CustomSceneManager.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\UIRoot.cs" />
@@ -270,6 +272,7 @@
     <Compile Include="Assets\Scripts\ECS\Factories\EnemyFactory.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\NetworkUpgradeSystem.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\HomerunSwingSkillSO.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\InvincibilitySystem.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\BuffSpawnerManager.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\UpgradeCardUI.cs" />
     <Compile Include="Assets\Scripts\Utils\Paralax.cs" />
