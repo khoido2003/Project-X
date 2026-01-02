@@ -64,11 +64,6 @@ public class CloakStrikeExecutorView : SkillExecutorView
         // Restore materials locally
         RestoreMaterials();
         
-        // Broadcast uncloak to clients to restore their materials
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
-            CloakVisualClientRpc(false);
-        }
     }
 
     /// <summary>
@@ -150,11 +145,8 @@ public class CloakStrikeExecutorView : SkillExecutorView
             health.IsUntargetable = true;
         }
 
-        // Broadcast cloak start to all clients
-        CloakVisualClientRpc(true);
-        
-        // ALSO apply cloak material locally on server for host player visibility
-        // This is redundant with RPC in host mode but ensures materials are stored
+        // Apply cloak material locally on server for host player visibility
+        // Clients receive SkillEffectTriggerEvent and handle material change in SpawnClientVisualEffect
         ApplyCloakMaterial();
 
         // Spawn cloak VFX on server
@@ -194,9 +186,7 @@ public class CloakStrikeExecutorView : SkillExecutorView
         
         // Restore materials locally on server
         RestoreMaterials();
-        
-        // Broadcast uncloak to clients
-        CloakVisualClientRpc(false);
+
 
         // Cleanup VFX
         if (_activeCloakVfx != null)
@@ -242,37 +232,35 @@ public class CloakStrikeExecutorView : SkillExecutorView
         }
     }
 
-    [ClientRpc]
-    private void CloakVisualClientRpc(bool isCloaking)
+
+    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
     {
-        // Server already handles materials locally via ApplyCloakMaterial/RestoreMaterials
-        // Skip RPC logic on server when uncloaking to prevent race condition
-        if (!isCloaking && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
-            return;
-        }
-        
-        // Ensure renderers are populated (may not be set on client)
+        if (@event.Skill is not CloakStrikeSkillSO skill) return;
+
+        // Apply cloak material on client - [ClientRpc] doesn't work on MonoBehaviour, only NetworkBehaviour
+        // So we handle material swap directly here when SkillEffectTriggerEvent is received
+        StartCoroutine(ClientCloakRoutine(skill));
+    }
+
+    /// <summary>
+    /// Client-side cloak routine that applies material change and spawns VFX
+    /// </summary>
+    private IEnumerator ClientCloakRoutine(CloakStrikeSkillSO skill)
+    {
+        // Ensure renderers are populated
         if (_renderers == null || _renderers.Length == 0)
         {
             _renderers = GetComponentsInChildren<Renderer>();
         }
 
-        if (_cloakMaterial == null)
+        // Apply cloak material
+        if (_cloakMaterial != null)
         {
-            Debug.LogWarning("[CloakStrike] No cloak material assigned!");
-            return;
-        }
-
-        Debug.Log($"[CloakStrike] CloakVisualClientRpc - isCloaking: {isCloaking}, renderers: {_renderers?.Length ?? 0}, IsServer: {NetworkManager.Singleton?.IsServer}");
-
-        foreach (var renderer in _renderers)
-        {
-            if (renderer == null) continue;
-
-            if (isCloaking)
+            foreach (var renderer in _renderers)
             {
-                // Only store if not already stored (prevents overwriting original with cloak material)
+                if (renderer == null) continue;
+
+                // Store original materials
                 if (!_originalMaterials.ContainsKey(renderer))
                 {
                     _originalMaterials[renderer] = renderer.materials;
@@ -286,32 +274,35 @@ public class CloakStrikeExecutorView : SkillExecutorView
                 }
                 renderer.materials = cloakMats;
             }
-            else
-            {
-                // Restore original materials (client only since server returns early)
-                if (_originalMaterials.TryGetValue(renderer, out Material[] originalMats))
-                {
-                    renderer.materials = originalMats;
-                }
-            }
         }
-
-        if (!isCloaking)
-        {
-            _originalMaterials.Clear();
-        }
-    }
-
-    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
-    {
-        if (@event.Skill is not CloakStrikeSkillSO skill) return;
 
         // Spawn cloak VFX on client
+        ParticleSystem clientVfx = null;
         if (skill.cloakVfxPrefab != null)
         {
-            var vfx = Instantiate(skill.cloakVfxPrefab, transform.position, Quaternion.identity, transform);
-            vfx.Play();
-            Destroy(vfx.gameObject, skill.cloakDuration + 1f);
+            clientVfx = Instantiate(skill.cloakVfxPrefab, transform.position, Quaternion.identity, transform);
+            clientVfx.Play();
+        }
+
+        // Wait for cloak duration
+        yield return new WaitForSeconds(skill.cloakDuration);
+
+        // Restore original materials
+        RestoreMaterials();
+
+        // Cleanup VFX
+        if (clientVfx != null)
+        {
+            clientVfx.Stop();
+            Destroy(clientVfx.gameObject, 1f);
+        }
+
+        // Spawn uncloak VFX on client
+        if (skill.uncloakVfxPrefab != null)
+        {
+            var uncloakVfx = Instantiate(skill.uncloakVfxPrefab, transform.position, Quaternion.identity);
+            uncloakVfx.Play();
+            Destroy(uncloakVfx.gameObject, 2f);
         }
     }
 
