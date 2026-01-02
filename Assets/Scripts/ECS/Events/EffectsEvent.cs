@@ -41,3 +41,25 @@ public struct ApplyBuffEvent
     public float Value;
     public float Duration;
 }
+
+public struct InvincibilityStartEvent
+{
+    public EntityId Entity;
+    public float Duration;
+
+    public InvincibilityStartEvent(EntityId entity, float duration)
+    {
+        Entity = entity;
+        Duration = duration;
+    }
+}
+
+public struct InvincibilityEndEvent
+{
+    public EntityId Entity;
+
+    public InvincibilityEndEvent(EntityId entity)
+    {
+        Entity = entity;
+    }
+}

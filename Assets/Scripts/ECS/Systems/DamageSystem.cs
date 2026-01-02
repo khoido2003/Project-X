@@ -60,6 +60,12 @@ public class DamageSystem : ISystem
             return;
         }
 
+        // Skip damage if target is invincible (respawn/upgrade protection)
+        if (health.IsInvincible)
+        {
+            return;
+        }
+
         // Faction check: Prevent friendly fire
         // - Enemies (including bosses) should NOT damage other enemies
         // - Players should NOT damage other players (in PvE context)

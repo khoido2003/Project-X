@@ -4625,7 +4625,7 @@ MonoBehaviour:
   maxConcurrentEnemies: 25
   waveConfigs:
   - round: 1
-    enemyCount: 10
+    enemyCount: 15
     spawnInterval: 2
     healthMultiplier: 1
     damageMultiplier: 1
@@ -4634,7 +4634,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: bfa5fe92393ff20459aa5e6dc05d4532, type: 2}
     - {fileID: 11400000, guid: 4afa74ebbae1b3f449499e5b5bd8ef02, type: 2}
   - round: 2
-    enemyCount: 15
+    enemyCount: 20
     spawnInterval: 2
     healthMultiplier: 1.2
     damageMultiplier: 1.2
@@ -4643,7 +4643,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: bfa5fe92393ff20459aa5e6dc05d4532, type: 2}
     - {fileID: 11400000, guid: 4afa74ebbae1b3f449499e5b5bd8ef02, type: 2}
   - round: 3
-    enemyCount: 20
+    enemyCount: 25
     spawnInterval: 2
     healthMultiplier: 1.4
     damageMultiplier: 1.4

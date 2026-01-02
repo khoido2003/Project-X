@@ -2883,6 +2883,7 @@ GameObject:
   - component: {fileID: 7447544904137708884}
   - component: {fileID: 4437720116726688543}
   - component: {fileID: 2789049304557450646}
+  - component: {fileID: 3035391589852240116}
   m_Layer: 8
   m_Name: MurderKitten
   m_TagString: Untagged
@@ -3145,6 +3146,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a154981084d4d4e4aa484f34170e1b37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffHandlerView
+--- !u!114 &3035391589852240116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5408295053290319734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1e6e827eb0439b4fad8333b38578e40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InvincibilityView
+  _invincibilityMaterial: {fileID: 2100000, guid: bef6af73bb692814596e5d324d919010, type: 2}
+  _targetRenderers: []
 --- !u!1 &5555532243374060460
 GameObject:
   m_ObjectHideFlags: 0
