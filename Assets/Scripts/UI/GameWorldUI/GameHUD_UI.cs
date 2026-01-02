@@ -170,6 +170,7 @@ public class GameHUD : MonoBehaviour
             return;
         }
 
+        // Update score
         if (_world.Components.TryGet(_localPlayerEntity, out PlayerScoreComponent score))
         {
             if (scoreText != null)
@@ -181,6 +182,13 @@ public class GameHUD : MonoBehaviour
             {
                 killsText.text = $"E: {score.EnemyKills} | P: {score.PlayerKills}";
             }
+        }
+
+        // update health from component to ensure consistency
+        // catches cases where health changed before entity was found
+        if (_world.Components.TryGet(_localPlayerEntity, out HealthDataComponent health))
+        {
+            UpdateHealthDisplay(health.CurrentHealth, health.MaxHealth);
         }
     }
 

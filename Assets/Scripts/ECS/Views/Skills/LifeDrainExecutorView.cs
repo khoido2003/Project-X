@@ -82,6 +82,20 @@ public class LifeDrainExecutorView : SkillExecutorView
             return;
         }
 
+        // Find skill index for RPC
+        int skillIndex = -1;
+        if (WorldInstance.Components.TryGet(EntityInstance, out SkillSetComponent skillSet))
+        {
+            for (int i = 0; i < skillSet.Skills.Count; i++)
+            {
+                if (skillSet.Skills[i] == skill || skillSet.Skills[i].category == skill.category)
+                {
+                    skillIndex = i;
+                    break;
+                }
+            }
+        }
+
         // Stop any existing coroutine before starting new one
         if (_activeCoroutine != null)
         {
@@ -89,17 +103,14 @@ public class LifeDrainExecutorView : SkillExecutorView
             CleanupLifeDrain();
         }
         
-        _activeCoroutine = StartCoroutine(LifeDrainRoutine(view.gameObject, skill));
+        _activeCoroutine = StartCoroutine(LifeDrainRoutine(view.gameObject, skill, skillIndex));
 
         base.ExecuteSkill(@event);
     }
 
-    private IEnumerator LifeDrainRoutine(GameObject owner, LifeDrainSkillSO skill)
+    private IEnumerator LifeDrainRoutine(GameObject owner, LifeDrainSkillSO skill, int skillIndex)
     {
         _isDraining = true;
-        
-        // Broadcast drain start to clients
-        LifeDrainVisualClientRpc(true, skill.drainDuration);
 
         // Spawn drain VFX on server
         if (skill.drainVfxPrefab != null)
@@ -139,9 +150,6 @@ public class LifeDrainExecutorView : SkillExecutorView
 
         // Cleanup using the shared method
         CleanupLifeDrain();
-
-        // Broadcast drain end
-        LifeDrainVisualClientRpc(false, 0f);
 
         FinishSkill(skill);
     }
@@ -222,23 +230,22 @@ public class LifeDrainExecutorView : SkillExecutorView
         return totalHealed;
     }
 
-    [ClientRpc]
-    private void LifeDrainVisualClientRpc(bool isStarting, float duration)
+    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
     {
-        if (isStarting)
-        {
-            StartCoroutine(ClientDrainVisualRoutine(duration));
-        }
+        // Spawn client-side VFX when SkillEffectTriggerEvent is received
+        // Note: [ClientRpc] doesn't work on EntityView (MonoBehaviour), only NetworkBehaviour
+        // So we spawn VFX directly here instead of relying on RPCs
+        if (@event.Skill is not LifeDrainSkillSO skill) return;
+
+        StartCoroutine(ClientDrainVisualRoutineFromEvent(skill));
     }
 
-    private IEnumerator ClientDrainVisualRoutine(float duration)
+    /// <summary>
+    /// Client-side drain visual routine triggered by SkillEffectTriggerEvent
+    /// </summary>
+    private IEnumerator ClientDrainVisualRoutineFromEvent(LifeDrainSkillSO skill)
     {
-        // Get skill for VFX/Audio reference
-        var skillBuffer = WorldInstance.Components.Get<SkillCastBufferComponent>(EntityInstance);
-        if (skillBuffer.Skill is not LifeDrainSkillSO skill)
-        {
-            yield break;
-        }
+        float duration = skill.drainDuration;
 
         ParticleSystem clientVfx = null;
         if (skill.drainVfxPrefab != null)
@@ -275,11 +282,6 @@ public class LifeDrainExecutorView : SkillExecutorView
             clientAudio.Stop();
             Destroy(clientAudio);
         }
-    }
-
-    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
-    {
-        // Client visuals handled via RPC
     }
 
     protected override void OnDestroy()

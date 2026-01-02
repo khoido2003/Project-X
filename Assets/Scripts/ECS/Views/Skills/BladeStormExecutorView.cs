@@ -56,6 +56,20 @@ public class BladeStormExecutorView : SkillExecutorView
             return;
         }
 
+        // Find skill index for RPC
+        int skillIndex = -1;
+        if (WorldInstance.Components.TryGet(EntityInstance, out SkillSetComponent skillSet))
+        {
+            for (int i = 0; i < skillSet.Skills.Count; i++)
+            {
+                if (skillSet.Skills[i] == skill || skillSet.Skills[i].category == skill.category)
+                {
+                    skillIndex = i;
+                    break;
+                }
+            }
+        }
+
         // Stop any existing coroutine before starting new one
         if (_activeCoroutine != null)
         {
@@ -63,18 +77,16 @@ public class BladeStormExecutorView : SkillExecutorView
             CleanupBladeStorm();
         }
         
-        _activeCoroutine = StartCoroutine(BladeStormRoutine(view.gameObject, skill));
+        _activeCoroutine = StartCoroutine(BladeStormRoutine(view.gameObject, skill, skillIndex));
 
         base.ExecuteSkill(@event);
     }
 
-    private IEnumerator BladeStormRoutine(GameObject owner, BladeStormSkillSO skill)
+    private IEnumerator BladeStormRoutine(GameObject owner, BladeStormSkillSO skill, int skillIndex)
     {
 
         _isSpinning = true;
 
-        // Broadcast spin start to clients
-        BladeStormVisualClientRpc(true, skill.spinDuration);
 
         // Spawn spin VFX on server
         if (skill.spinVfxPrefab != null)
@@ -140,9 +152,6 @@ public class BladeStormExecutorView : SkillExecutorView
 
         // Cleanup everything
         CleanupBladeStorm();
-
-        // Broadcast spin end
-        BladeStormVisualClientRpc(false, 0f);
 
         FinishSkill(skill);
     }
@@ -229,26 +238,24 @@ public class BladeStormExecutorView : SkillExecutorView
         }
     }
 
-    [ClientRpc]
-    private void BladeStormVisualClientRpc(bool isStarting, float duration)
+
+    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
     {
-        if (isStarting)
-        {
-            // Start spinning visual on client
-            StartCoroutine(ClientSpinVisualRoutine(duration));
-        }
+        // Spawn client-side VFX when SkillEffectTriggerEvent is received
+        // Note: [ClientRpc] doesn't work on EntityView (MonoBehaviour), only NetworkBehaviour
+        // So we spawn VFX directly here instead of relying on RPCs
+        if (@event.Skill is not BladeStormSkillSO skill) return;
+
+        StartCoroutine(ClientSpinVisualRoutineFromEvent(skill));
     }
 
-    private IEnumerator ClientSpinVisualRoutine(float duration)
+    /// <summary>
+    /// Client-side spin visual routine triggered by SkillEffectTriggerEvent
+    /// </summary>
+    private IEnumerator ClientSpinVisualRoutineFromEvent(BladeStormSkillSO skill)
     {
+        float duration = skill.spinDuration;
         float elapsed = 0f;
-        
-        // Get skill for VFX/Audio reference
-        var skillBuffer = WorldInstance.Components.Get<SkillCastBufferComponent>(EntityInstance);
-        if (skillBuffer.Skill is not BladeStormSkillSO skill)
-        {
-            yield break;
-        }
 
         ParticleSystem clientVfx = null;
         if (skill.spinVfxPrefab != null)
@@ -299,11 +306,6 @@ public class BladeStormExecutorView : SkillExecutorView
         {
             AudioHelper.PlaySound3D(WorldInstance, skill.spinEndSound, AudioCategory.Player, transform.position);
         }
-    }
-
-    protected override void SpawnClientVisualEffect(SkillEffectTriggerEvent @event)
-    {
-        // Client visuals handled via RPC
     }
 
     protected override void OnDestroy()

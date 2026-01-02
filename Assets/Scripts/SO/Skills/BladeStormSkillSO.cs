@@ -16,11 +16,11 @@ public class BladeStormSkillSO : SkillDefinitionSO
     [Tooltip("Radius of the spinning attack")]
     public float spinRadius = 3f;
     
-    [Tooltip("Movement speed multiplier during spin (0.5 = 50% speed)")]
-    public float moveSpeedMultiplier = 0.5f;
+    [Tooltip("Movement speed multiplier during spin (0.8 = 80% speed)")]
+    public float moveSpeedMultiplier = 0.8f;
     
     [Tooltip("Rotation speed during spin (degrees per second)")]
-    public float spinRotationSpeed = 1080f;
+    public float spinRotationSpeed = 1800f;
     
     [Tooltip("VFX for the spinning blades effect")]
     public ParticleSystem spinVfxPrefab;

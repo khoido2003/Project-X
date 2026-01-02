@@ -8,6 +8,7 @@ public class HealthHUD_UI : MonoBehaviour
 
     private World _world;
     private EntityViewRegistry _registry;
+    private EntityId _localPlayerEntity;
 
     public void Bind(World world)
     {
@@ -16,11 +17,19 @@ public class HealthHUD_UI : MonoBehaviour
 
         _world.Events.Subscribe<HealthChangedEvent>(OnHealthChangedEvent);
 
-        foreach (var (entity, health) in _world.Components.Query<HealthDataComponent>())
+        // Find local player's health to display
+        FindAndDisplayLocalPlayerHealth();
+    }
+
+    private void FindAndDisplayLocalPlayerHealth()
+    {
+        foreach (var (entity, owner, health) in _world.Components.Query<NetworkOwnerComponent, HealthDataComponent>())
         {
-            if (_world.Components.Has<PlayerTagComponent>(entity))
+            if (owner.IsLocalPlayer && _world.Components.Has<PlayerTagComponent>(entity))
             {
+                _localPlayerEntity = entity;
                 healthText.text = Mathf.RoundToInt(health.CurrentHealth).ToString();
+                Debug.Log($"[HealthHUD_UI] Found local player entity: {entity.Id}, Health: {health.CurrentHealth}");
                 break;
             }
         }
@@ -33,8 +42,14 @@ public class HealthHUD_UI : MonoBehaviour
 
     private void OnHealthChangedEvent(HealthChangedEvent @event)
     {
-        if (!_world.Components.Has<PlayerTagComponent>(@event.Entity))
+        // Only update for local player
+        if (!@event.Entity.Equals(_localPlayerEntity))
         {
+            // If we haven't found local player yet, try again
+            if (_localPlayerEntity.Equals(default))
+            {
+                FindAndDisplayLocalPlayerHealth();
+            }
             return;
         }
 

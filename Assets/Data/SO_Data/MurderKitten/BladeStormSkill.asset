@@ -28,8 +28,8 @@ MonoBehaviour:
   damagePerTick: 10
   tickInterval: 0.1
   spinRadius: 3
-  moveSpeedMultiplier: 0.5
-  spinRotationSpeed: 1080
+  moveSpeedMultiplier: 0.8
+  spinRotationSpeed: 1800
   spinVfxPrefab: {fileID: 198468570143173514, guid: 00d80947d8680354e91b1f21de6e0f73, type: 3}
   spinLoopSound: {fileID: 8300000, guid: 68bdf19a3da1647f5a75581818f4b45a, type: 3}
   spinEndSound: {fileID: 8300000, guid: 9c143b22026d34c3ab00e2e25cd78eec, type: 3}
