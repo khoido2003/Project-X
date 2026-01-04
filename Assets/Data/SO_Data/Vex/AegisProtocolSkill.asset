@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b3c9060a68a5db42945c00c4e61229a, type: 3}
+  m_Name: AegisProtocolSkill
+  m_EditorClassIdentifier: Assembly-CSharp::AegisProtocolSkillSO
+  assetId: b72b60d06e23d92419207d9436743ca2
+  skillName: AegisProtocol
+  category: 11
+  isInstant: 1
+  keyTrigger: Q
+  damage: 100
+  castRange: 1
+  cooldown: 15
+  hitVfxPrefab: {fileID: 198011925041146442, guid: 319c6b2bec42ddf4d949a0bdc4f2ce3f, type: 3}
+  skillVfxPrefab: {fileID: 0}
+  activateSound: {fileID: 8300000, guid: a176d23944ac643cdb6fad6cf7e898e8, type: 3}
+  activationAnimationTrigger: skill1
+  mechDuration: 10
+  healthBoostPercent: 1
+  damageBoostPercent: 0.5
+  moveSpeedPenalty: 0.2
+  knockbackImmune: 1
+  mechModelPrefab: {fileID: 8136266131851693139, guid: bab5bc8284aa6844ba07113e5b5225b1, type: 3}
+  mechAttackTrigger: attack
+  mechAttackMultiplier: 1.6
+  enterMechVfxPrefab: {fileID: 198108421688386642, guid: 703aad2911b3f084d88a4e3112ddcecb, type: 3}
+  exitMechVfxPrefab: {fileID: 198583920760321224, guid: 78d38236f3b20714c83d1186cef13e20, type: 3}
+  activeMechVfxPrefab: {fileID: 0}
+  enterMechSound: {fileID: 8300000, guid: f4bc9bed9baab41de9bf7ba23b883c7d, type: 3}
+  exitMechSound: {fileID: 8300000, guid: b21290a47a1cd43c8a8d426443ee5dfb, type: 3}
+  mechActiveLoopSound: {fileID: 8300000, guid: a7896b0e328564a5ea82ed5597e12b62, type: 3}

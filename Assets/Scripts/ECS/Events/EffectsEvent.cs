@@ -5,6 +5,9 @@ public enum BuffType
     DefenseBoost,
     AttackBoost,
     SpeedBoost,
+    AttackSpeedBoost,
+    MovementSlow,
+    DamageBoost,
 }
 
 public struct DamageEvent

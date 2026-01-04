@@ -6,10 +6,6 @@ public abstract class SkillExecutorView : EntityView
 
     protected virtual void Start()
     {
-        Debug.Log($"[SkillExecutorView] {GetType().Name} Start() called, Category: {Category}, " +
-                  $"WorldInstance: {WorldInstance != null}, EntityInstance: {EntityInstance.Id}, " +
-                  $"IsServer: {Unity.Netcode.NetworkManager.Singleton?.IsServer}");
-        
         if (WorldInstance == null)
         {
             Debug.LogError($"[SkillExecutorView] {GetType().Name} Start() called but WorldInstance is null! Events will NOT be subscribed.");
@@ -18,8 +14,6 @@ public abstract class SkillExecutorView : EntityView
         
         WorldInstance.Events.Subscribe<SkillConfirmExecutionEvent>(OnSkillConfirmExecutionEvent);
         WorldInstance.Events.Subscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
-        
-        Debug.Log($"[SkillExecutorView] {GetType().Name} subscribed to SkillConfirmExecutionEvent and SkillEffectTriggerEvent");
     }
 
     private void OnSkillEffectTriggerEvent(SkillEffectTriggerEvent @event)
@@ -33,8 +27,6 @@ public abstract class SkillExecutorView : EntityView
         {
             return;
         }
-        
-        Debug.Log($"[SkillExecutorView] {GetType().Name} received SkillEffectTriggerEvent for {Category}, Caster: {@event.Caster.Id}, IsServer: {Unity.Netcode.NetworkManager.Singleton.IsServer}");
 
         // Play skill sound - simplified!
         if (@event.Skill.activateSound != null)

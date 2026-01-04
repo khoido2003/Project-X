@@ -35,6 +35,12 @@ public class World
 
     public EntityId CreateEntity() => Entities.CreateEntity();
 
+    /// <summary>
+    /// Creates a temporary entity (ID 10000+) for projectiles, drones, etc.
+    /// These won't conflict with regular game entities.
+    /// </summary>
+    public EntityId CreateTemporaryEntity() => Entities.CreateTemporaryEntity();
+
     public void DestroyEntity(EntityId id)
     {
         // remove components

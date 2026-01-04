@@ -124,9 +124,7 @@ public class NetworkSyncView : NetworkBehaviour
             }
             else
             {
-                Debug.Log(
-                    $"[NetworkSyncView] Server entity {_entity.Id} ready for client {OwnerClientId}, NetworkObjectId: {NetworkObjectId}"
-                );
+                // Server ready for client, skip detailed log
             }
             return;
         }
@@ -134,9 +132,6 @@ public class NetworkSyncView : NetworkBehaviour
         // Client: Create local entity for this networked character
         if (IsClient)
         {
-            Debug.Log(
-                $"[NetworkSyncView] Client creating entity for networked character (Owner: {OwnerClientId}, IsOwner: {IsOwner}, NetworkObjectId: {NetworkObjectId})"
-            );
             CreateClientEntity(localWorld);
         }
     }
@@ -152,9 +147,6 @@ public class NetworkSyncView : NetworkBehaviour
         _world = world;
 
         bool isLocalPlayer = IsOwner;
-        Debug.Log(
-            $"[NetworkSyncView] Created client entity {clientEntity.Id} for {(isLocalPlayer ? "LOCAL" : "REMOTE")} player (ClientId: {OwnerClientId})"
-        );
 
         // Add NetworkOwnerComponent BEFORE binding views
         // This ensures LookAtMouseView.CheckIfLocalPlayer() can find the component
@@ -232,8 +224,6 @@ public class NetworkSyncView : NetworkBehaviour
         _netScore.OnValueChanged += OnNetScoreChanged;
         world.Components.Add(clientEntity, new PlayerUpgradesComponent());
 
-        Debug.Log($"[NetworkSyncView] Client entity {clientEntity.Id} components added, requesting character data...");
-
         // Initialize interpolation variables for remote players (spectators or non-owners)
         // This prevents the character from appearing at (0,0,0) before the first network update
         if (!isLocalPlayer)
@@ -244,8 +234,6 @@ public class NetworkSyncView : NetworkBehaviour
             _targerRotation = transform.rotation;
             _interpolationTime = _interpolationDuration;
             _lastNetworkUpdateTime = Time.time;
-
-            Debug.Log($"[NetworkSyncView] Initialized interpolation for remote player at {transform.position}");
         }
 
         // Request character data from server BEFORE publishing spawn event
@@ -295,10 +283,6 @@ public class NetworkSyncView : NetworkBehaviour
         _world.Events.Subscribe<CombatStateChangedEvent>(OnCombatStateChanged);
         _world.Events.Subscribe<AnimationParameterEvent>(OnAnimationParameter);
         _world.Events.Subscribe<AttackExecutionRequestEvent>(OnAttackExecutionRequest);
-
-        Debug.Log(
-            $"[NetworkSyncView] Server initialized entity {entity.Id}, _isServerInitialized: {_isServerInitialized}"
-        );
     }
 
     private void Start()
@@ -313,7 +297,6 @@ public class NetworkSyncView : NetworkBehaviour
                 _netHealth.OnValueChanged += OnNetHealthChanged;
                 _netCombatState.OnValueChanged += OnNetCombatStateChanged;
                 _netMovement.OnValueChanged += OnNetMovementChanged;
-                Debug.Log($"[NetworkSyncView] Client subscribed to NetworkVariable changes for entity {_entity.Id}");
             }
             catch (System.Exception ex)
             {
@@ -787,14 +770,8 @@ public class NetworkSyncView : NetworkBehaviour
         Vector3 spawnOffset
     )
     {
-        Debug.Log(
-            $"[NetworkSyncView] BroadcastAttackExecutionClientRpc received for entity {_entity.Id}, Type: {type}"
-        );
-
         if (IsServer)
-        {
             return;
-        }
 
         if (_world == null || _entity.Equals(default))
         {
@@ -1195,15 +1172,9 @@ public class NetworkSyncView : NetworkBehaviour
     [ClientRpc]
     private void BroadcastSkillExecutionClientRpc(Vector3 targetPoint, Vector3 direction, int skillIndex)
     {
-        Debug.Log(
-            $"[NetworkSyncView] BroadcastSkillExecutionClientRpc called, Entity: {_entity.Id}, IsServer: {IsServer}, skillIndex: {skillIndex}"
-        );
-
         // Server already processed this in the RPC caller context
         if (IsServer)
-        {
             return;
-        }
 
         // Look up skill from SkillSetComponent using the index
         // This is more reliable than using buffer.Skill which may not be set on client for instant skills
@@ -1233,10 +1204,6 @@ public class NetworkSyncView : NetworkBehaviour
             );
             return;
         }
-
-        Debug.Log(
-            $"[NetworkSyncView] Publishing SkillEffectTriggerEvent for skill: {skill.skillName}, category: {skill.category}"
-        );
 
         _world.Events.Publish(
             new SkillEffectTriggerEvent
@@ -2164,8 +2131,6 @@ public class NetworkSyncView : NetworkBehaviour
             health.IsInvincible = true;
         }
 
-        Debug.Log($"[NetworkSyncView] Client received invincibility start for entity {_entity.Id}");
-
         // Publish event for visual effect
         _world.Events.Publish(new InvincibilityStartEvent(_entity, duration));
     }
@@ -2192,10 +2157,97 @@ public class NetworkSyncView : NetworkBehaviour
             health.IsInvincible = false;
         }
 
-        Debug.Log($"[NetworkSyncView] Client received invincibility end for entity {_entity.Id}");
-
         // Publish event for visual effect
         _world.Events.Publish(new InvincibilityEndEvent(_entity));
+    }
+
+    #endregion
+
+    #region Vex Mech State RPCs
+
+    /// <summary>
+    /// Broadcasts mech transformation state to all clients.
+    /// Called by AegisProtocolExecutorView when entering/exiting mech.
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastMechStateClientRpc(bool isInMech)
+    {
+        // Server already processed
+        if (IsServer) return;
+
+        if (_world == null || _entity.Equals(default))
+        {
+            Debug.LogWarning("[NetworkSyncView] BroadcastMechStateClientRpc: World or entity not initialized");
+            return;
+        }
+
+        // Find the AegisProtocolExecutorView on this entity and notify it
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(_entity, out EntityView view))
+        {
+            var mechExecutor = view.GetComponent<AegisProtocolExecutorView>();
+            if (mechExecutor != null)
+            {
+                mechExecutor.OnMechStateChanged(isInMech);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Sentry Drone RPCs
+
+    /// <summary>
+    /// Broadcasts sentry drone explosion to all clients.
+    /// Called by SentryDroneAISystem when drone explodes on server.
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastDroneExplosionClientRpc(Vector3 explosionPosition)
+    {
+        // Server already processed
+        if (IsServer) return;
+
+        if (_world == null || _entity.Equals(default))
+        {
+            Debug.LogWarning("[NetworkSyncView] BroadcastDroneExplosionClientRpc: World or entity not initialized");
+            return;
+        }
+
+        // Find the SentryDroneExecutorView on this entity and notify it
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(_entity, out EntityView view))
+        {
+            var droneExecutor = view.GetComponent<SentryDroneExecutorView>();
+            if (droneExecutor != null)
+            {
+                droneExecutor.OnDroneExplosionFromServer(explosionPosition);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Broadcasts drone position to all clients for visual sync.
+    /// Called by SentryDroneAISystem periodically.
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastDronePositionClientRpc(Vector3 position, Quaternion rotation)
+    {
+        // Server already has the correct position
+        if (IsServer) return;
+
+        if (_world == null || _entity.Equals(default))
+            return;
+
+        // Find the SentryDroneExecutorView on this entity and update client drone position
+        var registry = _world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(_entity, out EntityView view))
+        {
+            var droneExecutor = view.GetComponent<SentryDroneExecutorView>();
+            if (droneExecutor != null)
+            {
+                droneExecutor.OnDronePositionFromServer(position, rotation);
+            }
+        }
     }
 
     #endregion

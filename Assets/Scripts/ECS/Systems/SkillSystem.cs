@@ -125,7 +125,6 @@ public class SkillSystem : ISystem
                     // Client sends RPC to server for instant skills
                     if (_world.Components.TryGet(@event.Entity, out NetworkSyncComponent sync))
                     {
-                        Debug.Log($"[SkillSystem] Client requesting instant skill {skill.skillName} execution via RPC (index: {index})");
                         sync.SyncView.RequestSkillExecutionServerRpc(targetPoint, direction, index);
                     }
                 }
@@ -204,7 +203,6 @@ public class SkillSystem : ISystem
                 }
             }
             
-            Debug.Log($"[SkillSystem] Server broadcasting instant skill {skill.skillName} (index: {skillIndex}) to all clients");
             sync.SyncView.BroadcastInstantSkillClientRpc(targetPoint, direction.normalized, skillIndex);
         }
     }
@@ -234,9 +232,6 @@ public class SkillSystem : ISystem
                 if (skillSet.Skills[i] == @event.Skill)
                 {
                     skillSet.CooldownUntil[i] = Time.time + @event.Skill.cooldown;
-                    Debug.Log(
-                        $"[SkillSystem] Skill {@event.Skill.skillName} on cooldown until {skillSet.CooldownUntil[i]} (IsServer: {NetworkManager.Singleton.IsServer})"
-                    );
                     break;
                 }
             }

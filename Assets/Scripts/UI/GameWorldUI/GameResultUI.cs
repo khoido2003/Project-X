@@ -119,11 +119,29 @@ public class GameResultsUI : MonoBehaviour
         bool isVictory = false;
         if (results != null && results.Length > 0)
         {
-            ulong localId = NetworkManager.Singleton != null ? NetworkManager.Singleton.LocalClientId : 0;
-            // Consider victory if local player is in the top 1 (or top 3 if you prefer)
-            for (int i = 0; i < Mathf.Min(3, results.Length); i++)
+            ulong targetClientId = NetworkManager.Singleton != null ? NetworkManager.Singleton.LocalClientId : 0;
+
+            // SPECIAL CASE: If we are a spectator, check result for the player we are following
+            if (SpectatorSpawner.Instance != null && SpectatorSpawner.Instance.IsLocalSpectator)
             {
-                if (results[i].ClientId == localId)
+                var spectatorController = FindFirstObjectByType<SpectatorController>();
+                if (spectatorController != null && !spectatorController.FollowedPlayerEntity.Equals(default))
+                {
+                    if (WorldRunner.Instance != null && WorldRunner.Instance.World != null)
+                    {
+                        if (WorldRunner.Instance.World.Components.TryGet(spectatorController.FollowedPlayerEntity, out NetworkOwnerComponent owner))
+                        {
+                            targetClientId = owner.OwnerClientId;
+                            Debug.Log($"[GameResultsUI] Spectating entity {spectatorController.FollowedPlayerEntity.Id}, using result for ClientId {targetClientId}");
+                        }
+                    }
+                }
+            }
+
+            // Consider victory if target player is in the top 1
+            for (int i = 0; i < Mathf.Min(1, results.Length); i++)
+            {
+                if (results[i].ClientId == targetClientId)
                 {
                     isVictory = true;
                     break;

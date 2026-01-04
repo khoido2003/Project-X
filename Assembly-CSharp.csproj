@@ -51,13 +51,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\SO\Skills\CloakStrikeSkillSO.cs" />
+    <Compile Include="Assets\Scripts\ECS\Systems\SentryDroneAISystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\AudioService.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\SentryDroneExecutorView.cs" />
     <Compile Include="Assets\Scripts\Utils\PriorityQueue.cs" />
     <Compile Include="Assets\Scripts\Utils\Singleton.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\NetworkSyncView.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\DamageSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Factories\CharacterFactory.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\OverchargeFieldExecutorView.cs" />
     <Compile Include="Assets\Scripts\UI\OnButtonPress.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleScrollUV.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\SkillCastBufferComponent.cs" />
@@ -118,6 +121,7 @@
     <Compile Include="Assets\Scripts\ECS\Systems\PlayerRespawnSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Projectiles\ExplosiveProjectileView.cs" />
     <Compile Include="Assets\Scripts\ECS\Components\BuffPickupComponent.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\SentryDroneSkillSO.cs" />
     <Compile Include="Assets\Scripts\SO\EnemyDefinitionSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\ISkillExecutor.cs" />
     <Compile Include="Assets\Scripts\UI\Spectator\SpectatorSkillBarUI.cs" />
@@ -158,6 +162,7 @@
     <Compile Include="Assets\Scripts\ECS\AI\EnemyAttackStateAI.cs" />
     <Compile Include="Assets\Scripts\Core\Grid\GridSystem.cs" />
     <Compile Include="Assets\Scripts\Core\ECS\ServiceLocator.cs" />
+    <Compile Include="Assets\Scripts\ECS\Views\Skills\AegisProtocolExecutorView.cs" />
     <Compile Include="Assets\Scripts\ECS\Interfaces\IAudioService.cs" />
     <Compile Include="Assets\Scripts\Core\Network\PlayerCharSelection.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\SniperShotSkillSO.cs" />
@@ -181,10 +186,11 @@
     <Compile Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\BuffHandlerView.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\InvincibilityComponent.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\EnemyVisionSystem.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CheckCodeEntered.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\BossJumpAttackStateAI.cs" />
-    <Compile Include="Assets\Scripts\ECS\Components\InvincibilityComponent.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\OverchargeFieldSkillSO.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\ThirdPersonController\Scripts\ThirdPersonController.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\CustomSceneManager.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\UIRoot.cs" />
@@ -195,6 +201,7 @@
     <Compile Include="Assets\Scripts\ECS\Components\WeaponDataComponent.cs" />
     <Compile Include="Assets\Scripts\Core\Managers\SettingsManager.cs" />
     <Compile Include="Assets\Scripts\ECS\AI\EnemyIdleStateAI.cs" />
+    <Compile Include="Assets\Scripts\SO\Skills\AegisProtocolSkillSO.cs" />
     <Compile Include="Assets\Scripts\UI\LobbyRoom\VacuumController.cs" />
     <Compile Include="Assets\Scripts\Utils\ProjectileSpawnPos.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\HomerunSwingExecutorView.cs" />
@@ -236,6 +243,7 @@
     <Compile Include="Assets\Scripts\ECS\Components\MovementDataComponent.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleRadialFillBar.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\AnimationView.cs" />
+    <Compile Include="Assets\Scripts\Utilities\ProjectileMover.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\ObjectPoolService.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\UpgradeCardContainerUI.cs" />
     <Compile Include="Assets\Scripts\Utils\RagdollReference.cs" />
@@ -246,6 +254,7 @@
     <Compile Include="Assets\Scripts\Utils\EnemyPatrolPointGizmo.cs" />
     <Compile Include="Assets\Scripts\UI\GameWorldUI\SkillSlotUI.cs" />
     <Compile Include="Assets\Scripts\SO\Skills\LifeDrainSkillSO.cs" />
+    <Compile Include="Assets\Scripts\ECS\Components\SentryDroneComponent.cs" />
     <Compile Include="Assets\Scripts\SO\MapConfigSO.cs" />
     <Compile Include="Assets\Scripts\ECS\Systems\CombatStateSystem.cs" />
     <Compile Include="Assets\Scripts\ECS\Services\RoomNameService.cs" />

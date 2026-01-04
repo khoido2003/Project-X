@@ -85,14 +85,11 @@ public class InvincibilityView : EntityView
                 StopCoroutine(_invincibilityCoroutine);
             }
             _invincibilityCoroutine = StartCoroutine(InvincibilityTimeoutCoroutine(duration + 0.5f));
-            Debug.Log($"[InvincibilityView] Refreshed invincibility visual for {EntityInstance.Id}, new duration: {duration}s");
             return;
         }
 
         _isInvincible = true;
         ApplyInvincibilityMaterial();
-
-        Debug.Log($"[InvincibilityView] Started invincibility visual for {EntityInstance.Id}, duration: {duration}s");
 
         // Start timeout coroutine as fallback (in case RPC end event is missed)
         if (_invincibilityCoroutine != null)
@@ -121,8 +118,6 @@ public class InvincibilityView : EntityView
             StopCoroutine(_invincibilityCoroutine);
             _invincibilityCoroutine = null;
         }
-
-        Debug.Log($"[InvincibilityView] Ended invincibility visual for {EntityInstance.Id}");
     }
 
     private IEnumerator InvincibilityTimeoutCoroutine(float timeout)

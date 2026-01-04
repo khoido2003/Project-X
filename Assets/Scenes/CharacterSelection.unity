@@ -10124,7 +10124,7 @@ PrefabInstance:
       objectReference: {fileID: 817570502}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: characterData.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: 'characterData.Array.data[1]'
@@ -10134,6 +10134,10 @@ PrefabInstance:
       propertyPath: 'characterData.Array.data[2]'
       value: 
       objectReference: {fileID: 11400000, guid: e1729ba927dc25d4f81337c66ad6a7d3, type: 2}
+    - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
+      propertyPath: 'characterData.Array.data[3]'
+      value: 
+      objectReference: {fileID: 11400000, guid: f12950bf5a89fa044ad1e1d628c2dba7, type: 2}
     - target: {fileID: 7126167015968825041, guid: 1baede89815d7ba4597e745c119aac33, type: 3}
       propertyPath: m_playerStates.Array.data[0].playerState
       value: 1
