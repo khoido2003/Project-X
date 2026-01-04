@@ -129,10 +129,17 @@ public class GameResultsUI : MonoBehaviour
                 {
                     if (WorldRunner.Instance != null && WorldRunner.Instance.World != null)
                     {
-                        if (WorldRunner.Instance.World.Components.TryGet(spectatorController.FollowedPlayerEntity, out NetworkOwnerComponent owner))
+                        if (
+                            WorldRunner.Instance.World.Components.TryGet(
+                                spectatorController.FollowedPlayerEntity,
+                                out NetworkOwnerComponent owner
+                            )
+                        )
                         {
-                            targetClientId = owner.OwnerClientId;
-                            Debug.Log($"[GameResultsUI] Spectating entity {spectatorController.FollowedPlayerEntity.Id}, using result for ClientId {targetClientId}");
+                            targetClientId = owner.ClientId;
+                            Debug.Log(
+                                $"[GameResultsUI] Spectating entity {spectatorController.FollowedPlayerEntity.Id}, using result for ClientId {targetClientId}"
+                            );
                         }
                     }
                 }
