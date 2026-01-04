@@ -20,6 +20,7 @@ public class SkillBarUI : MonoBehaviour
         _world.Events.Subscribe<SkillExecutionFinishedEvent>(OnSkillExecutionFinishedEvent);
         _world.Events.Subscribe<SkillPressedInputEvent>(OnSkillPressedInputEvent);
         _world.Events.Subscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
+        _world.Events.Subscribe<GamePhaseChangedEvent>(OnGamePhaseChangedEvent);
 
         // Find LOCAL player entity - important on client where there are multiple players
         foreach (var (entity, owner) in _world.Components.Query<NetworkOwnerComponent>())
@@ -127,6 +128,21 @@ public class SkillBarUI : MonoBehaviour
         }
     }
 
+    private void OnGamePhaseChangedEvent(GamePhaseChangedEvent @event)
+    {
+        // Hide skill bar on game end
+        if (@event.Phase == GamePhase.GameEnd)
+        {
+            if (skillContainer != null)
+                skillContainer.gameObject.SetActive(false);
+        }
+        else if (!skillContainer.gameObject.activeSelf)
+        {
+            // Show it again in other phases (like new lobby or restart)
+            skillContainer.gameObject.SetActive(true);
+        }
+    }
+
     private void OnDestroy()
     {
         if (_world != null)
@@ -134,6 +150,7 @@ public class SkillBarUI : MonoBehaviour
             _world.Events.Unsubscribe<SkillExecutionFinishedEvent>(OnSkillExecutionFinishedEvent);
             _world.Events.Unsubscribe<SkillPressedInputEvent>(OnSkillPressedInputEvent);
             _world.Events.Unsubscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
+            _world.Events.Unsubscribe<GamePhaseChangedEvent>(OnGamePhaseChangedEvent);
         }
     }
 }

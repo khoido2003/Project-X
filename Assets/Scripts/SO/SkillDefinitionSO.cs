@@ -16,6 +16,11 @@ public enum SkillCategory
     CloakStrike,
     LifeDrain,
     BladeStorm,
+
+    // Vex
+    SentryDrone,
+    OverchargeField,
+    AegisProtocol,
 }
 
 public abstract class SkillDefinitionSO : NetworkSO

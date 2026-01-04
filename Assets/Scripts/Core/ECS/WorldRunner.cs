@@ -370,6 +370,9 @@ public class WorldRunner : NetworkBehaviour
         World.Systems.AddSystem(new EnemyMovementSystem(), World);
         World.Systems.AddSystem(new EnemyAISystem(), World);
 
+        // Vex Sentry Drone AI
+        World.Systems.AddSystem(new SentryDroneAISystem(), World);
+
         EnemyAIHelpers.RegisterDefaultStates();
     }
 }

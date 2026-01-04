@@ -51,6 +51,7 @@ public class SpectatorSkillBarUI : MonoBehaviour
 
         // Subscribe to events
         _world.Events.Subscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
+        _world.Events.Subscribe<GamePhaseChangedEvent>(OnGamePhaseChangedEvent);
         _spectatorController.OnFollowedEntityChanged += OnFollowedEntityChanged;
 
         // Check if already following someone
@@ -162,6 +163,25 @@ public class SpectatorSkillBarUI : MonoBehaviour
         }
     }
 
+    private void OnGamePhaseChangedEvent(GamePhaseChangedEvent @event)
+    {
+        // Hide skill bar on game end
+        if (@event.Phase == GamePhase.GameEnd)
+        {
+            if (skillContainer != null)
+                skillContainer.gameObject.SetActive(false);
+            
+            if (noPlayerPanel != null)
+                noPlayerPanel.SetActive(false);
+        }
+        else
+        {
+            // Show it again in other phases
+            if (skillContainer != null && !skillContainer.gameObject.activeSelf)
+                skillContainer.gameObject.SetActive(true);
+        }
+    }
+
     private int GetSkillIndex(SkillDefinitionSO skill)
     {
         for (int i = 0; i < _slots.Count; i++)
@@ -179,6 +199,7 @@ public class SpectatorSkillBarUI : MonoBehaviour
         if (_world != null)
         {
             _world.Events.Unsubscribe<SkillEffectTriggerEvent>(OnSkillEffectTriggerEvent);
+            _world.Events.Unsubscribe<GamePhaseChangedEvent>(OnGamePhaseChangedEvent);
         }
 
         if (_spectatorController != null)

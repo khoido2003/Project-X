@@ -19,6 +19,26 @@ public class AnimationView : EntityView
         animator = GetComponentInChildren<Animator>();
         CacheAnimatorParameters();
     }
+
+    /// <summary>
+    /// Swap the animator reference at runtime (for mech transformations, etc.)
+    /// </summary>
+    public void SetAnimator(Animator newAnimator)
+    {
+        animator = newAnimator;
+        CacheAnimatorParameters();
+        
+        // Force Unity to synchronize the animator state (fixes issues after GameObject re-enable)
+        if (animator != null)
+        {
+            animator.Update(0);
+        }
+    }
+
+    /// <summary>
+    /// Get the current animator reference
+    /// </summary>
+    public Animator GetAnimator() => animator;
     
     private void CacheAnimatorParameters()
     {

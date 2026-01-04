@@ -18,7 +18,7 @@ public static class GameConstants
     public const float GAME_END_DURATION = 10f;
 
     // Player Settings
-    public const int MIN_PLAYERS = 1; // For testing, set to 4 for production
+    public const int MIN_PLAYERS = 1;
     public const int MAX_PLAYERS = 4;
 
     // Invincibility Settings

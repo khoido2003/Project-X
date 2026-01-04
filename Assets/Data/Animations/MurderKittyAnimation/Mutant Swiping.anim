@@ -71074,7 +71074,7 @@ AnimationClip:
     floatParameter: 0
     intParameter: 1
     messageOptions: 0
-  - time: 1.5666667
+  - time: 1.5
     functionName: OnAnimationTrigger
     data: 
     objectReferenceParameter: {fileID: 0}

@@ -6,6 +6,8 @@ public class DamageSystem : ISystem
 {
     private World _world;
     private readonly Dictionary<EntityId, (float value, float expires)> _defenseBuffs = new();
+    private readonly Dictionary<EntityId, (float value, float expires)> _damageBoostBuffs = new();
+    private readonly Dictionary<EntityId, (float value, float expires)> _attackSpeedBuffs = new();
 
     public void Initialize(World world)
     {
@@ -16,13 +18,25 @@ public class DamageSystem : ISystem
 
     public void Update(float dt)
     {
-        if (_defenseBuffs.Count == 0)
+        // Cleanup expired defense buffs
+        CleanupExpiredBuffs(_defenseBuffs);
+        
+        // Cleanup expired damage boost buffs
+        CleanupExpiredBuffs(_damageBoostBuffs);
+        
+        // Cleanup expired attack speed buffs
+        CleanupExpiredBuffs(_attackSpeedBuffs);
+    }
+
+    private void CleanupExpiredBuffs(Dictionary<EntityId, (float value, float expires)> buffs)
+    {
+        if (buffs.Count == 0)
         {
             return;
         }
 
         List<EntityId> toRemove = null;
-        foreach (var kvp in _defenseBuffs)
+        foreach (var kvp in buffs)
         {
             if (Time.time >= kvp.Value.expires)
             {
@@ -35,7 +49,7 @@ public class DamageSystem : ISystem
         {
             foreach (var id in toRemove)
             {
-                _defenseBuffs.Remove(id);
+                buffs.Remove(id);
             }
         }
     }
@@ -66,13 +80,17 @@ public class DamageSystem : ISystem
             return;
         }
 
-        // Faction check: Prevent friendly fire
-        // - Enemies (including bosses) should NOT damage other enemies
-        // - Players should NOT damage other players (in PvE context)
+        // Skip damage to sentry drones - they're not valid attack targets
+        // (drones can only be destroyed by their duration expiring or owner death)
+        if (_world.Components.Has<SentryDroneComponent>(@event.Target))
+        {
+            return;
+        }
+
+        // Faction check: Prevent friendly fire between enemies/bosses only
+        // PvPvE: Players CAN damage other players, enemies, and bosses
         bool attackerIsEnemy = _world.Components.Has<EnemyComponent>(@event.Attacker);
         bool targetIsEnemy = _world.Components.Has<EnemyComponent>(@event.Target);
-        bool attackerIsPlayer = _world.Components.Has<PlayerTagComponent>(@event.Attacker);
-        bool targetIsPlayer = _world.Components.Has<PlayerTagComponent>(@event.Target);
 
         // If both are enemies, skip damage (no friendly fire between enemies/bosses)
         if (attackerIsEnemy && targetIsEnemy)
@@ -80,15 +98,13 @@ public class DamageSystem : ISystem
             return;
         }
 
-        // If both are players, skip damage (no PvP in PvE mode)
-        /*
-        if (attackerIsPlayer && targetIsPlayer)
-        {
-            return;
-        }
-        */
-
         float actualDamage = @event.Amount;
+
+        // Apply damage boost from buffs (Overcharge Field, AEGIS Protocol)
+        if (_damageBoostBuffs.TryGetValue(@event.Attacker, out var damageBuff) && Time.time < damageBuff.expires)
+        {
+            actualDamage *= (1f + damageBuff.value);
+        }
 
         // Apply defense buffs (shield)
         if (_defenseBuffs.TryGetValue(@event.Target, out var buff) && Time.time < buff.expires)
@@ -219,6 +235,8 @@ public class DamageSystem : ISystem
         _world.Events.Unsubscribe<DamageEvent>(OnDamage);
         _world.Events.Unsubscribe<ApplyBuffEvent>(OnApplyBuff);
         _defenseBuffs.Clear();
+        _damageBoostBuffs.Clear();
+        _attackSpeedBuffs.Clear();
     }
 
     private void OnApplyBuff(ApplyBuffEvent @event)
@@ -228,10 +246,41 @@ public class DamageSystem : ISystem
             return;
         }
 
-        if (@event.BuffType == BuffType.DefenseBoost)
+        switch (@event.BuffType)
         {
-            float value = Mathf.Clamp01(@event.Value);
-            _defenseBuffs[@event.Target] = (value, Time.time + @event.Duration);
+            case BuffType.DefenseBoost:
+                float defValue = Mathf.Clamp01(@event.Value);
+                _defenseBuffs[@event.Target] = (defValue, Time.time + @event.Duration);
+                break;
+                
+            case BuffType.DamageBoost:
+                // Value is percentage (0.25 = 25% boost)
+                _damageBoostBuffs[@event.Target] = (@event.Value, Time.time + @event.Duration);
+                Debug.Log($"[DamageSystem] Applied {(@event.Value * 100):F0}% damage boost to {@event.Target.Id} for {@event.Duration}s");
+                break;
+                
+            case BuffType.AttackSpeedBoost:
+                // Value is percentage (0.3 = 30% faster)
+                _attackSpeedBuffs[@event.Target] = (@event.Value, Time.time + @event.Duration);
+                Debug.Log($"[DamageSystem] Applied {(@event.Value * 100):F0}% attack speed boost to {@event.Target.Id} for {@event.Duration}s");
+                break;
+                
+            // MovementSlow is handled directly in OverchargeFieldExecutorView
         }
     }
+
+    /// <summary>
+    /// Check if an entity has an active attack speed buff
+    /// </summary>
+    public bool TryGetAttackSpeedBoost(EntityId entity, out float boost)
+    {
+        if (_attackSpeedBuffs.TryGetValue(entity, out var buff) && Time.time < buff.expires)
+        {
+            boost = buff.value;
+            return true;
+        }
+        boost = 0f;
+        return false;
+    }
 }
+

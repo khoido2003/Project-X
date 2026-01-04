@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3b16a1f94510734ab1bea3364951247, type: 3}
+  m_Name: SentryDroneSkill
+  m_EditorClassIdentifier: Assembly-CSharp::SentryDroneSkillSO
+  assetId: a62f9ebdeb6739540bd06358ba7deaa6
+  skillName: Sentry Drone
+  category: 9
+  isInstant: 1
+  keyTrigger: E
+  damage: 150
+  castRange: 5
+  cooldown: 5
+  hitVfxPrefab: {fileID: 198670200411678530, guid: 484bffa5cb780e84b98be0658f62ebf6, type: 3}
+  skillVfxPrefab: {fileID: 198011925041146442, guid: 319c6b2bec42ddf4d949a0bdc4f2ce3f, type: 3}
+  activateSound: {fileID: 8300000, guid: f8e494648f23d41dbad98e7dc96269bf, type: 3}
+  activationAnimationTrigger: skill1
+  dronePrefab: {fileID: 7658147018046768881, guid: a82b2ac173bb20a41882dd19d9082706, type: 3}
+  flightSpeed: 12
+  maxLifetime: 5
+  detectionRange: 15
+  explosionRadius: 4
+  explosionDamage: 80
+  explosionVfxPrefab: {fileID: 198202731371243394, guid: 65932b7368590234d8163da03c2055d8, type: 3}
+  explosionSound: {fileID: 8300000, guid: f0375c26204ee4e0eabf997199a24f08, type: 3}
+  spawnVfxPrefab: {fileID: 198662263970059650, guid: 2d9d08b2093e529429cd5ce910d4dd08, type: 3}
+  spawnSound: {fileID: 8300000, guid: 4c805887f66dc40bdb245be9a7638588, type: 3}
+  flyingLoopSound: {fileID: 0}
