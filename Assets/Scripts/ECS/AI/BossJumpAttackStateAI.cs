@@ -50,6 +50,13 @@ public class BossJumpAttackStateAI : IEnemyState
         {
             AudioHelper.PlaySound3D(world, boss.JumpSound, AudioCategory.Enemy, enemyTf.Position);
         }
+        
+        // Broadcast audio to clients
+        var registry = world.Services.Resolve<EntityViewRegistry>();
+        if (registry.TryGet(entity, out EntityView view) && view.TryGetComponent(out EnemyNetworkSyncView syncView))
+        {
+            syncView.BroadcastBossAudioClientRpc(0, enemyTf.Position); // 0 = Jump sound
+        }
     }
 
     public void OnUpdate(World world, EntityId entity, float dt)
@@ -166,6 +173,8 @@ public class BossJumpAttackStateAI : IEnemyState
         if (registry.TryGet(entity, out EntityView view) && view.TryGetComponent(out EnemyNetworkSyncView syncView))
         {
             syncView.BroadcastBossJumpLandingVfxClientRpc(enemyTf.Position);
+            // Broadcast landing/impact audio to clients
+            syncView.BroadcastBossAudioClientRpc(1, enemyTf.Position); // 1 = Landing sound
         }
         
         // Publish audio cue for the impact

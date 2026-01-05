@@ -36,6 +36,7 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
         // Spectators are always allowed to connect (they don't take player slots)
         if (SpectatorNetworkHandler.Instance != null && SpectatorNetworkHandler.Instance.IsSpectator(clientId))
         {
+            Debug.Log($"[ClientConnection] Spectator {clientId} allowed to connect");
             return true;
         }
         
@@ -55,15 +56,26 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
         }
         else
         {
+            // Game is in progress (Map_1/2/3 etc)
+            // For players who were already in the game, they have a character selected
             if (HasACharacterSelected(clientId))
             {
                 return true;
             }
-            else
-            {
-                Debug.LogWarning($"[ClientConnection] Client {clientId} rejected - no character selected. Scene: {currentScene}");
-                return false;
-            }
+            
+            // LATE-JOIN HANDLING:
+            // If we reach here, this could be:
+            // 1. A spectator whose RPC hasn't arrived yet (race condition)
+            // 2. A late-joining player without a character (should be rejected)
+            //
+            // We temporarily allow connection here and let LoadingSceneManager
+            // handle the proper verification with a delay. If they're not a spectator
+            // after the delay, they'll be disconnected there.
+            //
+            // For now, we allow late-joiners through if we're in a gameplay scene
+            // The SpectatorNetworkHandler will validate them properly.
+            Debug.Log($"[ClientConnection] Client {clientId} connecting late to scene {currentScene} - allowing for spectator check");
+            return true;
         }
     }
     

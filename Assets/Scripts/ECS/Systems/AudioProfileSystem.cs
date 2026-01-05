@@ -31,11 +31,12 @@ public class AudioProfileSystem : ISystem
 
         if (profile.Profile == null)
         {
-            // Client-side enemies may have null profiles since we don't sync audio profiles over network
-            // Server handles enemy audio playback - silently skip on client
+            // Profile is null - this can happen if the enemy prefab doesn't have an AudioProfileSO assigned
+            // in EnemyNetworkSyncView._enemyAudioProfile field
             if (_world.Components.Has<EnemyComponent>(@event.Entity))
             {
-                return; // Silent skip for enemies - server handles their audio
+                // Silently skip - enemy prefab needs AudioProfileSO configured
+                return;
             }
             
             // For players, log a warning since they should have profiles from CharacterData

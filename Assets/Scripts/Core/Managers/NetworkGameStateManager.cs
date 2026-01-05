@@ -156,6 +156,10 @@ public class NetworkGameStateManager : NetworkBehaviour
         if (!IsServer && !NetworkManager.Singleton.IsConnectedClient)
         {
             Debug.LogWarning("[NetworkGameStateManager] Host disconnected! Returning to menu...");
+            
+            // Store settings for potential reconnection instead of resetting
+            ConnectionSettings.StoreForReconnection();
+            
             ReturnToMainMenu();
         }
     }

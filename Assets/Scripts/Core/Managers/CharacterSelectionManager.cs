@@ -393,6 +393,21 @@ public class CharacterSelectionManager : SingletonNetwork<CharacterSelectionMana
         return characterData[playerId].isSelected;
     }
 
+    /// <summary>
+    /// Check if a specific client has a selected character (for late-join validation).
+    /// </summary>
+    public bool HasCharacterForClient(ulong clientId)
+    {
+        foreach (var data in characterData)
+        {
+            if (data.isSelected && data.clientId == clientId)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     #endregion
 
     ///////////////////////////////////////////////////////////////
