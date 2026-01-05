@@ -15026,8 +15026,8 @@ Transform:
   m_GameObject: {fileID: 1561839241}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.1723, y: -5.3, z: -0.9014}
-  m_LocalScale: {x: 80.95024, y: 10, z: 76.692856}
+  m_LocalPosition: {x: -0.1331, y: -5.02, z: -0.7256}
+  m_LocalScale: {x: 80.33615, y: 10, z: 77.04588}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 866610402}
@@ -16413,9 +16413,9 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 640
-  obstacleSweepHeight: 1
-  obstacleCheckRadiusFactor: 0.45
-  rayCastHeight: 10
+  obstacleSweepHeight: 1.5
+  obstacleCheckRadiusFactor: 0.5
+  rayCastHeight: 12
   enableVisualGrid: 0
   walkableMaterial: {fileID: 2100000, guid: c89fa13b76d0f2648a1fbc01a557cec5, type: 2}
   obstacleMaterial: {fileID: 2100000, guid: c2d310622f2a35f4ea8fd7c2f475b629, type: 2}
@@ -16428,7 +16428,7 @@ Transform:
   m_GameObject: {fileID: 1672054327}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8.2, y: 0.4, z: -8.7}
+  m_LocalPosition: {x: -8.2, y: 0.6, z: -8.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

@@ -199,12 +199,12 @@ public class SpectatorController : MonoBehaviour
         
         if (_currentMode == SpectatorMode.PlayerFollow)
         {
-            // Try to find a player to follow
-            if (_playerEntities.Count > 0)
+            // Only reset to first player if we don't have a valid target
+            if (_playerEntities.Count > 0 && _currentPlayerIndex >= _playerEntities.Count)
             {
                 _currentPlayerIndex = 0;
-                UpdateFollowTarget();
             }
+            UpdateFollowTarget();
         }
         else if (_currentMode == SpectatorMode.Overview)
         {

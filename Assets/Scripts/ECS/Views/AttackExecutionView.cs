@@ -24,6 +24,8 @@ public class AttackExecutionView : EntityView
         _world.Events.Subscribe<AnimationEventRelayEvent>(OnAnimationRelay);
         _world.Events.Subscribe<EntityDeathEvent>(OnEntityDeath);
         _world.Events.Subscribe<PlayerRespawnedEvent>(OnPlayerRespawned);
+        _world.Events.Subscribe<EntityDestroyedEvent>(OnEntityDestroyed);
+        _world.Events.Subscribe<AttackPressedInputEvent>(OnAttackStart);
 
         // Clear cache on bind to ensure fresh state for new/reused entities
         _attackHitCache.Clear();
@@ -245,7 +247,22 @@ public class AttackExecutionView : EntityView
 
     private void ExecuteCustomAttack(AttackExecutionRequestEvent @event, Transform attackerTf) { }
 
-    // Clears damage cache when attack animation ends
+    // Clears damage cache when a NEW attack starts
+    // This is critical because ATTACK_END may not fire reliably during animator swaps (e.g., mech transformation)
+    private void OnAttackStart(AttackPressedInputEvent @event)
+    {
+        if (@event.Entity.Equals(EntityInstance))
+        {
+            // Clear cache for this attacker when starting a new attack
+            // This ensures fresh hit detection even if previous ATTACK_END was missed
+            if (_attackHitCache.ContainsKey(@event.Entity))
+            {
+                _attackHitCache[@event.Entity].Clear();
+            }
+        }
+    }
+
+    // Also clears damage cache when attack animation ends (backup cleanup)
     private void OnAnimationRelay(AnimationEventRelayEvent @event)
     {
         if (@event.EventType == AnimationEventRelayType.ATTACK_END)
@@ -267,6 +284,19 @@ public class AttackExecutionView : EntityView
         if (@event.Entity.Equals(EntityInstance))
         {
             ClearDamageCache();
+        }
+    }
+
+    /// <summary>
+    /// When any entity is destroyed, remove its ID from all target HashSets in the cache.
+    /// This prevents stale IDs from blocking damage when entity IDs are recycled.
+    /// </summary>
+    private void OnEntityDestroyed(EntityDestroyedEvent @event)
+    {
+        // Remove the destroyed entity from all target HashSets
+        foreach (var kvp in _attackHitCache)
+        {
+            kvp.Value.Remove(@event.Entity);
         }
     }
 
@@ -318,6 +348,8 @@ public class AttackExecutionView : EntityView
             _world.Events.Unsubscribe<AnimationEventRelayEvent>(OnAnimationRelay);
             _world.Events.Unsubscribe<EntityDeathEvent>(OnEntityDeath);
             _world.Events.Unsubscribe<PlayerRespawnedEvent>(OnPlayerRespawned);
+            _world.Events.Unsubscribe<EntityDestroyedEvent>(OnEntityDestroyed);
+            _world.Events.Unsubscribe<AttackPressedInputEvent>(OnAttackStart);
         }
     }
 }

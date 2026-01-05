@@ -203,19 +203,7 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
                 }
                 else
                 {
-                    // Check if this is a valid player (has character selected)
-                    bool hasCharacter = HasCharacterSelected(clientId);
-                    
-                    if (hasCharacter)
-                    {
-                        Debug.Log($"[LoadingSceneManager] Player {clientId} loaded into gameplay scene: {sceneName}");
-                    }
-                    else
-                    {
-                        // This is an invalid late-joiner - not a spectator and no character
-                        Debug.LogWarning($"[LoadingSceneManager] Rejecting client {clientId} - not a spectator and no character selected. Disconnecting...");
-                        DisconnectClient(clientId);
-                    }
+                    Debug.Log($"[LoadingSceneManager] Player {clientId} loaded into gameplay scene: {sceneName}");
                 }
                 break;
 
