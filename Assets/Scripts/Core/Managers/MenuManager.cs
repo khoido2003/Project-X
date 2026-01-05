@@ -667,6 +667,7 @@ public class MenuManager : MonoBehaviour
 
         // Store target IP for potential reconnection
         ConnectionSettings.TargetIP = ipAddress;
+        ConnectionSettings.IsSpectator = false;
 
         // Configure transport with the target host IP address
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();

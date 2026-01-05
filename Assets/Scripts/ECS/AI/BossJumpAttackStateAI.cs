@@ -81,14 +81,44 @@ public class BossJumpAttackStateAI : IEnemyState
             boss.JumpProgress = 1f;
             boss.IsJumping = false;
 
-            // Snap to landing position
-            enemyTf.Position = boss.JumpTargetPosition;
+            // CRITICAL: Validate landing position has ground beneath it
+            // Use raycast to find actual ground level, preventing falling through terrain
+            Vector3 landingPos = boss.JumpTargetPosition;
+            Vector3 rayOrigin = new Vector3(landingPos.x, landingPos.y + 5f, landingPos.z);
+            
+            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 20f, LayerMask.GetMask("Ground", "Default")))
+            {
+                landingPos = hit.point;
+            }
+            else
+            {
+                // Fallback: If no ground found, use start Y position (safe)
+                Debug.LogWarning($"[BossJumpAttack] No ground found at landing position! Using start Y.");
+                landingPos.y = _startPosition.y;
+            }
+            
+            // Also try to sample NavMesh for valid position
+            if (UnityEngine.AI.NavMesh.SamplePosition(landingPos, out UnityEngine.AI.NavMeshHit navHit, 3f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                landingPos = navHit.position;
+            }
+
+            // Set validated landing position
+            enemyTf.Position = landingPos;
 
             // Update view position
             var registry = world.Services.Resolve<EntityViewRegistry>();
             if (registry.TryGet(entity, out EntityView view))
             {
-                view.transform.position = boss.JumpTargetPosition;
+                view.transform.position = landingPos;
+                
+                // Re-enable NavMeshAgent if it exists to snap to navmesh
+                var agent = view.GetComponent<UnityEngine.AI.NavMeshAgent>();
+                if (agent != null && !agent.enabled)
+                {
+                    agent.enabled = true;
+                    agent.Warp(landingPos);
+                }
             }
 
             // Deal AoE damage on landing

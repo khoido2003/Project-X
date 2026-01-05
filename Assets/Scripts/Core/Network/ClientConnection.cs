@@ -40,43 +40,16 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
             return true;
         }
         
-        // During character selection or loading transition, allow connection based on max players
-        SceneName currentScene = LoadingSceneManager.Instance.SceneActive;
-        if (currentScene == SceneName.CharacterSelection || currentScene == SceneName.Loading)
-        {
-            // Count only non-spectator players for max connection check
-            int playersConnected = GetActivePlayerCount();
+        // Count only non-spectator players for max connection check
+        int playersConnected = GetActivePlayerCount();
 
-            if (playersConnected > m_maxConnections)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        else
+        if (playersConnected > m_maxConnections)
         {
-            // Game is in progress (Map_1/2/3 etc)
-            // For players who were already in the game, they have a character selected
-            if (HasACharacterSelected(clientId))
-            {
-                return true;
-            }
-            
-            // LATE-JOIN HANDLING:
-            // If we reach here, this could be:
-            // 1. A spectator whose RPC hasn't arrived yet (race condition)
-            // 2. A late-joining player without a character (should be rejected)
-            //
-            // We temporarily allow connection here and let LoadingSceneManager
-            // handle the proper verification with a delay. If they're not a spectator
-            // after the delay, they'll be disconnected there.
-            //
-            // For now, we allow late-joiners through if we're in a gameplay scene
-            // The SpectatorNetworkHandler will validate them properly.
-            Debug.Log($"[ClientConnection] Client {clientId} connecting late to scene {currentScene} - allowing for spectator check");
-            return true;
+            Debug.LogWarning($"[ClientConnection] Client {clientId} rejected - max players reached ({playersConnected}/{m_maxConnections})");
+            return false;
         }
+
+        return true;
     }
     
     /// <summary>
@@ -108,6 +81,13 @@ public class ClientConnection : SingletonNetworkPersistent<ClientConnection>
 
     private bool HasACharacterSelected(ulong clientId)
     {
+        // Use CharacterSelectionManager which properly tracks player character selections
+        if (CharacterSelectionManager.Instance != null)
+        {
+            return CharacterSelectionManager.Instance.HasCharacterForClient(clientId);
+        }
+        
+        // Fallback: check the raw SO data (less reliable)
         foreach (var data in m_characterDatas)
         {
             if (data.clientId == clientId)
