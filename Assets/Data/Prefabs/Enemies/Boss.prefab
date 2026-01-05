@@ -10492,6 +10492,11 @@ MonoBehaviour:
   _attackAnimationTrigger: attack
   _bossJumpLandingVFX: {fileID: 198106895250101352, guid: 876473f06ffd95c42b0cae78a94bc015, type: 3}
   _bossFlamethrowerVFX: {fileID: 198015459346078236, guid: 49a1555350ecbab47bd9957762c9e75b, type: 3}
+  _bossJumpSound: {fileID: 8300000, guid: 65dabf3003fd34776bd2e12067872c54, type: 3}
+  _bossLandingSound: {fileID: 8300000, guid: e8f89aecf16804bcb8d8677d354fc990, type: 3}
+  _bossFlamethrowerSound: {fileID: 8300000, guid: 8d38828caa6e487408ba44479ae7d958, type: 3}
+  _bossAttackSound: {fileID: 8300000, guid: 8a3f5ba3f45ed7d478c7c824b149d5fe, type: 3}
+  _enemyAudioProfile: {fileID: 0}
 --- !u!1 &4156250815486133128
 GameObject:
   m_ObjectHideFlags: 0

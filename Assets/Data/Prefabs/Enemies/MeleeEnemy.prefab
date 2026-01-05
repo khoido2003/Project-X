@@ -5521,7 +5521,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4225712522
+  GlobalObjectIdHash: 812263905
   InScenePlacedSourceGlobalObjectIdHash: 1727008231
   DeferredDespawnTick: 0
   Ownership: 1
@@ -5595,6 +5595,13 @@ MonoBehaviour:
   _projectileLifetime: 3
   _projectileSpawnOffset: {x: 0, y: 0, z: 0}
   _attackAnimationTrigger: attack
+  _bossJumpLandingVFX: {fileID: 0}
+  _bossFlamethrowerVFX: {fileID: 0}
+  _bossJumpSound: {fileID: 0}
+  _bossLandingSound: {fileID: 0}
+  _bossFlamethrowerSound: {fileID: 0}
+  _bossAttackSound: {fileID: 0}
+  _enemyAudioProfile: {fileID: 11400000, guid: e57d21c5440c0414a9b5013ebca7dda1, type: 2}
 --- !u!1 &8516020294467271716
 GameObject:
   m_ObjectHideFlags: 0

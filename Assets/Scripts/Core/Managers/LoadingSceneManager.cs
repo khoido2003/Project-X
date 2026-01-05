@@ -198,17 +198,54 @@ public class LoadingSceneManager : SingletonPersistent<LoadingSceneManager>
             case SceneName.Map_3:
                 if (isSpectator)
                 {
-                    Debug.Log($"[LoadingSceneManager] Spectator {clientId} loaded into gameplay scene: {sceneName}");
+                    Debug.Log($"[LoadingSceneManager] Spectator {clientId} successfully loaded into gameplay scene: {sceneName}");
+                    // Spectator is good - SpectatorSpawner will handle camera setup
                 }
                 else
                 {
-                    Debug.Log($"[LoadingSceneManager] Player {clientId} loaded into gameplay scene: {sceneName}");
+                    // Check if this is a valid player (has character selected)
+                    bool hasCharacter = HasCharacterSelected(clientId);
+                    
+                    if (hasCharacter)
+                    {
+                        Debug.Log($"[LoadingSceneManager] Player {clientId} loaded into gameplay scene: {sceneName}");
+                    }
+                    else
+                    {
+                        // This is an invalid late-joiner - not a spectator and no character
+                        Debug.LogWarning($"[LoadingSceneManager] Rejecting client {clientId} - not a spectator and no character selected. Disconnecting...");
+                        DisconnectClient(clientId);
+                    }
                 }
                 break;
 
             case SceneName.Victory:
             case SceneName.Defeat:
                 break;
+        }
+    }
+    
+    /// <summary>
+    /// Check if a client has selected a character.
+    /// </summary>
+    private bool HasCharacterSelected(ulong clientId)
+    {
+        // Check CharacterSelectionManager for character data
+        if (CharacterSelectionManager.Instance != null)
+        {
+            return CharacterSelectionManager.Instance.HasCharacterForClient(clientId);
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Disconnect a client that shouldn't be in the game.
+    /// </summary>
+    private void DisconnectClient(ulong clientId)
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            NetworkManager.Singleton.DisconnectClient(clientId);
         }
     }
 

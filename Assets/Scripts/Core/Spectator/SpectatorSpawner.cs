@@ -67,6 +67,9 @@ public class SpectatorSpawner : MonoBehaviour
             _isSpectator = true;
             SpawnSpectatorCamera();
 
+            // Log current game state for debugging late-join scenarios
+            SyncGameStateForLateJoin();
+
             Debug.Log("[SpectatorSpawner] Spectator client detected - camera rig spawned");
         }
         else
@@ -76,6 +79,26 @@ public class SpectatorSpawner : MonoBehaviour
 
         // Reset the flag after use (to prevent issues if player returns to menu and rejoins)
         // Note: Don't reset here if you want the flag to persist for the session
+    }
+
+    /// <summary>
+    /// Sync game state info for late-joining spectators.
+    /// The actual game state is synced via NetworkVariables, this just logs for debugging.
+    /// </summary>
+    private void SyncGameStateForLateJoin()
+    {
+        // NetworkGameStateManager syncs state via NetworkVariables automatically
+        // This method helps verify that late-join is working
+        if (NetworkGameStateManager.Instance != null)
+        {
+            Debug.Log(
+                $"[SpectatorSpawner] Spectator late-join sync - Current phase: {NetworkGameStateManager.Instance.CurrentPhase}, Round: {NetworkGameStateManager.Instance.CurrentRound}"
+            );
+        }
+        else
+        {
+            Debug.Log("[SpectatorSpawner] NetworkGameStateManager not yet available - game state will sync when ready");
+        }
     }
 
     private void SpawnSpectatorCamera()
@@ -103,11 +126,11 @@ public class SpectatorSpawner : MonoBehaviour
 
         // Disable any main cameras that might conflict
         DisableOtherCameras();
-        
+
         // Configure spectator camera properly
         ConfigureSpectatorCamera();
     }
-    
+
     /// <summary>
     /// Configure the spectator camera to render all layers and handle audio properly.
     /// </summary>
@@ -118,14 +141,14 @@ public class SpectatorSpawner : MonoBehaviour
         {
             // Render ALL layers so VFX, particles, etc. are visible
             spectatorCam.cullingMask = -1; // -1 = Everything
-            
+
             // Ensure proper depth and clear flags
             spectatorCam.depth = 10; // Higher depth to ensure it renders on top
             spectatorCam.clearFlags = CameraClearFlags.Skybox;
-            
+
             Debug.Log($"[SpectatorSpawner] Configured spectator camera - cullingMask: Everything");
         }
-        
+
         // Handle AudioListener - disable any extras to prevent warning
         AudioListener[] listeners = _spectatorInstance.GetComponentsInChildren<AudioListener>();
         if (listeners.Length > 0)
@@ -167,14 +190,14 @@ public class SpectatorSpawner : MonoBehaviour
             if (cam != spectatorCam && cam.CompareTag("MainCamera"))
             {
                 cam.enabled = false;
-                
+
                 // Also disable AudioListener on disabled cameras to prevent warning
                 AudioListener listener = cam.GetComponent<AudioListener>();
                 if (listener != null)
                 {
                     listener.enabled = false;
                 }
-                
+
                 // Disable CinemachineBrain on disabled cameras to prevent it from controlling spectator camera
                 CinemachineBrain brain = cam.GetComponent<CinemachineBrain>();
                 if (brain != null)
@@ -182,11 +205,11 @@ public class SpectatorSpawner : MonoBehaviour
                     brain.enabled = false;
                     Debug.Log($"[SpectatorSpawner] Disabled CinemachineBrain on: {cam.gameObject.name}");
                 }
-                
+
                 Debug.Log($"[SpectatorSpawner] Disabled camera: {cam.gameObject.name}");
             }
         }
-        
+
         // Disable ALL Cinemachine Brains in the scene that could interfere
         CinemachineBrain[] allBrains = FindObjectsByType<CinemachineBrain>(FindObjectsSortMode.None);
         foreach (CinemachineBrain brain in allBrains)
@@ -196,11 +219,11 @@ public class SpectatorSpawner : MonoBehaviour
             {
                 continue;
             }
-            
+
             brain.enabled = false;
             Debug.Log($"[SpectatorSpawner] Disabled CinemachineBrain: {brain.gameObject.name}");
         }
-        
+
         // Disable ALL Cinemachine Virtual Cameras to prevent them from activating
         CinemachineCamera[] allVirtualCameras = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None);
         foreach (CinemachineCamera vcam in allVirtualCameras)
@@ -208,11 +231,11 @@ public class SpectatorSpawner : MonoBehaviour
             vcam.enabled = false;
             Debug.Log($"[SpectatorSpawner] Disabled CinemachineCamera: {vcam.gameObject.name}");
         }
-        
+
         // Disable ALL other AudioListeners in the scene too
         AudioListener[] allListeners = FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
         AudioListener spectatorListener = _spectatorInstance?.GetComponentInChildren<AudioListener>();
-        
+
         foreach (AudioListener listener in allListeners)
         {
             if (listener != spectatorListener)

@@ -34,6 +34,7 @@ public class AegisProtocolExecutorView : SkillExecutorView
     private float _originalMoveSpeed;
     private float _originalMaxHealth;
     private float _storedBonusHealth;
+    private float _originalAttackRange;
 
     // Cached AnimationView reference
     private AnimationView _animationView;
@@ -45,6 +46,7 @@ public class AegisProtocolExecutorView : SkillExecutorView
         if (WorldInstance != null)
         {
             WorldInstance.Events.Subscribe<EntityDeathEvent>(OnEntityDeath);
+            WorldInstance.Events.Subscribe<PlayerRespawnedEvent>(OnPlayerRespawned);
         }
 
         // Cache AnimationView reference
@@ -74,6 +76,17 @@ public class AegisProtocolExecutorView : SkillExecutorView
         if (_mechHealthBar != null)
         {
             _mechHealthBar.SetActive(false);
+        }
+        
+        // CRITICAL: Explicitly set the character animator on ALL clients (including spectators)
+        // This is necessary because AnimationView.Awake() may have cached the wrong animator
+        // (e.g., the mech animator if it was higher in the hierarchy)
+        if (_animationView != null && _characterAnimatorRef != null)
+        {
+            _characterAnimatorRef.Rebind();
+            _characterAnimatorRef.Update(0);
+            _animationView.SetAnimator(_characterAnimatorRef);
+            Debug.Log("[AegisProtocol] Explicitly bound character animator on Start()");
         }
     }
 
@@ -147,6 +160,14 @@ public class AegisProtocolExecutorView : SkillExecutorView
             _originalMoveSpeed = movement.MoveSpeed;
             // Apply speed penalty
             movement.MoveSpeed *= (1f - skill.moveSpeedPenalty);
+        }
+
+        // Increase attack range for mech (mech is bigger, needs larger hit detection)
+        if (WorldInstance.Components.TryGet(EntityInstance, out WeaponDataComponent weapon))
+        {
+            _originalAttackRange = weapon.BaseRange;
+            weapon.BaseRange *= 2f; // Double the range for mech attacks
+            Debug.Log($"[AegisProtocol] Mech attack range increased: {_originalAttackRange} -> {weapon.BaseRange}");
         }
 
         if (WorldInstance.Components.TryGet(EntityInstance, out HealthDataComponent health))
@@ -230,6 +251,12 @@ public class AegisProtocolExecutorView : SkillExecutorView
             movement.MoveSpeed = _originalMoveSpeed;
         }
 
+        // Restore attack range
+        if (WorldInstance.Components.TryGet(EntityInstance, out WeaponDataComponent weapon))
+        {
+            weapon.BaseRange = _originalAttackRange;
+        }
+
         if (WorldInstance.Components.TryGet(EntityInstance, out HealthDataComponent health))
         {
             // Remove bonus health, but don't reduce current health below 1
@@ -292,7 +319,22 @@ public class AegisProtocolExecutorView : SkillExecutorView
         {
             if (WorldInstance.Components.TryGet(EntityInstance, out MovementDataComponent movement))
             {
-                movement.MoveSpeed = _originalMoveSpeed;
+                // Only restore if we have a valid stored speed
+                if (_originalMoveSpeed > 0)
+                {
+                    movement.MoveSpeed = _originalMoveSpeed;
+                    _originalMoveSpeed = 0f; // Reset to prevent stale values on next mech use
+                }
+            }
+
+            // Restore attack range
+            if (WorldInstance.Components.TryGet(EntityInstance, out WeaponDataComponent weapon))
+            {
+                if (_originalAttackRange > 0)
+                {
+                    weapon.BaseRange = _originalAttackRange;
+                    _originalAttackRange = 0f;
+                }
             }
 
             if (WorldInstance.Components.TryGet(EntityInstance, out HealthDataComponent health))
@@ -301,8 +343,8 @@ public class AegisProtocolExecutorView : SkillExecutorView
             }
         }
 
-        // Swap models back
-        SwapToMechModel(false);
+        // Swap models back - use IMMEDIATE swap to avoid coroutine being cancelled during cleanup
+        SwapToMechModelImmediate(false);
 
         // Cleanup VFX
         if (_activeMechVfx != null)
@@ -327,6 +369,126 @@ public class AegisProtocolExecutorView : SkillExecutorView
         }
     }
 
+    /// <summary>
+    /// Called when player respawns - ensures animator is reset to character form.
+    /// </summary>
+    private void OnPlayerRespawned(PlayerRespawnedEvent @event)
+    {
+        if (@event.Entity != EntityInstance) return;
+        
+        // Only server handles respawn logic
+        if (!NetworkManager.Singleton.IsServer) return;
+        
+        // CRITICAL: Clear attack cache on respawn to ensure damage logic is reset
+        // This fixes issue where Vex stops dealing damage to Boss after respawn if died mid-attack
+        var attackView = GetComponent<AttackExecutionView>();
+        if (attackView != null)
+        {
+            attackView.ClearDamageCache();
+        }
+        
+        // Ensure we're in normal form with correct animator after respawn
+        if (_isInMech)
+        {
+            ForceExitMech();
+        }
+        else
+        {
+            // Even if not in mech, ensure animator is set to character form
+            // This handles cases where the mech state was cleared but animator wasn't reset
+            EnsureCharacterAnimator();
+            
+            // CRITICAL: Broadcast to clients to ensure they also reset animator
+            // Without this, clients/spectators may have stale animator state
+            if (WorldInstance.Components.TryGet(EntityInstance, out NetworkSyncComponent sync))
+            {
+                sync.SyncView.BroadcastMechStateClientRpc(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Ensures the character animator is properly set after respawn or recovery.
+    /// </summary>
+    private void EnsureCharacterAnimator()
+    {
+        if (_animationView == null)
+            _animationView = GetComponent<AnimationView>();
+        
+        if (_animationView != null && _characterAnimatorRef != null)
+        {
+            _characterAnimatorRef.Rebind();
+            _characterAnimatorRef.Update(0);
+            _animationView.SetAnimator(_characterAnimatorRef);
+        }
+        
+        // Ensure models are in correct state
+        if (_characterModel != null) _characterModel.SetActive(true);
+        if (_mechModel != null) _mechModel.SetActive(false);
+        if (_characterHealthBar != null) _characterHealthBar.SetActive(true);
+        if (_mechHealthBar != null) _mechHealthBar.SetActive(false);
+    }
+
+    /// <summary>
+    /// Immediately swaps models and animator without waiting a frame.
+    /// Used during forced exits (death, destroy) where coroutines may be cancelled.
+    /// </summary>
+    private void SwapToMechModelImmediate(bool showMech)
+    {
+        // Reset attack state to prevent stuck IsAttacking flag after model swap
+        if (WorldInstance != null)
+        {
+            if (WorldInstance.Components.TryGet(EntityInstance, out AttackDataComponent attack))
+            {
+                if (attack.IsAttacking)
+                    attack.IsAttacking = false;
+            }
+            
+            if (WorldInstance.Components.TryGet(EntityInstance, out CombatStateComponent state))
+            {
+                if (state.CurrentState == CombatState.Attacking)
+                    state.CurrentState = CombatState.Idle;
+            }
+
+        }
+
+        // Manually clear attack cache as ATTACK_END event may be missed during swap
+        var attackView = GetComponent<AttackExecutionView>();
+        if (attackView != null)
+        {
+            attackView.ClearDamageCache();
+        }
+        
+        // Swap models
+        if (showMech)
+        {
+            if (_mechModel != null) _mechModel.SetActive(true);
+            if (_characterModel != null) _characterModel.SetActive(false);
+        }
+        else
+        {
+            if (_characterModel != null) _characterModel.SetActive(true);
+            if (_mechModel != null) _mechModel.SetActive(false);
+        }
+
+        // Lazy init AnimationView
+        if (_animationView == null)
+            _animationView = GetComponent<AnimationView>();
+
+        // IMMEDIATELY set animator - no coroutine delay
+        Animator targetAnimator = showMech ? _mechAnimatorRef : _characterAnimatorRef;
+        if (_animationView != null && targetAnimator != null)
+        {
+            targetAnimator.Rebind();
+            targetAnimator.Update(0);
+            _animationView.SetAnimator(targetAnimator);
+        }
+
+        // Toggle health bars
+        if (_characterHealthBar != null) _characterHealthBar.SetActive(!showMech);
+        if (_mechHealthBar != null) _mechHealthBar.SetActive(showMech);
+    }
+
     private void SwapToMechModel(bool showMech)
     {
         // Reset attack state to prevent stuck IsAttacking flag after model swap
@@ -345,6 +507,14 @@ public class AegisProtocolExecutorView : SkillExecutorView
                 if (state.CurrentState == CombatState.Attacking)
                     state.CurrentState = CombatState.Idle;
             }
+
+        }
+
+        // Manually clear attack cache as ATTACK_END event may be missed during swap
+        var attackView = GetComponent<AttackExecutionView>();
+        if (attackView != null)
+        {
+            attackView.ClearDamageCache();
         }
         
         // IMPORTANT: Enable the target model FIRST, then disable the other
@@ -517,6 +687,7 @@ public class AegisProtocolExecutorView : SkillExecutorView
         if (WorldInstance != null)
         {
             WorldInstance.Events.Unsubscribe<EntityDeathEvent>(OnEntityDeath);
+            WorldInstance.Events.Unsubscribe<PlayerRespawnedEvent>(OnPlayerRespawned);
         }
 
         StopAllCoroutines();

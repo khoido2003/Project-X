@@ -254,10 +254,16 @@ public class OverchargeFieldExecutorView : SkillExecutorView
             return;
         }
 
-        // Store original speed
+        // Only store original speed if this enemy is not already tracked
+        // This prevents storing an already-slowed speed if they re-enter the field
         if (!_originalSpeeds.ContainsKey(entity))
         {
             _originalSpeeds[entity] = movement.MoveSpeed;
+        }
+        else
+        {
+            // Already slowed - don't re-apply slow on top of slow
+            return;
         }
 
         // Apply slow

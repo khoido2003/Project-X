@@ -33,7 +33,7 @@ MonoBehaviour:
     executionType: 0
     damage: 60
     cooldown: 1.2
-    range: 1.5
+    range: 2.5
     animationTrigger: attack
     totalAnimations: 3
     hitImpactVFX: {fileID: 198690249993889400, guid: dd181bf02c445704aac0fc4aaf2583c1, type: 3}
@@ -51,6 +51,6 @@ MonoBehaviour:
   audioProfile: {fileID: 11400000, guid: 5e5f799dc26315e4f8c84e7d0ae09781, type: 2}
   clientId: 0
   playerId: 0
-  isSelected: 1
+  isSelected: 0
   enemiesDestroyed: 0
   totalDamages: 0

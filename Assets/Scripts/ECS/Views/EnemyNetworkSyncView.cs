@@ -51,6 +51,24 @@ public class EnemyNetworkSyncView : NetworkBehaviour
     [SerializeField]
     private ParticleSystem _bossFlamethrowerVFX;
 
+    [Header("Boss Audio (Configure on Boss Prefab)")]
+    [SerializeField]
+    private AudioClip _bossJumpSound;
+
+    [SerializeField]
+    private AudioClip _bossLandingSound;
+
+    [SerializeField]
+    private AudioClip _bossFlamethrowerSound;
+
+    [SerializeField]
+    private AudioClip _bossAttackSound;
+
+    [Header("Enemy Audio Profile (Configure on Enemy Prefab)")]
+    [SerializeField]
+    [Tooltip("Audio profile for enemy sounds - set this to enable client-side audio")]
+    private AudioProfileSO _enemyAudioProfile;
+
     // Active flamethrower VFX instance (for start/stop)
     private ParticleSystem _activeFlameVFX;
 
@@ -218,9 +236,9 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             }
         );
 
-        // Add empty AudioProfileComponent to prevent warnings when animation events publish audio cues
-        // Profile is null because we don't sync audio profiles over network - server handles enemy audio
-        _world.Components.Add(_entity, new AudioProfileComponent());
+        // Add AudioProfileComponent with the serialized profile from prefab
+        // This allows clients to play enemy sounds locally
+        _world.Components.Add(_entity, new AudioProfileComponent { Profile = _enemyAudioProfile });
 
         // Subscribe to NetworkVariable changes
         _netTransform.OnValueChanged += OnNetTransformChanged;
@@ -692,6 +710,33 @@ public class EnemyNetworkSyncView : NetworkBehaviour
             _activeFlameVFX.Stop();
             Destroy(_activeFlameVFX.gameObject, 1f);
             _activeFlameVFX = null;
+        }
+    }
+
+    /// <summary>
+    /// Broadcasts boss audio to all clients.
+    /// audioType: 0 = Jump, 1 = Landing, 2 = Flamethrower, 3 = Attack
+    /// </summary>
+    [ClientRpc]
+    public void BroadcastBossAudioClientRpc(int audioType, Vector3 position)
+    {
+        if (IsServer)
+            return;
+
+        AudioClip clip = audioType switch
+        {
+            0 => _bossJumpSound,
+            1 => _bossLandingSound,
+            2 => _bossFlamethrowerSound,
+            3 => _bossAttackSound,
+            _ => null
+        };
+
+        if (clip != null)
+        {
+            // Use AudioHelper to route through audio service (mixer, volume control, pooling)
+            // instead of raw AudioSource.PlayClipAtPoint which bypasses mixer
+            AudioHelper.PlaySound3D(clip, AudioCategory.Enemy, position, 1.0f);
         }
     }
 

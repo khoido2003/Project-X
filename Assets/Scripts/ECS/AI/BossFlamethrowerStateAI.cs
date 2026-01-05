@@ -44,6 +44,12 @@ public class BossFlamethrowerStateAI : IEnemyState
         {
             AudioHelper.PlaySound3D(world, boss.FlamethrowerSound, AudioCategory.Enemy, enemyTf.Position);
         }
+        
+        // Broadcast flamethrower audio to clients
+        if (registry.TryGet(entity, out EntityView audioView) && audioView.TryGetComponent(out EnemyNetworkSyncView audioSyncView))
+        {
+            audioSyncView.BroadcastBossAudioClientRpc(2, enemyTf.Position); // 2 = Flamethrower sound
+        }
     }
 
     public void OnUpdate(World world, EntityId entity, float dt)

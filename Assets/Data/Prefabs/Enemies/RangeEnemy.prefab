@@ -381,6 +381,13 @@ MonoBehaviour:
   _projectileLifetime: 3
   _projectileSpawnOffset: {x: 0, y: 0, z: 0}
   _attackAnimationTrigger: attack
+  _bossJumpLandingVFX: {fileID: 0}
+  _bossFlamethrowerVFX: {fileID: 0}
+  _bossJumpSound: {fileID: 0}
+  _bossLandingSound: {fileID: 0}
+  _bossFlamethrowerSound: {fileID: 0}
+  _bossAttackSound: {fileID: 0}
+  _enemyAudioProfile: {fileID: 11400000, guid: 4f068eb5bfcf9fa4aa0b343406bbe870, type: 2}
 --- !u!1 &5463701898387434300
 GameObject:
   m_ObjectHideFlags: 0

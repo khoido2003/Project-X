@@ -73,6 +73,31 @@ public class MenuManager : MonoBehaviour
     [Tooltip("Optional: TextMeshPro to display host IP addresses for sharing with clients")]
     private TextMeshProUGUI m_hostIpDisplay;
 
+    [Header("Error Notification")]
+    [SerializeField]
+    [Tooltip("Panel to show error messages (host failure, etc.)")]
+    private GameObject m_errorPanel;
+
+    [SerializeField]
+    private TextMeshProUGUI m_errorText;
+
+    [SerializeField]
+    private Button m_errorOkBtn;
+
+    [Header("Reconnect Panel")]
+    [SerializeField]
+    [Tooltip("Panel shown after disconnect with reconnect option")]
+    private GameObject m_reconnectPanel;
+
+    [SerializeField]
+    private TextMeshProUGUI m_reconnectText;
+
+    [SerializeField]
+    private Button m_reconnectBtn;
+
+    [SerializeField]
+    private Button m_reconnectCancelBtn;
+
     private void Awake() { }
 
     private IEnumerator Start()
@@ -122,6 +147,23 @@ public class MenuManager : MonoBehaviour
             m_cancelJoinBtn.onClick.AddListener(OnClickCancelJoin);
         }
 
+        // Setup error panel button
+        if (m_errorOkBtn != null)
+        {
+            m_errorOkBtn.onClick.AddListener(OnClickErrorOk);
+        }
+
+        // Setup reconnect panel buttons
+        if (m_reconnectBtn != null)
+        {
+            m_reconnectBtn.onClick.AddListener(OnClickReconnect);
+        }
+
+        if (m_reconnectCancelBtn != null)
+        {
+            m_reconnectCancelBtn.onClick.AddListener(OnClickReconnectCancel);
+        }
+
         // Hide panels initially
         if (m_joinPanel != null)
         {
@@ -133,14 +175,32 @@ public class MenuManager : MonoBehaviour
             m_spectatorPanel.SetActive(false);
         }
 
+        if (m_errorPanel != null)
+        {
+            m_errorPanel.SetActive(false);
+        }
+
+        if (m_reconnectPanel != null)
+        {
+            m_reconnectPanel.SetActive(false);
+        }
+
         m_hostBtn.gameObject.SetActive(false);
         m_joinBtn.gameObject.SetActive(false);
         m_quickGameBtn.gameObject.SetActive(false);
+        m_reconnectBtn.gameObject.SetActive(false);
+
         if (m_watchMatchBtn != null)
             m_watchMatchBtn.gameObject.SetActive(false);
 
         yield return new WaitUntil(() => NetworkManager.Singleton.SceneManager != null);
         LoadingSceneManager.Instance.Init();
+
+        // Check for reconnection opportunity after returning from a disconnect
+        if (ConnectionSettings.IsReconnectionAttempt)
+        {
+            ShowReconnectOption();
+        }
     }
 
     private void Update()
@@ -167,6 +227,18 @@ public class MenuManager : MonoBehaviour
             transport.SetConnectionData("0.0.0.0", m_port, "0.0.0.0");
         }
 
+        // Try to start host and check for failure
+        bool success = NetworkManager.Singleton.StartHost();
+
+        if (!success)
+        {
+            Debug.LogError($"[MenuManager] Failed to start host on port {m_port}. Port may already be in use.");
+            ShowHostErrorNotification(
+                $"Failed to host on port {m_port}.\n\nAnother game may already be running on this network, or the port is in use by another application."
+            );
+            return;
+        }
+
         // Get and display local IP addresses
         string ipInfo = GetLocalIPAddresses();
         Debug.Log($"[MenuManager] Host starting on port {m_port}. Share one of these IPs with clients:\n{ipInfo}");
@@ -178,9 +250,161 @@ public class MenuManager : MonoBehaviour
             m_hostIpDisplay.gameObject.SetActive(true);
         }
 
-        NetworkManager.Singleton.StartHost();
         LoadingSceneManager.Instance.LoadScene(nextScene);
     }
+
+    #region Error and Reconnect UI
+
+    private void ShowHostErrorNotification(string message)
+    {
+        if (m_errorPanel != null)
+        {
+            m_errorPanel.SetActive(true);
+            if (m_errorText != null)
+                m_errorText.text = message;
+            HideMainButtons();
+        }
+        else
+        {
+            // Fallback: just log to console if no UI panel
+            Debug.LogError($"[MenuManager] HOST FAILED: {message}");
+            // Still allow user to try again by keeping buttons visible
+        }
+    }
+
+    /// <summary>
+    /// Shows notification when connection to host fails (no match found).
+    /// </summary>
+    private void ShowConnectionFailedNotification(string ipAddress, bool isSpectator)
+    {
+        string mode = isSpectator ? "watch" : "join";
+        string message =
+            $"Could not connect to {ipAddress}:{m_port}.\n\nNo match is currently running at this address, or the host may have closed the game.";
+
+        if (m_errorPanel != null)
+        {
+            m_errorPanel.SetActive(true);
+            if (m_errorText != null)
+                m_errorText.text = message;
+            HideMainButtons();
+        }
+        else
+        {
+            Debug.LogWarning($"[MenuManager] CONNECTION FAILED: {message}");
+            ShowMainButtons();
+        }
+    }
+
+    private void OnClickErrorOk()
+    {
+        PlayButtonClickSound();
+
+        if (m_errorPanel != null)
+        {
+            m_errorPanel.SetActive(false);
+        }
+
+        ShowMainButtons();
+    }
+
+    private void ShowReconnectOption()
+    {
+        if (m_reconnectPanel != null)
+        {
+            string message;
+            if (ConnectionSettings.IsSpectator)
+            {
+                // Spectator reconnection is supported
+                message =
+                    $"You were disconnected from {ConnectionSettings.TargetIP}.\n\nWould you like to reconnect as spectator?";
+            }
+            else
+            {
+                // Player reconnection is NOT supported - inform user
+                message =
+                    $"You were disconnected from {ConnectionSettings.TargetIP}.\n\nNote: Player reconnection is not supported. You can only rejoin as a spectator.";
+            }
+
+            if (m_reconnectText != null)
+            {
+                m_reconnectText.text = message;
+            }
+            m_reconnectPanel.SetActive(true);
+            // Skip the press any key phase
+            m_pressAnyKeyActive = false;
+            if (m_pressAnyKeyText != null)
+                m_pressAnyKeyText.gameObject.SetActive(false);
+            // Show main buttons behind the reconnect panel so user can dismiss and still navigate
+            ShowMainButtons();
+        }
+        else
+        {
+            Debug.Log(
+                $"[MenuManager] Reconnection opportunity: {ConnectionSettings.TargetIP} (Spectator: {ConnectionSettings.IsSpectator})"
+            );
+            // No UI panel, just reset and continue normally
+            ConnectionSettings.Reset();
+        }
+    }
+
+    private void OnClickReconnect()
+    {
+        PlayButtonClickSound();
+
+        if (m_reconnectPanel != null)
+        {
+            m_reconnectPanel.SetActive(false);
+        }
+
+        // Only allow spectator reconnection - player reconnection is not supported
+        if (ConnectionSettings.IsSpectator)
+        {
+            StartCoroutine(JoinAsSpectator(ConnectionSettings.TargetIP));
+        }
+        else
+        {
+            // Player reconnection is not supported - show error
+            string message =
+                "Player reconnection is not supported.\n\nYour character slot was lost when you disconnected. You can rejoin as a spectator to watch the match.";
+
+            if (m_errorPanel != null)
+            {
+                m_errorPanel.SetActive(true);
+                if (m_errorText != null)
+                    m_errorText.text = message;
+                HideMainButtons();
+            }
+            else
+            {
+                Debug.LogWarning($"[MenuManager] {message}");
+                ShowMainButtons();
+            }
+
+            // Clear connection settings since we can't reconnect as player
+            ConnectionSettings.Reset();
+            return;
+        }
+
+        // Clear reconnection flag (will be set again if disconnect happens)
+        ConnectionSettings.IsReconnectionAttempt = false;
+    }
+
+    private void OnClickReconnectCancel()
+    {
+        PlayButtonClickSound();
+
+        if (m_reconnectPanel != null)
+        {
+            m_reconnectPanel.SetActive(false);
+        }
+
+        // Clear all connection settings
+        ConnectionSettings.Reset();
+
+        ShowMainButtons();
+    }
+
+    #endregion
 
     public void OnClickJoin()
     {
@@ -193,6 +417,7 @@ public class MenuManager : MonoBehaviour
             m_hostBtn.gameObject.SetActive(false);
             m_joinBtn.gameObject.SetActive(false);
             m_quickGameBtn.gameObject.SetActive(false);
+            m_reconnectBtn.gameObject.SetActive(false);
 
             // Set default IP if empty
             if (string.IsNullOrEmpty(m_ipInputField.text))
@@ -239,6 +464,7 @@ public class MenuManager : MonoBehaviour
         m_hostBtn.gameObject.SetActive(true);
         m_joinBtn.gameObject.SetActive(true);
         m_quickGameBtn.gameObject.SetActive(true);
+        m_reconnectBtn.gameObject.SetActive(true);
     }
 
     public void OnClickQuit()
@@ -275,6 +501,7 @@ public class MenuManager : MonoBehaviour
         m_hostBtn.gameObject.SetActive(true);
         m_joinBtn.gameObject.SetActive(true);
         m_quickGameBtn.gameObject.SetActive(true);
+        m_reconnectBtn.gameObject.SetActive(true);
         if (m_watchMatchBtn != null)
             m_watchMatchBtn.gameObject.SetActive(true);
     }
@@ -375,7 +602,9 @@ public class MenuManager : MonoBehaviour
             NetworkManager.Singleton.Shutdown();
             ConnectionSettings.Reset();
             LoadingFadeEffect.Instance.FadeOut();
-            ShowMainButtons();
+
+            // Show error notification
+            ShowConnectionFailedNotification(ipAddress, true);
         }
     }
 
@@ -410,7 +639,9 @@ public class MenuManager : MonoBehaviour
     {
         m_hostBtn.gameObject.SetActive(false);
         m_joinBtn.gameObject.SetActive(false);
+        m_reconnectBtn.gameObject.SetActive(false);
         m_quickGameBtn.gameObject.SetActive(false);
+
         if (m_watchMatchBtn != null)
             m_watchMatchBtn.gameObject.SetActive(false);
     }
@@ -419,7 +650,9 @@ public class MenuManager : MonoBehaviour
     {
         m_hostBtn.gameObject.SetActive(true);
         m_joinBtn.gameObject.SetActive(true);
+        m_reconnectBtn.gameObject.SetActive(true);
         m_quickGameBtn.gameObject.SetActive(true);
+
         if (m_watchMatchBtn != null)
             m_watchMatchBtn.gameObject.SetActive(true);
     }
@@ -431,6 +664,9 @@ public class MenuManager : MonoBehaviour
         LoadingFadeEffect.Instance.FadeAll();
 
         yield return new WaitUntil(() => LoadingFadeEffect.s_canLoad);
+
+        // Store target IP for potential reconnection
+        ConnectionSettings.TargetIP = ipAddress;
 
         // Configure transport with the target host IP address
         var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
@@ -456,12 +692,11 @@ public class MenuManager : MonoBehaviour
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
             NetworkManager.Singleton.Shutdown();
+            ConnectionSettings.Reset();
             LoadingFadeEffect.Instance.FadeOut();
 
-            // Show main menu buttons again
-            m_hostBtn.gameObject.SetActive(true);
-            m_joinBtn.gameObject.SetActive(true);
-            m_quickGameBtn.gameObject.SetActive(true);
+            // Show error notification
+            ShowConnectionFailedNotification(ipAddress, false);
         }
     }
 

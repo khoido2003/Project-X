@@ -22,6 +22,11 @@ public class AttackExecutionView : EntityView
 
         _world.Events.Subscribe<AttackExecutionRequestEvent>(OnExecuteAttack);
         _world.Events.Subscribe<AnimationEventRelayEvent>(OnAnimationRelay);
+        _world.Events.Subscribe<EntityDeathEvent>(OnEntityDeath);
+        _world.Events.Subscribe<PlayerRespawnedEvent>(OnPlayerRespawned);
+
+        // Clear cache on bind to ensure fresh state for new/reused entities
+        _attackHitCache.Clear();
 
         _isInitialized = true;
     }
@@ -249,6 +254,32 @@ public class AttackExecutionView : EntityView
         }
     }
 
+    private void OnEntityDeath(EntityDeathEvent @event)
+    {
+        if (@event.Entity.Equals(EntityInstance))
+        {
+            ClearDamageCache();
+        }
+    }
+
+    private void OnPlayerRespawned(PlayerRespawnedEvent @event)
+    {
+        if (@event.Entity.Equals(EntityInstance))
+        {
+            ClearDamageCache();
+        }
+    }
+
+    /// <summary>
+    /// Manually clears the attack damage cache.
+    /// Used when attacks are interrupted (e.g. by mech transformation) and ATTACK_END event is missed.
+    /// </summary>
+    public void ClearDamageCache()
+    {
+        // Safe to clear all because this View instance is bound to a single Entity
+        _attackHitCache.Clear();
+    }
+
     private void TriggerAimingRigForAttack(AttackExecutionRequestEvent @event, Transform attackerTf)
     {
         if (!_registry.TryGet(@event.Attacker, out EntityView attackerView))
@@ -285,6 +316,8 @@ public class AttackExecutionView : EntityView
         {
             _world.Events.Unsubscribe<AttackExecutionRequestEvent>(OnExecuteAttack);
             _world.Events.Unsubscribe<AnimationEventRelayEvent>(OnAnimationRelay);
+            _world.Events.Unsubscribe<EntityDeathEvent>(OnEntityDeath);
+            _world.Events.Unsubscribe<PlayerRespawnedEvent>(OnPlayerRespawned);
         }
     }
 }
