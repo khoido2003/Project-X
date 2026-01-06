@@ -84,23 +84,53 @@ public class BossJumpAttackStateAI : IEnemyState
             // CRITICAL: Validate landing position has ground beneath it
             // Use raycast to find actual ground level, preventing falling through terrain
             Vector3 landingPos = boss.JumpTargetPosition;
-            Vector3 rayOrigin = new Vector3(landingPos.x, landingPos.y + 5f, landingPos.z);
+            float originalTargetY = landingPos.y;
             
-            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 20f, LayerMask.GetMask("Ground", "Default")))
+            // Start raycast from well above the target to ensure we find ground
+            Vector3 rayOrigin = new Vector3(landingPos.x, landingPos.y + 10f, landingPos.z);
+            
+            // CRITICAL FIX: Only use "Ground" layer, NOT "Default" which can hit props/platforms
+            // This prevents the boss from landing on elevated objects and then falling through
+            int groundLayer = LayerMask.GetMask("Ground");
+            if (groundLayer == 0)
             {
-                landingPos = hit.point;
+                // Fallback if Ground layer doesn't exist - use raycast to find any surface below target
+                groundLayer = LayerMask.GetMask("Default");
             }
-            else
+            
+            bool foundValidGround = false;
+            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 25f, groundLayer))
             {
-                // Fallback: If no ground found, use start Y position (safe)
-                Debug.LogWarning($"[BossJumpAttack] No ground found at landing position! Using start Y.");
+                // SANITY CHECK: Only accept ground that's at or BELOW the original target position
+                // If we hit something ABOVE the target, it's probably a ceiling/platform, not ground
+                float hitY = hit.point.y;
+                if (hitY <= originalTargetY + 0.5f) // Allow 0.5 unit tolerance
+                {
+                    landingPos.y = hitY;
+                    foundValidGround = true;
+                }
+            }
+            
+            if (!foundValidGround)
+            {
+                // Fallback: Use the start Y position (where the boss was before jumping)
                 landingPos.y = _startPosition.y;
             }
             
-            // Also try to sample NavMesh for valid position
-            if (UnityEngine.AI.NavMesh.SamplePosition(landingPos, out UnityEngine.AI.NavMeshHit navHit, 3f, UnityEngine.AI.NavMesh.AllAreas))
+            // Try to sample NavMesh for valid position - use larger radius for boss
+            // CRITICAL: Sample at GROUND level, not at the potentially wrong hit point
+            Vector3 navSamplePos = new Vector3(landingPos.x, _startPosition.y, landingPos.z);
+            if (UnityEngine.AI.NavMesh.SamplePosition(navSamplePos, out UnityEngine.AI.NavMeshHit navHit, 5f, UnityEngine.AI.NavMesh.AllAreas))
             {
                 landingPos = navHit.position;
+            }
+            else
+            {
+                // If NavMesh sampling fails at target, try at start position as absolute fallback
+                if (UnityEngine.AI.NavMesh.SamplePosition(_startPosition, out navHit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    landingPos = navHit.position;
+                }
             }
 
             // Set validated landing position

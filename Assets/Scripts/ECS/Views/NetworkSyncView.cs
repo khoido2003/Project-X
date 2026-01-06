@@ -2028,8 +2028,14 @@ public class NetworkSyncView : NetworkBehaviour
         }
     }
 
+    // Track active speed buff to prevent stacking
+    private float _originalMoveSpeed = -1f;
+    private bool _hasActiveSpeedBuff = false;
+    private Coroutine _speedBuffCoroutine;
+    
     /// <summary>
     /// Called by BuffHandlerView on server to sync speed buff to all clients.
+    /// Prevents stacking - only refreshes duration if already buffed.
     /// </summary>
     public void ApplySpeedBuffFromServer(float percentage, float duration)
     {
@@ -2037,12 +2043,25 @@ public class NetworkSyncView : NetworkBehaviour
 
         if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
         {
-            float multiplier = 1 + (percentage / 100f);
-            movement.MoveSpeed *= multiplier;
+            // Store original speed on first buff application
+            if (!_hasActiveSpeedBuff)
+            {
+                _originalMoveSpeed = movement.MoveSpeed;
+                float multiplier = 1 + (percentage / 100f);
+                movement.MoveSpeed = _originalMoveSpeed * multiplier;
+                _hasActiveSpeedBuff = true;
+            }
+            // If already buffed, just refresh duration (no stacking)
         }
 
+        // Cancel existing coroutine and start new one (refresh duration)
+        if (_speedBuffCoroutine != null)
+        {
+            StopCoroutine(_speedBuffCoroutine);
+        }
+        _speedBuffCoroutine = StartCoroutine(RevertSpeedBuffAfterDelay(duration));
+        
         BroadcastSpeedBuffClientRpc(percentage, duration);
-        StartCoroutine(RevertSpeedBuffAfterDelay(percentage, duration));
     }
 
     [ClientRpc]
@@ -2053,24 +2072,64 @@ public class NetworkSyncView : NetworkBehaviour
 
         if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
         {
-            float multiplier = 1 + (percentage / 100f);
-            movement.MoveSpeed *= multiplier;
+            // Store original speed on first buff application
+            if (!_hasActiveSpeedBuff)
+            {
+                _originalMoveSpeed = movement.MoveSpeed;
+                float multiplier = 1 + (percentage / 100f);
+                movement.MoveSpeed = _originalMoveSpeed * multiplier;
+                _hasActiveSpeedBuff = true;
+            }
         }
 
-        StartCoroutine(RevertSpeedBuffAfterDelay(percentage, duration));
+        // Cancel existing coroutine and start new one (refresh duration)
+        if (_speedBuffCoroutine != null)
+        {
+            StopCoroutine(_speedBuffCoroutine);
+        }
+        _speedBuffCoroutine = StartCoroutine(RevertSpeedBuffAfterDelay(duration));
     }
 
-    private System.Collections.IEnumerator RevertSpeedBuffAfterDelay(float percentage, float duration)
+    private System.Collections.IEnumerator RevertSpeedBuffAfterDelay(float duration)
     {
         yield return new WaitForSeconds(duration);
 
-        if (_world == null || _entity.Equals(default)) yield break;
-
-        if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
+        RevertSpeedBuff();
+    }
+    
+    /// <summary>
+    /// Immediately reverts speed buff. Called when buff expires or player dies/respawns.
+    /// </summary>
+    public void RevertSpeedBuff()
+    {
+        if (!_hasActiveSpeedBuff) return;
+        
+        if (_world != null && !_entity.Equals(default))
         {
-            float multiplier = 1 + (percentage / 100f);
-            movement.MoveSpeed /= multiplier;
+            if (_world.Components.TryGet(_entity, out MovementDataComponent movement))
+            {
+                movement.MoveSpeed = _originalMoveSpeed;
+            }
         }
+        
+        _hasActiveSpeedBuff = false;
+        _originalMoveSpeed = -1f;
+        _speedBuffCoroutine = null;
+    }
+    
+    /// <summary>
+    /// Clears all active buffs. Called on player death/respawn.
+    /// </summary>
+    public void ClearAllBuffs()
+    {
+        // Stop speed buff coroutine
+        if (_speedBuffCoroutine != null)
+        {
+            StopCoroutine(_speedBuffCoroutine);
+            _speedBuffCoroutine = null;
+        }
+        
+        RevertSpeedBuff();
     }
 
     #endregion

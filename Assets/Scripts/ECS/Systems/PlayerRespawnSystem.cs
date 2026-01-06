@@ -87,12 +87,14 @@ public class PlayerRespawnSystem : ISystem
             attack.IsAttacking = false;
         }
 
-        Debug.Log($"[PlayerRespawn] Player {entity.Id} respawned at {spawnPos}");
 
         // Broadcast respawn to clients
         if (_world.Components.TryGet(entity, out NetworkSyncComponent sync))
         {
             sync.SyncView.BroadcastPlayerRespawnClientRpc(spawnPos);
+            
+            // Clear any active buffs before respawning (prevents speed buff persistence)
+            sync.SyncView.ClearAllBuffs();
             
             // Grant invincibility after respawn
             sync.SyncView.StartInvincibilityFromServer(GameConstants.INVINCIBILITY_DURATION);

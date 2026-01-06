@@ -78,19 +78,35 @@ public class AttackExecutionView : EntityView
         }
     }
 
+    // Track the current attack instance to determine when a new attack starts
+    private int _lastAttackInstance = 0;
+    private int _currentAttackInstance = 0;
+    
     private void ExecuteMeleeAttack(AttackExecutionRequestEvent @event, Transform attackerTf)
     {
-        // Ensure cache exists for this attacker
+        // Increment attack instance counter - each ATTACK_HIT is a new attack
+        _currentAttackInstance++;
+        
+        // CRITICAL FIX: Since each ExecuteMeleeAttack call is a new attack (ATTACK_HIT fires once per attack),
+        // we should start with a fresh cache. Clear any stale entries from previous attacks.
+        // This fixes the bug where dying mid-attack or mech transformation causes ATTACK_END to be missed.
         if (!_attackHitCache.TryGetValue(@event.Attacker, out var damagedEntities))
         {
             damagedEntities = new HashSet<EntityId>();
             _attackHitCache[@event.Attacker] = damagedEntities;
+        }
+        else
+        {
+            // Cache exists from a previous attack - clear it for this new attack
+            damagedEntities.Clear();
         }
 
         Vector3 origin = attackerTf.position + attackerTf.forward * 0.5f;
         float radius = @event.Range * 0.5f;
 
         Collider[] hits = Physics.OverlapSphere(origin, radius);
+
+
 
         foreach (Collider hit in hits)
         {
@@ -100,7 +116,7 @@ public class AttackExecutionView : EntityView
             }
 
             EntityId targetEntity = targetView.EntityInstance;
-
+            
             if (targetEntity.Equals(@event.Attacker))
             {
                 continue;
@@ -110,7 +126,7 @@ public class AttackExecutionView : EntityView
             {
                 continue;
             }
-
+            
             damagedEntities.Add(targetEntity);
 
             _world.Events.Publish(
@@ -254,7 +270,6 @@ public class AttackExecutionView : EntityView
         if (@event.Entity.Equals(EntityInstance))
         {
             // Clear cache for this attacker when starting a new attack
-            // This ensures fresh hit detection even if previous ATTACK_END was missed
             if (_attackHitCache.ContainsKey(@event.Entity))
             {
                 _attackHitCache[@event.Entity].Clear();
@@ -306,7 +321,6 @@ public class AttackExecutionView : EntityView
     /// </summary>
     public void ClearDamageCache()
     {
-        // Safe to clear all because this View instance is bound to a single Entity
         _attackHitCache.Clear();
     }
 

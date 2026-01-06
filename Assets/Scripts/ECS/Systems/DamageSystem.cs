@@ -98,6 +98,7 @@ public class DamageSystem : ISystem
             return;
         }
 
+
         float actualDamage = @event.Amount;
 
         // Apply damage boost from buffs (Overcharge Field, AEGIS Protocol)

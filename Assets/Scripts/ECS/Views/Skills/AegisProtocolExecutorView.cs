@@ -482,6 +482,9 @@ public class AegisProtocolExecutorView : SkillExecutorView
             targetAnimator.Rebind();
             targetAnimator.Update(0);
             _animationView.SetAnimator(targetAnimator);
+            
+            // CRITICAL FIX: Must also rebind event relay in immediate swap
+            RebindAnimationEventRelay(targetAnimator.gameObject);
         }
 
         // Toggle health bars
@@ -590,10 +593,30 @@ public class AegisProtocolExecutorView : SkillExecutorView
             targetAnimator.Update(0);
             
             _animationView.SetAnimator(targetAnimator);
+            
+            // CRITICAL FIX: Rebind AnimationEventRelayView on the new animator
+            // Without this, the event relay has a stale/null World reference and attacks won't register
+            RebindAnimationEventRelay(targetAnimator.gameObject);
         }
         else
         {
             Debug.LogWarning($"[AegisProtocol] {(showMech ? "Mech" : "Character")} animator reference is null - check SerializeField assignment in inspector!");
+        }
+    }
+    
+    /// <summary>
+    /// Rebinds AnimationEventRelayView components on the given model to ensure they have valid World/Entity references.
+    /// This is critical after model swaps where the animator changes.
+    /// </summary>
+    private void RebindAnimationEventRelay(GameObject modelRoot)
+    {
+        var relays = modelRoot.GetComponentsInChildren<AnimationEventRelayView>(true);
+        foreach (var relay in relays)
+        {
+            if (WorldInstance != null)
+            {
+                relay.Bind(WorldInstance, EntityInstance);
+            }
         }
     }
 
