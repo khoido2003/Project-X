@@ -6525,7 +6525,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 4afa74ebbae1b3f449499e5b5bd8ef02, type: 2}
   bossDefinition: {fileID: 11400000, guid: 4e85540e7535fd24389f0764ae4b37cc, type: 2}
   bossSpawnRound: 1
-  bossFightTimeLimit: 30
+  bossFightTimeLimit: 120
   enemySpawnPoints:
   - {fileID: 1016580269}
   - {fileID: 1422802235}
@@ -15010,7 +15010,7 @@ GameObject:
   - component: {fileID: 1561839245}
   - component: {fileID: 1561839244}
   - component: {fileID: 1561839243}
-  m_Layer: 7
+  m_Layer: 6
   m_Name: Floorbackup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
