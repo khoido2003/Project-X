@@ -14,17 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossDefinitionSO
   prefab: {fileID: 4147245692572374181, guid: 922a49f854a85e945b728778ee8c9db9, type: 3}
   bossName: Corrupted Mech
-  maxHealth: 3000
-  moveSpeed: 4
+  maxHealth: 3500
+  moveSpeed: 4.5
   enrageHealthThreshold: 0.3
-  hammerDamage: 50
+  hammerDamage: 90
   hammerCooldown: 1.5
-  hammerRange: 3
+  hammerRange: 3.5
   hammerAnimationTrigger: attack
   totalHammerAnimations: 2
   hammerImpactVFX: {fileID: 198633821086180066, guid: 2fc2b4305b63e364b8dfa3b209f8ae8b, type: 3}
   hammerSwingSound: {fileID: 8300000, guid: 8a3f5ba3f45ed7d478c7c824b149d5fe, type: 3}
-  hammerSlamDamage: 100
+  hammerSlamDamage: 150
   hammerSlamRadius: 5
   hammerSlamCooldown: 8
   hammerSlamTrigger: attack
@@ -32,19 +32,19 @@ MonoBehaviour:
   hammerSlamSound: {fileID: 8300000, guid: 8a3f5ba3f45ed7d478c7c824b149d5fe, type: 3}
   jumpAttackRange: 8
   jumpAttackMinRange: 5
-  jumpAttackCooldown: 7
-  jumpAttackDamage: 50
+  jumpAttackCooldown: 6
+  jumpAttackDamage: 75
   jumpAttackRadius: 4
   jumpDuration: 0.6
   jumpAnimationTrigger: jumpAttack
   jumpLandingVFX: {fileID: 198106895250101352, guid: 876473f06ffd95c42b0cae78a94bc015, type: 3}
   jumpSound: {fileID: 8300000, guid: 2989ff14cbdb5c24eb65d09c2b9caf08, type: 3}
-  flamethrowerCooldown: 10
-  flamethrowerDamagePerTick: 15
+  flamethrowerCooldown: 7
+  flamethrowerDamagePerTick: 25
   flamethrowerTickInterval: 0.3
   flamethrowerRange: 7
   flamethrowerAngle: 45
-  flamethrowerDuration: 3
+  flamethrowerDuration: 3.5
   flamethrowerTrigger: flamethrower
   flamethrowerVFX: {fileID: 198015459346078236, guid: 49a1555350ecbab47bd9957762c9e75b, type: 3}
   flamethrowerSound: {fileID: 8300000, guid: 8d38828caa6e487408ba44479ae7d958, type: 3}

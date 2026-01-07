@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: MurderKittenSO
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDefinitionSO
   assetId: 
-  characterName: Murder Kitten
+  characterName: MK-IV
   prefab: {fileID: 5408295053290319734, guid: df28629557bb37748a7f12b8c6d44b47, type: 3}
   isPlayer: 1
   characterSprite: {fileID: 21300000, guid: d73fab15640b87e4abec65b354de75a9, type: 3}
   weaponSprite: {fileID: 21300000, guid: 3ad00ad79e19e294a9e4af6cc9aa0ee6, type: 3}
-  maxHealth: 180
+  maxHealth: 250
   moveSpeed: 6
   forwardMultiplier: 1
   isMovingParam: isMoving

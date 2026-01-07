@@ -183,6 +183,7 @@
     <Compile Include="Assets\Scripts\UI\GameWorldUI\HealthBarUI.cs" />
     <Compile Include="Assets\Models\POLYGON - Particle FX v1.0\Lobby\Source Files\Scripts\LoadSceneByIndex.cs" />
     <Compile Include="Assets\Scripts\ECS\Views\Skills\SkillExecutorView.cs" />
+    <Compile Include="Assets\Scripts\Core\Managers\AspectRatioManager.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleOscillateSliders.cs" />
     <Compile Include="Assets\Materials\Ultimate 10 Plus Shaders\Shaders\Plexus\Plexus.cs" />
     <Compile Include="Assets\Models\InterfaceApocalypseHUD\Samples\Scripts\SampleTimeLabel.cs" />

@@ -18,7 +18,7 @@ MonoBehaviour:
   isPlayer: 1
   characterSprite: {fileID: 21300000, guid: caef1cc0f6f1d0e41b51312e944c9e22, type: 3}
   weaponSprite: {fileID: 21300000, guid: ed7b42d3ef2157a41838269516ea1647, type: 3}
-  maxHealth: 250
+  maxHealth: 350
   moveSpeed: 5
   forwardMultiplier: 1
   isMovingParam: isMoving
@@ -32,8 +32,8 @@ MonoBehaviour:
   - attackName: Baseball Bat
     executionType: 0
     damage: 80
-    cooldown: 1.4
-    range: 1.2
+    cooldown: 1.5
+    range: 1.4
     animationTrigger: attack
     totalAnimations: 2
     hitImpactVFX: {fileID: 7089567446671028007, guid: a3015979818be2645a5a7a5907241fe8, type: 3}

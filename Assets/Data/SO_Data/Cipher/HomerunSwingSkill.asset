@@ -25,7 +25,7 @@ MonoBehaviour:
   activateSound: {fileID: 8300000, guid: 8b735966d1aff452c95425551476d49b, type: 3}
   activationAnimationTrigger: skill2
   chargeDuration: 0.5
-  attackRadius: 2
+  attackRadius: 4
   knockbackForce: 8
   stunDuration: 1.5
   coneAngle: 120

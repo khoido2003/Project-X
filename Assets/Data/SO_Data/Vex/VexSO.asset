@@ -19,7 +19,7 @@ MonoBehaviour:
   characterSprite: {fileID: 21300000, guid: a42e2f5c575a50845a7aa34dc811f6fa, type: 3}
   weaponSprite: {fileID: 21300000, guid: ed7b42d3ef2157a41838269516ea1647, type: 3}
   maxHealth: 300
-  moveSpeed: 4.5
+  moveSpeed: 4
   forwardMultiplier: 1
   isMovingParam: isMoving
   moveXParam: moveX
@@ -50,7 +50,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a62f9ebdeb6739540bd06358ba7deaa6, type: 2}
   audioProfile: {fileID: 11400000, guid: 5e5f799dc26315e4f8c84e7d0ae09781, type: 2}
   clientId: 0
-  playerId: 0
+  playerId: -1
   isSelected: 0
   enemiesDestroyed: 0
   totalDamages: 0

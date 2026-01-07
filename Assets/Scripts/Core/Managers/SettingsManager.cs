@@ -1,4 +1,14 @@
+using System;
 using UnityEngine;
+
+/// <summary>
+/// Aspect ratio modes for UI scaling.
+/// </summary>
+public enum AspectRatioMode
+{
+    Ratio16_9 = 0,
+    Ratio16_10 = 1
+}
 
 /// <summary>
 /// Custom quality presets for graphics settings.
@@ -17,8 +27,14 @@ public class SettingsManager : MonoBehaviour
 {
     public static SettingsManager Instance { get; private set; }
 
+    /// <summary>
+    /// Event fired when aspect ratio setting changes.
+    /// </summary>
+    public static event Action<AspectRatioMode> OnAspectRatioChanged;
+
     // Custom quality names
     private static readonly string[] QUALITY_NAMES = { "Low", "Medium", "High" };
+    private static readonly string[] ASPECT_RATIO_NAMES = { "16:9", "16:10" };
 
     // PlayerPrefs keys
     private const string KEY_MASTER_VOLUME = "Settings_MasterVolume";
@@ -27,12 +43,14 @@ public class SettingsManager : MonoBehaviour
     private const string KEY_FULLSCREEN = "Settings_Fullscreen";
     private const string KEY_VSYNC = "Settings_VSync";
     private const string KEY_QUALITY = "Settings_Quality";
+    private const string KEY_ASPECT_RATIO = "Settings_AspectRatio";
 
     // Default values
     private const float DEFAULT_MASTER_VOLUME = 1f;
     private const float DEFAULT_MUSIC_VOLUME = 0.5f;
     private const float DEFAULT_SFX_VOLUME = 1f;
     private const int DEFAULT_QUALITY = (int)GraphicsQuality.High;
+    private const int DEFAULT_ASPECT_RATIO = (int)AspectRatioMode.Ratio16_9;
 
     private void Awake()
     {
@@ -61,6 +79,7 @@ public class SettingsManager : MonoBehaviour
         bool fullscreen = PlayerPrefs.GetInt(KEY_FULLSCREEN, Screen.fullScreen ? 1 : 0) == 1;
         bool vsync = PlayerPrefs.GetInt(KEY_VSYNC, QualitySettings.vSyncCount > 0 ? 1 : 0) == 1;
         int quality = PlayerPrefs.GetInt(KEY_QUALITY, QualitySettings.GetQualityLevel());
+        int aspectRatio = PlayerPrefs.GetInt(KEY_ASPECT_RATIO, DEFAULT_ASPECT_RATIO);
 
         // Apply settings
         ApplyMasterVolume(masterVolume);
@@ -69,6 +88,7 @@ public class SettingsManager : MonoBehaviour
         ApplyFullscreen(fullscreen);
         ApplyVSync(vsync);
         ApplyQuality(quality);
+        ApplyAspectRatio(aspectRatio);
     }
 
     /// <summary>
@@ -294,6 +314,46 @@ public class SettingsManager : MonoBehaviour
 
     #endregion
 
+    #region Aspect Ratio Settings
+
+    public int GetAspectRatio()
+    {
+        return PlayerPrefs.GetInt(KEY_ASPECT_RATIO, DEFAULT_ASPECT_RATIO);
+    }
+
+    public void SetAspectRatio(int aspectRatioIndex)
+    {
+        aspectRatioIndex = Mathf.Clamp(aspectRatioIndex, 0, ASPECT_RATIO_NAMES.Length - 1);
+        PlayerPrefs.SetInt(KEY_ASPECT_RATIO, aspectRatioIndex);
+        ApplyAspectRatio(aspectRatioIndex);
+    }
+
+    private void ApplyAspectRatio(int aspectRatioIndex)
+    {
+        AspectRatioMode mode = (AspectRatioMode)aspectRatioIndex;
+        OnAspectRatioChanged?.Invoke(mode);
+    }
+
+    public string[] GetAspectRatioNames()
+    {
+        return ASPECT_RATIO_NAMES;
+    }
+
+    /// <summary>
+    /// Gets the reference resolution for the specified aspect ratio mode.
+    /// </summary>
+    public static Vector2 GetReferenceResolution(AspectRatioMode mode)
+    {
+        return mode switch
+        {
+            AspectRatioMode.Ratio16_9 => new Vector2(1920, 1080),
+            AspectRatioMode.Ratio16_10 => new Vector2(1920, 1200),
+            _ => new Vector2(1920, 1080)
+        };
+    }
+
+    #endregion
+
     /// <summary>
     /// Reset all settings to default values.
     /// </summary>
@@ -304,7 +364,8 @@ public class SettingsManager : MonoBehaviour
         SetSFXVolume(DEFAULT_SFX_VOLUME);
         SetFullscreen(true);
         SetVSync(true);
-        SetQuality(QualitySettings.names.Length - 1); // Highest quality
+        SetQuality(DEFAULT_QUALITY);
+        SetAspectRatio(DEFAULT_ASPECT_RATIO);
         SaveSettings();
     }
 }

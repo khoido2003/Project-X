@@ -17,14 +17,14 @@ MonoBehaviour:
   category: 7
   isInstant: 1
   keyTrigger: E
-  damage: 100
+  damage: 120
   castRange: 4
   cooldown: 4
   hitVfxPrefab: {fileID: 198355779183106702, guid: 3e3c1a68be5c7a346a09d06be31c9c48, type: 3}
   skillVfxPrefab: {fileID: 198853323768970596, guid: c334ff8e207722f4faa33704e57e28af, type: 3}
   activateSound: {fileID: 8300000, guid: 0c81ae95d73724800ab386a76a55cf99, type: 3}
   activationAnimationTrigger: skill
-  lifestealPercent: 0.5
+  lifestealPercent: 0.65
   drainRadius: 4
   drainDuration: 2
   tickCount: 4

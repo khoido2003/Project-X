@@ -48,6 +48,9 @@ public class SettingsUI : MonoBehaviour
     [SerializeField]
     private TMP_Dropdown qualityDropdown;
 
+    [SerializeField]
+    private TMP_Dropdown aspectRatioDropdown;
+
     [Header("Buttons")]
     [SerializeField]
     private Button applyButton;
@@ -146,6 +149,19 @@ public class SettingsUI : MonoBehaviour
             qualityDropdown.onValueChanged.AddListener(OnQualityChanged);
         }
 
+        // Setup aspect ratio dropdown
+        if (aspectRatioDropdown != null)
+        {
+            aspectRatioDropdown.ClearOptions();
+            
+            string[] aspectRatioNames = SettingsManager.Instance != null 
+                ? SettingsManager.Instance.GetAspectRatioNames() 
+                : new string[] { "16:9", "16:10" };
+            
+            aspectRatioDropdown.AddOptions(new System.Collections.Generic.List<string>(aspectRatioNames));
+            aspectRatioDropdown.onValueChanged.AddListener(OnAspectRatioChanged);
+        }
+
         // Hide panel initially
         if (settingsPanel != null)
         {
@@ -233,6 +249,11 @@ public class SettingsUI : MonoBehaviour
         {
             qualityDropdown.value = SettingsManager.Instance.GetQuality();
         }
+
+        if (aspectRatioDropdown != null)
+        {
+            aspectRatioDropdown.value = SettingsManager.Instance.GetAspectRatio();
+        }
     }
 
     #region Slider Handlers
@@ -304,6 +325,15 @@ public class SettingsUI : MonoBehaviour
         if (SettingsManager.Instance != null)
         {
             SettingsManager.Instance.SetQuality(index);
+        }
+    }
+
+    private void OnAspectRatioChanged(int index)
+    {
+        PlayClickSound();
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.SetAspectRatio(index);
         }
     }
 

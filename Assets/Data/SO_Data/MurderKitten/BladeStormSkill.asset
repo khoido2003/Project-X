@@ -25,7 +25,7 @@ MonoBehaviour:
   activateSound: {fileID: 8300000, guid: 32f54a152b3dc4816b80c0c452b6c619, type: 3}
   activationAnimationTrigger: skill1
   spinDuration: 2
-  damagePerTick: 10
+  damagePerTick: 20
   tickInterval: 0.1
   spinRadius: 3
   moveSpeedMultiplier: 0.8
