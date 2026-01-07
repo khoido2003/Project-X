@@ -12892,8 +12892,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkGameStateManager
   ShowTopMostFoldoutHeaderGroup: 1
   maxRounds: 3
-  upgradePhaseDuration: 15
-  combatPhaseDuration: 60
+  upgradePhaseDuration: 10
+  combatPhaseDuration: 45
   minPlayers: 1
   resultsUI: {fileID: 2739877206516067789}
   voiceoverConfig: {fileID: 11400000, guid: ec9f5ed23eba8d44da541160302bc08e, type: 2}

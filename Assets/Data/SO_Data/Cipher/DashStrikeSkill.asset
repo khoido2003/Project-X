@@ -17,7 +17,7 @@ MonoBehaviour:
   category: 0
   isInstant: 0
   keyTrigger: Q
-  damage: 50
+  damage: 70
   castRange: 5
   cooldown: 1.5
   hitVfxPrefab: {fileID: 5683715703724972373, guid: e55b07d1dee51c947ba23ff5d4e3afbc, type: 3}
